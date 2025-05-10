@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 
 function StudentPage() {
   const [menuOpen, setMenuOpen] = useState(true);
+  const [selectedMajor, setSelectedMajor] = useState('');
+  const [selectedSemester, setSelectedSemester] = useState('');
   const [profile, setProfile] = useState({
     name: '',
     email: '',
@@ -25,6 +27,10 @@ function StudentPage() {
     localStorage.setItem('studentProfile', JSON.stringify(profile));
     alert('Profile updated!');
   };
+  const [ismajorssOpen, setIsmajorsOpen] = useState(false);
+  const handlemajorsToggle = () => {
+    setIsmajorsOpen(!ismajorssOpen);
+  };
 
   return (
     <div style={{ display: 'flex' }}>
@@ -44,6 +50,11 @@ function StudentPage() {
             <li><a href="#profile">My Profile</a></li>
             <li><a href="#jobs">Browse Jobs</a></li>
             <li><a href="#applications">My Applications</a></li>
+            <li style={{ margin: '15px 0' }}>
+              <button onClick={handlemajorsToggle} style={{ background: 'none', border: 'none', padding: 0,color: '#007bff', textDecoration: 'underline', cursor: 'pointer', font: 'inherit' }}>
+                Majors
+              </button>
+            </li>
             <li><a href="#settings">Settings</a></li>
           </ul>
         )}
@@ -124,6 +135,102 @@ function StudentPage() {
             Save Profile
           </button>
         </div>
+
+    {ismajorssOpen && (
+      <div style={{
+        position: 'fixed',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: '300px',
+        backgroundColor: 'white',
+        border: '1px solid #ccc',
+        borderRadius: '5px',
+        padding: '20px',
+        boxShadow: '0 0 10px rgba(0,0,0,0.1)',
+        zIndex: 1000,
+      }}>
+        <button 
+          onClick={handlemajorsToggle}
+          style={{
+            position: 'absolute',
+            top: '10px',
+            right: '10px',
+            border: 'none',
+            background: 'transparent',
+            fontSize: '18px',
+            cursor: 'pointer',
+          }}
+        >
+          ×
+        </button>
+        
+        <h3 style={{ marginTop: 0 }}>Select Your Major</h3>
+        
+        {/* Majors Dropdown */}
+        <div style={{ marginBottom: '15px' }}>
+          <label htmlFor="majors" style={{ display: 'block', marginBottom: '5px' }}>Major:</label>
+          <select
+            id="majors"
+            value={selectedMajor}
+            onChange={(e) => setSelectedMajor(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '8px',
+              borderRadius: '4px',
+              border: '1px solid #ddd'
+            }}
+          >
+            <option value="">Select a major</option>
+            <option value="MET">MET</option>
+            <option value="IET">IET</option>
+            <option value="Mechatronics">Mechatronics</option>
+            <option value="Business Informatics">Business Informatics</option>
+            <option value="Pharmacy">Pharmacy</option>
+          </select>
+        </div>
+        
+        {/* Semester Dropdown */}
+        <div style={{ marginBottom: '20px' }}>
+          <label htmlFor="semester" style={{ display: 'block', marginBottom: '5px' }}>Semester:</label>
+          <select
+            id="semester"
+            value={selectedSemester}
+            onChange={(e) => setSelectedSemester(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '8px',
+              borderRadius: '4px',
+              border: '1px solid #ddd'
+            }}
+          >
+            <option value="">Select semester</option>
+            {[1, 2, 3, 4, 5, 6, 7, 8,9,10].map((num) => (
+              <option key={num} value={num}>Semester {num}</option>
+            ))}
+          </select>
+        </div>
+        
+        {/* Select Button */}
+        <button
+          onClick={() => {
+            // You can add functionality here later
+            console.log('Selected:', selectedMajor, 'Semester:', selectedSemester);
+          }}
+          style={{
+            width: '100%',
+            padding: '10px',
+            backgroundColor: '#007bff',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+          }}
+        >
+          Select
+        </button>
+      </div>
+    )}
       </div>
     </div>
   );

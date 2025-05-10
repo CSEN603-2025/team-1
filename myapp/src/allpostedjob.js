@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 
-function Jobs() {
+function ALLJobs() {
   const [jobs, setJobs] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [industryFilter, setIndustryFilter] = useState('');
@@ -9,12 +8,6 @@ function Jobs() {
   const [paidFilter, setPaidFilter] = useState('');
   const [filteredJobs, setFilteredJobs] = useState([]);
   const [selectedJob, setSelectedJob] = useState(null);
-  const [appliedInternships, setAppliedInternships] = useState(() => {
-    const storedApplied = localStorage.getItem('appliedInternships');
-    return storedApplied ? JSON.parse(storedApplied) : [];
-  });
-  const [extraDocuments, setExtraDocuments] = useState([]);
-  const navigate = useNavigate();
 
   useEffect(() => {
     const allJobsString = localStorage.getItem('allJobs');
@@ -38,7 +31,7 @@ function Jobs() {
       );
     }
 
-    // Industry filter
+    // Industry filter (assuming each job object has an 'industry' property)
     if (industryFilter) {
       results = results.filter(
         (job) => job.industry && job.industry.toLowerCase() === industryFilter.toLowerCase()
@@ -62,45 +55,8 @@ function Jobs() {
     setFilteredJobs(results);
   }, [jobs, searchTerm, industryFilter, durationFilter, paidFilter]);
 
-  useEffect(() => {
-    localStorage.setItem('appliedInternships', JSON.stringify(appliedInternships));
-  }, [appliedInternships]);
-
   const handleSelectJob = (job) => {
     setSelectedJob(job);
-  };
-
-  const handleDocumentChange = (event) => {
-    const files = Array.from(event.target.files);
-    setExtraDocuments(files);
-  };
-
-  const handleApply = () => {
-    if (selectedJob) {
-      const alreadyApplied = appliedInternships.some(
-        (applied) => applied.title === selectedJob.title && applied.companyName === selectedJob.companyName
-      );
-      if (!alreadyApplied) {
-        const newApplication = { ...selectedJob, status: 'pending', documents: extraDocuments.map(file => file.name) };
-        setAppliedInternships([...appliedInternships, newApplication]);
-        alert(`Applied to ${selectedJob.title} at ${selectedJob.companyName}! Status: Pending. Documents uploaded: ${extraDocuments.map(file => file.name).join(', ')}`);
-        setSelectedJob(null);
-        setExtraDocuments([]);
-        console.log('Uploaded documents:', extraDocuments);
-      } else {
-        alert('You have already applied to this internship.');
-      }
-    } else {
-      alert('Please select an internship to apply.');
-    }
-  };
-
-  const handleGoToMyApplications = () => {
-    navigate('/studentapplications');
-  };
-
-  const handleBack = () => {
-    navigate('/studentpage'); // Navigate to StudentPage.js
   };
 
   return (
@@ -123,7 +79,7 @@ function Jobs() {
           style={{ padding: '10px', borderRadius: '5px', border: '1px solid #ccc', flexGrow: 1, minWidth: '200px' }}
         />
 
-        {/* Industry Filter */}
+        {/* Industry Filter (assuming you have an array of unique industries) */}
         <select
           value={industryFilter}
           onChange={(e) => setIndustryFilter(e.target.value)}
@@ -143,8 +99,8 @@ function Jobs() {
         >
           <option value="">Any Duration</option>
           <option value="1 month">1 Month</option>
-          <option value="2 months">2 Months</option>
-          <option value="3 months">3 Months</option>
+          <option value="2 months">3 Months</option>
+          <option value="3 months">6 Months</option>
           {/* Add more duration options as needed */}
         </select>
 
@@ -158,22 +114,9 @@ function Jobs() {
           <option value="paid">Paid</option>
           <option value="unpaid">Unpaid</option>
         </select>
-
-        <button onClick={handleGoToMyApplications} style={{
-          padding: '10px 15px',
-          backgroundColor: '#6c757d',
-          color: 'white',
-          border: 'none',
-          borderRadius: '5px',
-          cursor: 'pointer',
-          fontSize: '14px',
-        }}>
-          View My Applications
-        </button>
       </div>
 
       <div style={{ overflowX: 'auto' }}>
-        <h2>Available Internships</h2>
         <table style={{
           width: '100%',
           borderCollapse: 'collapse',
@@ -199,36 +142,7 @@ function Jobs() {
                 <td style={{ padding: '12px 15px' }}>{job.duration}</td>
                 <td style={{ padding: '12px 15px' }}>{job.isPaid ? 'Yes' : 'No'}</td>
                 <td style={{ padding: '12px 15px', textAlign: 'center' }}>
-                  <button
-                    onClick={() => handleSelectJob(job)}
-                    style={{
-                      padding: '8px 12px',
-                      backgroundColor: '#007bff',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '5px',
-                      cursor: 'pointer',
-                      fontSize: '14px',
-                      marginRight: '5px',
-                    }}
-                  >
-                    Select
-                  </button>
-                  <button
-                    onClick={handleApply}
-                    disabled={appliedInternships.some(applied => applied.title === job.title && applied.companyName === job.companyName)}
-                    style={{
-                      padding: '8px 12px',
-                      backgroundColor: appliedInternships.some(applied => applied.title === job.title && applied.companyName === job.companyName) ? '#ccc' : '#28a745',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '5px',
-                      cursor: 'pointer',
-                      fontSize: '14px',
-                    }}
-                  >
-                    {appliedInternships.some(applied => applied.title === job.title && applied.companyName === job.companyName) ? 'Applied' : 'Apply'}
-                  </button>
+                  
                 </td>
               </tr>
             ))}
@@ -251,53 +165,11 @@ function Jobs() {
           <p><strong>Duration:</strong> {selectedJob.duration}</p>
           <p><strong>Paid:</strong> {selectedJob.isPaid ? 'Yes' : 'No'}</p>
           {selectedJob.industry && <p><strong>Industry:</strong> {selectedJob.industry}</p>}
-
-          <div style={{ marginTop: '15px' }}>
-            <label htmlFor="extraDocuments" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-              Upload Supporting Documents (CV, Cover Letter, Certificates, etc.):
-            </label>
-            <input
-              type="file"
-              id="extraDocuments"
-              multiple
-              onChange={handleDocumentChange}
-              style={{ padding: '5px', border: '1px solid #ccc', borderRadius: '5px' }}
-            />
-            {extraDocuments.length > 0 && (
-              <div style={{ marginTop: '10px', fontSize: '0.9em', color: '#555' }}>
-                <strong>Selected Files:</strong>
-                <ul>
-                  {extraDocuments.map((file, index) => (
-                    <li key={index}>{file.name}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-
-          <button
-            onClick={handleApply}
-            disabled={selectedJob && appliedInternships.some(applied => applied.title === selectedJob.title && applied.companyName === selectedJob.companyName)}
-            style={{
-              marginTop: '15px',
-              padding: '10px 15px',
-              backgroundColor: selectedJob && appliedInternships.some(applied => applied.title === selectedJob.title && selectedJob.companyName === selectedJob.companyName) ? '#ccc' : '#007bff',
-              color: 'white',
-              border: 'none',
-              borderRadius: '5px',
-              cursor: 'pointer',
-              fontSize: '16px',
-            }}
-          >
-            {selectedJob && appliedInternships.some(applied => applied.title === selectedJob.title && selectedJob.companyName === selectedJob.companyName) ? 'Already Applied' : 'Apply Now'}
-          </button>
+          {/* You can display more details about the selected job here */}
         </div>
       )}
-        <button onClick={handleBack} style={{ marginTop: '20px', padding: '10px 15px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '14px' }}>
-            Back to Student Page
-        </button>
     </div>
   );
 }
 
-export default Jobs;
+export default ALLJobs;

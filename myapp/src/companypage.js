@@ -180,7 +180,7 @@ function CompanyPage() {
                 Post a Job
               </button>
             </li>
-            <li><Link to="/jobspage">All posted Jobs</Link></li> {/* Using Link here */}
+            <li><Link to="/allpostedjobs">All posted Jobs</Link></li> {/* Using Link here */}
             <li style={{ margin: '15px 0' }}><Link to="/company/applications">View Applications</Link></li>
             <li style={{ margin: '15px 0' }}><Link to="/company/interns">Your Interns</Link></li>
             <li style={{ margin: '15px 0' }}><Link to="/company/settings">Settings</Link></li>

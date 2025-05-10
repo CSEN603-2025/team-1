@@ -86,7 +86,6 @@ function Jobs() {
         alert(`Applied to ${selectedJob.title} at ${selectedJob.companyName}! Status: Pending. Documents uploaded: ${extraDocuments.map(file => file.name).join(', ')}`);
         setSelectedJob(null);
         setExtraDocuments([]);
-        console.log('Uploaded documents:', extraDocuments);
       } else {
         alert('You have already applied to this internship.');
       }
@@ -100,8 +99,12 @@ function Jobs() {
   };
 
   const handleBack = () => {
-    navigate('/studentpage'); // Navigate to StudentPage.js
+    navigate('/studentpage');
   };
+
+  const isAlreadyApplied = (job) => {
+      return appliedInternships.some(applied => applied.title === job.title && applied.companyName === job.companyName);
+  }
 
   return (
     <div style={{
@@ -216,10 +219,10 @@ function Jobs() {
                   </button>
                   <button
                     onClick={handleApply}
-                    disabled={appliedInternships.some(applied => applied.title === job.title && applied.companyName === job.companyName)}
+                    disabled={isAlreadyApplied(job)}
                     style={{
                       padding: '8px 12px',
-                      backgroundColor: appliedInternships.some(applied => applied.title === job.title && applied.companyName === job.companyName) ? '#ccc' : '#28a745',
+                      backgroundColor: isAlreadyApplied(job) ? '#ccc' : '#28a745',
                       color: 'white',
                       border: 'none',
                       borderRadius: '5px',
@@ -227,7 +230,7 @@ function Jobs() {
                       fontSize: '14px',
                     }}
                   >
-                    {appliedInternships.some(applied => applied.title === job.title && applied.companyName === job.companyName) ? 'Applied' : 'Apply'}
+                    {isAlreadyApplied(job) ? 'Applied' : 'Apply'}
                   </button>
                 </td>
               </tr>
@@ -277,11 +280,11 @@ function Jobs() {
 
           <button
             onClick={handleApply}
-            disabled={selectedJob && appliedInternships.some(applied => applied.title === selectedJob.title && applied.companyName === selectedJob.companyName)}
+            disabled={selectedJob && isAlreadyApplied(selectedJob)}
             style={{
               marginTop: '15px',
               padding: '10px 15px',
-              backgroundColor: selectedJob && appliedInternships.some(applied => applied.title === selectedJob.title && selectedJob.companyName === selectedJob.companyName) ? '#ccc' : '#007bff',
+              backgroundColor: selectedJob && isAlreadyApplied(selectedJob) ? '#ccc' : '#007bff',
               color: 'white',
               border: 'none',
               borderRadius: '5px',
@@ -289,13 +292,13 @@ function Jobs() {
               fontSize: '16px',
             }}
           >
-            {selectedJob && appliedInternships.some(applied => applied.title === selectedJob.title && selectedJob.companyName === selectedJob.companyName) ? 'Already Applied' : 'Apply Now'}
+            {selectedJob && isAlreadyApplied(selectedJob) ? 'Already Applied' : 'Apply Now'}
           </button>
         </div>
       )}
-        <button onClick={handleBack} style={{ marginTop: '20px', padding: '10px 15px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '14px' }}>
-            Back to Student Page
-        </button>
+      <button onClick={handleBack} style={{ marginTop: '20px', padding: '10px 15px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '14px' }}>
+        Back to Student Page
+      </button>
     </div>
   );
 }

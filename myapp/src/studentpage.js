@@ -64,6 +64,7 @@ function StudentPage() {
         }}
       >
         {menuOpen && (
+<<<<<<< HEAD
           <ul style={{ listStyleType: "none", padding: 0, marginTop: "50px" }}>
             <li>
               <a href="#profile">My Profile</a>
@@ -90,6 +91,14 @@ function StudentPage() {
                   font: "inherit",
                 }}
               >
+=======
+          <ul style={{ listStyleType: 'none', padding: 0, marginTop: '50px' }}>
+            <li><a href="#profile">My Profile</a></li>
+            <li><a href="/jobspage">Browse Jobs</a></li>
+            <li><a href="/studentapplications">My Applications</a></li>
+            <li style={{ margin: '15px 0' }}>
+              <button onClick={handlemajorsToggle} style={{ background: 'none', border: 'none', padding: 0,color: '#007bff', textDecoration: 'underline', cursor: 'pointer', font: 'inherit' }}>
+>>>>>>> 7e13d5fb6d1fe2b95911e628ce45ef4a6b95a1a6
                 Majors
               </button>
             </li>

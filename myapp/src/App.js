@@ -8,6 +8,8 @@ import CompanyPage from './companypage';
 import FacultyPage from './facultypage';
 import ViewRegistration from './viewregistration';
 import Jobs from './jobspage';
+import MyApplications from "./studentapplications";
+import ALLJobs from './allpostedjob';
 
 function App() {
   // Manage notification state
@@ -222,6 +224,8 @@ function App() {
         <Route path="/company-dashboard" element={<CompanyPage />} />
         <Route path="/facultypage" element={<FacultyPage />} />
         <Route path="/jobspage" element={<Jobs/>} />
+        <Route path="/studentapplications" element={<MyApplications/>}/>
+        <Route path= "/allpostedjobs" element={<ALLJobs/>}/>
       </Routes>
 
       {/* Display Notification Message */}

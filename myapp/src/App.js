@@ -7,6 +7,7 @@ import SCADPage from './scadpage';
 import CompanyPage from './companypage';
 import FacultyPage from './facultypage';
 import ViewRegistration from './viewregistration';
+import Jobs from './jobspage';
 
 function App() {
   // Manage notification state
@@ -220,6 +221,7 @@ function App() {
         <Route path="/scadpage" element={<SCADPage />} />
         <Route path="/company-dashboard" element={<CompanyPage />} />
         <Route path="/facultypage" element={<FacultyPage />} />
+        <Route path="/jobspage" element={<Jobs/>} />
       </Routes>
 
       {/* Display Notification Message */}

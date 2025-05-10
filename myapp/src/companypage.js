@@ -33,6 +33,11 @@ function CompanyPage() {
 
     if (storedCompany) {
       setCompanyName(storedCompany.companyName || storedCompany.companyEmail);
+      // Load existing jobs for this company from localStorage
+      const storedJobs = localStorage.getItem(`companyJobs_${storedCompany.companyEmail}`);
+      if (storedJobs) {
+        setPostedJobs(JSON.parse(storedJobs));
+      }
     } else {
       navigate('/'); // Redirect if no company object
     }
@@ -45,6 +50,29 @@ function CompanyPage() {
 
     return () => clearTimeout(timer); // Cleanup on every change to searchQuery
   }, [searchQuery]);
+
+  // Save jobs to localStorage whenever postedJobs changes AND companyUser exists
+  useEffect(() => {
+    const storedCompany = location.state?.companyUser;
+    if (storedCompany) {
+      localStorage.setItem(`companyJobs_${storedCompany.companyEmail}`, JSON.stringify(postedJobs));
+      // Update the global jobs list (for jobs.js)
+      updateGlobalJobList(storedCompany.companyName || storedCompany.companyEmail, postedJobs);
+    }
+  }, [postedJobs, location.state?.companyUser]);
+
+  const updateGlobalJobList = (companyName, companyJobs) => {
+    const allJobsString = localStorage.getItem('allJobs') || '[]';
+    const allJobs = JSON.parse(allJobsString);
+
+    // Filter out existing jobs from this company and then add the updated ones
+    const updatedAllJobs = allJobs.filter(job => job.companyName !== companyName);
+    companyJobs.forEach(job => {
+      updatedAllJobs.push({ ...job, companyName });
+    });
+
+    localStorage.setItem('allJobs', JSON.stringify(updatedAllJobs));
+  };
 
   const toggleMenu = () => setMenuOpen(prev => !prev);
 
@@ -152,6 +180,7 @@ function CompanyPage() {
                 Post a Job
               </button>
             </li>
+            <li><Link to="/jobspage">All posted Jobs</Link></li> {/* Using Link here */}
             <li style={{ margin: '15px 0' }}><Link to="/company/applications">View Applications</Link></li>
             <li style={{ margin: '15px 0' }}><Link to="/company/interns">Your Interns</Link></li>
             <li style={{ margin: '15px 0' }}><Link to="/company/settings">Settings</Link></li>

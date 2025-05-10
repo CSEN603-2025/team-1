@@ -32,6 +32,7 @@ function SCADPage() {
             <li><Link to="/view-registration" style={{ color: '#274472', textDecoration: 'underline', fontWeight: 'bold',fontSize: '17px' }}>Company Registrations</Link></li>
             <li><Link to="/view-students" style={{ color: '#385e72', textDecoration: 'underline', fontWeight: 'bold' }}>View Students</Link></li>
             <li><Link to="/approve-internships" style={{ color: '#385e72', textDecoration: 'underline', fontWeight: 'bold' }}>Approve Internships</Link></li>
+            <li><Link to="/jobspage" style={{ color: '#385e72',textDecoration: 'underline', fontWeight: 'bold' }}>Available Internships</Link></li>
             <li><Link to="/messages" style={{ color: '#385e72',textDecoration: 'underline', fontWeight: 'bold' }}>Messages</Link></li>
             <li><Link to="/reports" style={{ color: '#385e72', textDecoration: 'underline', fontWeight: 'bold' }}>Reports</Link></li>
             <li><Link to="/settings" style={{ color: '#385e72', textDecoration: 'underline', fontWeight: 'bold' }}>Settings</Link></li>

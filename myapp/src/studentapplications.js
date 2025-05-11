@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 
 function MyApplications() {
   const [appliedInternships, setAppliedInternships] = useState([]);
+  const savedProfile = JSON.parse(localStorage.getItem('studentProfile'));
+  const [myApplications, setMyApplications] = useState([]);
 
-  // Load applications and set up storage listener
   useEffect(() => {
     const loadApplications = () => {
       const storedApplied = localStorage.getItem('appliedInternships');
@@ -14,10 +15,8 @@ function MyApplications() {
       }
     };
 
-    // Load initially
     loadApplications();
 
-    // Set up listener for storage changes
     const handleStorageChange = (e) => {
       if (e.key === 'appliedInternships') {
         loadApplications();
@@ -26,33 +25,22 @@ function MyApplications() {
 
     window.addEventListener('storage', handleStorageChange);
 
-    // Also listen for changes within the same tab
-    const intervalId = setInterval(loadApplications, 2000); // Check every 2 seconds
-
     return () => {
       window.removeEventListener('storage', handleStorageChange);
-      clearInterval(intervalId);
     };
-  }, []);
+  }, []); // Empty dependency array - runs once after initial render
 
-  // Additional check for changes in the company's job applications
   useEffect(() => {
-    const checkForExternalChanges = () => {
-      const storedApplied = localStorage.getItem('appliedInternships');
-      if (storedApplied) {
-        const parsedApplied = JSON.parse(storedApplied);
-        
-        // Compare with current state to detect changes
-        if (JSON.stringify(parsedApplied) !== JSON.stringify(appliedInternships)) {
-          setAppliedInternships(parsedApplied);
-        }
-      }
-    };
-
-    const intervalId = setInterval(checkForExternalChanges, 2000); // Check every 2 seconds
-
-    return () => clearInterval(intervalId);
-  }, [appliedInternships]);
+    // Filter the applied internships to show only those applied by the current student
+    if (savedProfile && appliedInternships.length > 0) {
+      const studentApplications = appliedInternships.filter(
+        (app) => app.studentProfile && app.studentProfile.email === savedProfile.email
+      );
+      setMyApplications(studentApplications);
+    } else {
+      setMyApplications([]);
+    }
+  }, [appliedInternships, savedProfile]); // Dependencies: appliedInternships and savedProfile
 
   return (
     <div style={{
@@ -64,7 +52,7 @@ function MyApplications() {
     }}>
       <h1 style={{ textAlign: 'center', marginBottom: '30px', color: '#28a745' }}>My Applications</h1>
 
-      {appliedInternships.length > 0 ? (
+      {myApplications.length > 0 ? (
         <table style={{
           width: '100%',
           borderCollapse: 'collapse',
@@ -84,7 +72,7 @@ function MyApplications() {
             </tr>
           </thead>
           <tbody>
-            {appliedInternships.map((appliedJob, index) => (
+            {myApplications.map((appliedJob, index) => (
               <tr key={index} style={{ borderBottom: '1px solid #ddd' }}>
                 <td style={{ padding: '12px 15px' }}>{appliedJob.companyName}</td>
                 <td style={{ padding: '12px 15px' }}>{appliedJob.title}</td>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 
 function StudentPage() {
   const [menuOpen, setMenuOpen] = useState(true);
@@ -12,7 +13,7 @@ function StudentPage() {
     partTimeJobs: '',
     collegeActivities: '',
   });
-
+  const savedProfile = JSON.parse(localStorage.getItem('studentProfile'));
   useEffect(() => {
     const savedProfile = JSON.parse(localStorage.getItem('studentProfile'));
     if (savedProfile) setProfile(savedProfile);
@@ -48,8 +49,8 @@ function StudentPage() {
         {menuOpen && (
           <ul style={{ listStyleType: 'none', padding: 0, marginTop: '50px' }}>
             <li><a href="#profile">My Profile</a></li>
-            <li><a href="/jobspage">Browse Jobs</a></li>
-            <li><a href="/studentapplications">My Applications</a></li>
+           <li><Link to="/jobspage" state={{ savedProfile }}>Browse Jobs</Link></li>
+           <li><Link to="/studentapplications" state={{ savedProfile }}>My Applications</Link></li>
             <li style={{ margin: '15px 0' }}>
               <button onClick={handlemajorsToggle} style={{ background: 'none', border: 'none', padding: 0,color: '#007bff', textDecoration: 'underline', cursor: 'pointer', font: 'inherit' }}>
                 Majors

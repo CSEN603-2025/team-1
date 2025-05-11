@@ -7,7 +7,7 @@ function ALLJobs() {
   const [durationFilter, setDurationFilter] = useState('');
   const [paidFilter, setPaidFilter] = useState('');
   const [filteredJobs, setFilteredJobs] = useState([]);
-  const [selectedJob, setSelectedJob] = useState(null);
+ 
 
   useEffect(() => {
     const allJobsString = localStorage.getItem('allJobs');
@@ -55,9 +55,7 @@ function ALLJobs() {
     setFilteredJobs(results);
   }, [jobs, searchTerm, industryFilter, durationFilter, paidFilter]);
 
-  const handleSelectJob = (job) => {
-    setSelectedJob(job);
-  };
+
 
   return (
     <div style={{
@@ -157,17 +155,6 @@ function ALLJobs() {
         </table>
       </div>
 
-      {selectedJob && (
-        <div style={{ marginTop: '30px', border: '1px solid #ccc', borderRadius: '8px', padding: '20px' }}>
-          <h2 style={{ color: '#007bff', marginBottom: '15px' }}>Selected Internship</h2>
-          <p><strong>Company:</strong> {selectedJob.companyName}</p>
-          <p><strong>Title:</strong> {selectedJob.title}</p>
-          <p><strong>Duration:</strong> {selectedJob.duration}</p>
-          <p><strong>Paid:</strong> {selectedJob.isPaid ? 'Yes' : 'No'}</p>
-          {selectedJob.industry && <p><strong>Industry:</strong> {selectedJob.industry}</p>}
-          {/* You can display more details about the selected job here */}
-        </div>
-      )}
     </div>
   );
 }

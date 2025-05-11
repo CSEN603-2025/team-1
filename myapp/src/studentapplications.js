@@ -1,20 +1,58 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 function MyApplications() {
   const [appliedInternships, setAppliedInternships] = useState([]);
-  const navigate = useNavigate();
 
+  // Load applications and set up storage listener
   useEffect(() => {
-    const storedApplied = localStorage.getItem('appliedInternships');
-    if (storedApplied) {
-      setAppliedInternships(JSON.parse(storedApplied));
-    }
+    const loadApplications = () => {
+      const storedApplied = localStorage.getItem('appliedInternships');
+      if (storedApplied) {
+        setAppliedInternships(JSON.parse(storedApplied));
+      } else {
+        setAppliedInternships([]);
+      }
+    };
+
+    // Load initially
+    loadApplications();
+
+    // Set up listener for storage changes
+    const handleStorageChange = (e) => {
+      if (e.key === 'appliedInternships') {
+        loadApplications();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    // Also listen for changes within the same tab
+    const intervalId = setInterval(loadApplications, 2000); // Check every 2 seconds
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(intervalId);
+    };
   }, []);
 
-  const handleBack = () => {
-    navigate('/studentpage');
-  };
+  // Additional check for changes in the company's job applications
+  useEffect(() => {
+    const checkForExternalChanges = () => {
+      const storedApplied = localStorage.getItem('appliedInternships');
+      if (storedApplied) {
+        const parsedApplied = JSON.parse(storedApplied);
+        
+        // Compare with current state to detect changes
+        if (JSON.stringify(parsedApplied) !== JSON.stringify(appliedInternships)) {
+          setAppliedInternships(parsedApplied);
+        }
+      }
+    };
+
+    const intervalId = setInterval(checkForExternalChanges, 2000); // Check every 2 seconds
+
+    return () => clearInterval(intervalId);
+  }, [appliedInternships]);
 
   return (
     <div style={{
@@ -59,7 +97,7 @@ function MyApplications() {
                       appliedJob.status === 'rejected' ? 'red' :
                         appliedJob.status === 'finalized' ? 'blue' :
                           'orange' // pending
-                  }}>{appliedJob.status}</span>
+                  }}>{appliedJob.status || 'pending'}</span>
                 </td>
                 <td style={{ padding: '12px 15px' }}>
                   {appliedJob.documents && appliedJob.documents.length > 0
@@ -73,9 +111,6 @@ function MyApplications() {
       ) : (
         <p>No internships applied to yet.</p>
       )}
-      <button onClick={handleBack} style={{ marginTop: '20px', padding: '10px 15px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '14px' }}>
-        Back to Student Page
-      </button>
     </div>
   );
 }

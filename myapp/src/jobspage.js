@@ -14,6 +14,15 @@ function Jobs() {
     return storedApplied ? JSON.parse(storedApplied) : [];
   });
   const [extraDocuments, setExtraDocuments] = useState([]);
+  const [editingJob, setEditingJob] = useState(null);
+  const [editedJobData, setEditedJobData] = useState({
+    title: '',
+    duration: '',
+    isPaid: false,
+    salary: '',
+    skills: '',
+    description: ''
+  });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -103,8 +112,34 @@ function Jobs() {
   };
 
   const isAlreadyApplied = (job) => {
-      return appliedInternships.some(applied => applied.title === job.title && applied.companyName === job.companyName);
+    return appliedInternships.some(applied => applied.title === job.title && applied.companyName === job.companyName);
   }
+
+  
+
+  const handleEditInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setEditedJobData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  };
+
+  const handleSaveEdit = () => {
+    const updatedJobs = jobs.map(job => 
+      job.title === editingJob.title && job.companyName === editingJob.companyName 
+        ? { ...job, ...editedJobData } 
+        : job
+    );
+    
+    setJobs(updatedJobs);
+    localStorage.setItem('allJobs', JSON.stringify(updatedJobs));
+    setEditingJob(null);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingJob(null);
+  };
 
   return (
     <div style={{
@@ -148,7 +183,6 @@ function Jobs() {
           <option value="1 month">1 Month</option>
           <option value="2 months">2 Months</option>
           <option value="3 months">3 Months</option>
-          {/* Add more duration options as needed */}
         </select>
 
         {/* Paid/Unpaid Filter */}
@@ -228,6 +262,7 @@ function Jobs() {
                       borderRadius: '5px',
                       cursor: 'pointer',
                       fontSize: '14px',
+                      marginRight: '5px',
                     }}
                   >
                     {isAlreadyApplied(job) ? 'Applied' : 'Apply'}
@@ -296,6 +331,116 @@ function Jobs() {
           </button>
         </div>
       )}
+
+      {editingJob && (
+        <div style={{ marginTop: '30px', border: '1px solid #ccc', borderRadius: '8px', padding: '20px' }}>
+          <h2 style={{ color: '#007bff', marginBottom: '15px' }}>Edit Internship</h2>
+          
+          <div style={{ marginBottom: '15px' }}>
+            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Job Title</label>
+            <input
+              type="text"
+              name="title"
+              value={editedJobData.title}
+              onChange={handleEditInputChange}
+              style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
+            />
+          </div>
+
+          <div style={{ marginBottom: '15px' }}>
+            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Duration</label>
+            <select
+              name="duration"
+              value={editedJobData.duration}
+              onChange={handleEditInputChange}
+              style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
+            >
+              <option value="1 month">1 month</option>
+              <option value="2 months">2 months</option>
+              <option value="3 months">3 months</option>
+            </select>
+          </div>
+
+          <div style={{ marginBottom: '15px' }}>
+            <label>
+              <input
+                type="checkbox"
+                name="isPaid"
+                checked={editedJobData.isPaid}
+                onChange={handleEditInputChange}
+                style={{ marginRight: '5px' }}
+              />
+              Paid
+            </label>
+          </div>
+
+          {editedJobData.isPaid && (
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Salary</label>
+              <input
+                type="text"
+                name="salary"
+                value={editedJobData.salary}
+                onChange={handleEditInputChange}
+                style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
+              />
+            </div>
+          )}
+
+          <div style={{ marginBottom: '15px' }}>
+            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Skills</label>
+            <input
+              type="text"
+              name="skills"
+              value={editedJobData.skills}
+              onChange={handleEditInputChange}
+              style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
+            />
+          </div>
+
+          <div style={{ marginBottom: '15px' }}>
+            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Description</label>
+            <textarea
+              name="description"
+              value={editedJobData.description}
+              onChange={handleEditInputChange}
+              style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ddd', minHeight: '100px' }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button
+              onClick={handleSaveEdit}
+              style={{
+                padding: '10px 15px',
+                backgroundColor: '#28a745',
+                color: 'white',
+                border: 'none',
+                borderRadius: '5px',
+                cursor: 'pointer',
+                fontSize: '16px',
+              }}
+            >
+              Save Changes
+            </button>
+            <button
+              onClick={handleCancelEdit}
+              style={{
+                padding: '10px 15px',
+                backgroundColor: '#6c757d',
+                color: 'white',
+                border: 'none',
+                borderRadius: '5px',
+                cursor: 'pointer',
+                fontSize: '16px',
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
       <button onClick={handleBack} style={{ marginTop: '20px', padding: '10px 15px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '14px' }}>
         Back to Student Page
       </button>

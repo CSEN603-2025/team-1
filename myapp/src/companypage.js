@@ -101,27 +101,29 @@ function CompanyPage() {
     }));
   };
 
-  const handleJobSubmit = (e) => {
+const handleJobSubmit = (e) => {
     e.preventDefault();
     const updatedJobs = [...postedJobs];
     if (editingIndex !== null) {
-      updatedJobs[editingIndex] = jobData;
+        updatedJobs[editingIndex] = jobData;
     } else {
-      updatedJobs.push(jobData);
+        // Initialize applicants array for new job
+        const newJob = { ...jobData, applicants: [] };
+        updatedJobs.push(newJob);
     }
-
     setPostedJobs(updatedJobs);
     setEditingIndex(null);
     setIsJobModalOpen(false);
     setJobData({
-      title: '',
-      duration: '',
-      isPaid: false,
-      salary: '',
-      skills: '',
-      description: '',
+        title: '',
+        duration: '',
+        isPaid: false,
+        salary: '',
+        skills: '',
+        description: '',
     });
-  };
+};
+  
 
   const handleEditJob = (index) => {
     setEditingIndex(index);
@@ -180,8 +182,8 @@ function CompanyPage() {
                 Post a Job
               </button>
             </li>
-            <li><Link to="/allpostedjobs">All posted Jobs</Link></li> {/* Using Link here */}
-            <li style={{ margin: '15px 0' }}><Link to="/company/applications">View Applications</Link></li>
+            <li><Link to="/allpostedjobs">All posted Jobs</Link></li>
+            <li style={{ margin: '15px 0' }}><Link to="/companyapplications">View Applications</Link></li>
             <li style={{ margin: '15px 0' }}><Link to="/company/interns">Your Interns</Link></li>
             <li style={{ margin: '15px 0' }}><Link to="/company/settings">Settings</Link></li>
             <li style={{ margin: '15px 0', cursor: 'pointer' }} onClick={handleLogout}>Logout</li>
@@ -257,7 +259,7 @@ function CompanyPage() {
           </div>
         </div>
 
-        <h2>Posted Jobs</h2>
+        <h2>My Posted Jobs</h2>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr>

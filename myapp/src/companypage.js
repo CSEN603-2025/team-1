@@ -30,21 +30,22 @@ function CompanyPage() {
 
   const navigate = useNavigate();
   const location = useLocation();
-  const storedCompany = location.state?.companyUser;
+  const storedCompany = location.state?.company;
   useEffect(() => {
-    const storedCompany = location.state?.companyUser;
+    const storedCompany = location.state?.company;
 
     if (storedCompany) {
-      setCompanyName(storedCompany.companyName || storedCompany.companyEmail);
+        setCompanyName(storedCompany.companyName || storedCompany.companyEmail);
       // Load existing jobs for this company from localStorage
       const storedJobs = localStorage.getItem(`companyJobs_${storedCompany.companyEmail}`);
       if (storedJobs) {
         setPostedJobs(JSON.parse(storedJobs));
         console.log('Loaded jobs:', JSON.parse(storedJobs));
       }
-    } else {
-      navigate('/'); // Redirect if no company object
     }
+    //  else {
+    //   navigate('/'); // Redirect if no company object
+    // }
   }, [location, navigate]);
 
   useEffect(() => {
@@ -57,13 +58,14 @@ function CompanyPage() {
 
   // Save jobs to localStorage whenever postedJobs changes AND companyUser exists
   useEffect(() => {
-    const storedCompany = location.state?.companyUser;
+    const storedCompany = location.state?.company;
     if (storedCompany) {
+       setCompanyName(storedCompany.companyName || storedCompany.companyEmail);
       localStorage.setItem(`companyJobs_${storedCompany.companyEmail}`, JSON.stringify(postedJobs));
       // Update the global jobs list (for jobs.js)
       updateGlobalJobList(storedCompany.companyName || storedCompany.companyEmail, postedJobs);
     }
-  }, [postedJobs, location.state?.companyUser]);
+  }, [postedJobs, location.state?.company]);
 
   const updateGlobalJobList = (companyName, companyJobs) => {
     const allJobsString = localStorage.getItem('allJobs') || '[]';

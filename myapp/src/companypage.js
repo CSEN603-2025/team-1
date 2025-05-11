@@ -14,6 +14,9 @@ function CompanyPage() {
     skills: '',
     description: '',
   });
+
+
+  
   const [postedJobs, setPostedJobs] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterPaid, setFilterPaid] = useState({ paid: false, unpaid: false });

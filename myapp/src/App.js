@@ -93,29 +93,29 @@ function App() {
 };
 
   
-  const isInitialLoad = useState(true);
+const isInitialLoad = useState(true);
   useEffect(() => {
     // Check if the user is already logged in via localStorage
     // Check for existing user sessions on initial load
     if (isInitialLoad.current) {
       isInitialLoad.current = false; // Prevent this block from running again
 
-      const storedUser = localStorage.getItem('user');
-      if (storedUser) {
-        const user = JSON.parse(storedUser);
-        if (user.role === 'student') {
-          navigate('/studentpage');
-        } else if (user.role === 'scad') {
-          navigate('/scadpage');
-        } else if (user.role === 'faculty') {
-          navigate('/facultypage');
-        }
-      }
+      // const storedUser = localStorage.getItem('user');
+      // if (storedUser) {
+      //   const user = JSON.parse(storedUser);
+      //   if (user.role === 'student') {
+      //     navigate('/studentpage');
+      //   } else if (user.role === 'scad') {
+      //     navigate('/scadpage');
+      //   } else if (user.role === 'faculty') {
+      //     navigate('/facultypage');
+      //   }
+      // }
 
       const raw = sessionStorage.getItem('currentCompany');
       if (raw) {
         const companyUser = JSON.parse(raw);
-        navigate('/company-dashboard', { state: { companyUser } });
+        navigate('/company-dashboard', { state: {company:companyUser } });
       }
     }
   }, [navigate,isInitialLoad]);

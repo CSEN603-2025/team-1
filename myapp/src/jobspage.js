@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-function Jobs({ setNotification }) {
+function Jobs() {
   const [jobs, setJobs] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [industryFilter, setIndustryFilter] = useState('');
@@ -9,7 +9,6 @@ function Jobs({ setNotification }) {
   const [paidFilter, setPaidFilter] = useState('');
   const [filteredJobs, setFilteredJobs] = useState([]);
   const [selectedJob, setSelectedJob] = useState(null);
-
   const [appliedInternships, setAppliedInternships] = useState(() => {
     const storedApplied = localStorage.getItem('appliedInternships');
     return storedApplied ? JSON.parse(storedApplied) : [];

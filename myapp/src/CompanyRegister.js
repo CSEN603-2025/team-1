@@ -24,7 +24,7 @@ function CompanyRegister() {
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState({});
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [registeredCompany, setRegisteredCompany] = useState(null);
+  const [user, setUser] = useState(null);
 
   const navigate = useNavigate();
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -109,7 +109,7 @@ function CompanyRegister() {
       existingSession.push(fullCompany);
       sessionStorage.setItem('companies', JSON.stringify(existingSession));
 
-      setRegisteredCompany(fullCompany);
+      setUser(fullCompany);
       setIsModalOpen(true);
     } catch (error) {
       console.error('Error processing files:', error);
@@ -119,8 +119,8 @@ function CompanyRegister() {
 
   const handleModalOkClick = () => {
     setIsModalOpen(false);
-    if (registeredCompany) {
-      navigate('/company-login', { state: { company: registeredCompany } });
+    if (user) {
+      navigate('/company-login', { state: { company:user } });
     }
   };
 

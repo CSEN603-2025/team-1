@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 
-function ViewRegistration({ setNotificationMessage }) {
+function ViewRegistration({ setNotification }) {
   const [companyDetails, setCompanyDetails] = useState(null);
   const [companies, setCompanies] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -47,7 +47,13 @@ function ViewRegistration({ setNotificationMessage }) {
     );
     localStorage.setItem('companies', JSON.stringify(updated));
     localStorage.setItem('companiesUpdated', Date.now());
-    setNotificationMessage?.(`Registration for ${companyDetails.companyName} accepted.`);
+    
+    // Updated notification logic
+    setNotification({
+      message: `Registration for ${companyDetails.companyName} accepted.`,
+      email: companyDetails.companyEmail,
+    });
+
     setCompanies(prev => prev.filter(c => c.companyEmail !== companyDetails.companyEmail));
     setCompanyDetails(null);
   };
@@ -59,7 +65,13 @@ function ViewRegistration({ setNotificationMessage }) {
     const updated = all.filter(c => c.companyEmail !== companyDetails.companyEmail);
     localStorage.setItem('companies', JSON.stringify(updated));
     localStorage.setItem('companiesUpdated', Date.now());
-    setNotificationMessage?.(`Registration for ${companyDetails.companyName} rejected.`);
+
+    // Updated notification logic
+    setNotification({
+      message: `Registration for ${companyDetails.companyName} rejected.`,
+      email: companyDetails.companyEmail,
+    });
+
     setCompanies(prev => prev.filter(c => c.companyEmail !== companyDetails.companyEmail));
     setCompanyDetails(null);
   };
@@ -70,8 +82,7 @@ function ViewRegistration({ setNotificationMessage }) {
     link.download = doc.name;
     link.click();
   };
-  
-  
+
   const filtered = useMemo(() =>
     companies.filter(c =>
       c.companyName.toLowerCase().includes(searchQuery.toLowerCase()) &&

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-function Jobs() {
+function Jobs({ setNotification }) {
   const [jobs, setJobs] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [industryFilter, setIndustryFilter] = useState('');
@@ -9,6 +9,7 @@ function Jobs() {
   const [paidFilter, setPaidFilter] = useState('');
   const [filteredJobs, setFilteredJobs] = useState([]);
   const [selectedJob, setSelectedJob] = useState(null);
+
   const [appliedInternships, setAppliedInternships] = useState(() => {
     const storedApplied = localStorage.getItem('appliedInternships');
     return storedApplied ? JSON.parse(storedApplied) : [];
@@ -86,18 +87,32 @@ function Jobs() {
 
   const handleApply = () => {
     if (selectedJob) {
-      const alreadyApplied = appliedInternships.some(
-        (applied) => applied.title === selectedJob.title && applied.companyName === selectedJob.companyName
-      );
-      if (!alreadyApplied) {
+      // const alreadyApplied = appliedInternships.some(
+      //   (applied) => applied.title === selectedJob.title && applied.companyName === selectedJob.companyName
+      // );
+      // if (!alreadyApplied) {
         const newApplication = { ...selectedJob, status: 'pending', documents: extraDocuments.map(file => file.name) };
         setAppliedInternships([...appliedInternships, newApplication]);
         alert(`Applied to ${selectedJob.title} at ${selectedJob.companyName}! Status: Pending. Documents uploaded: ${extraDocuments.map(file => file.name).join(', ')}`);
         setSelectedJob(null);
         setExtraDocuments([]);
-      } else {
-        alert('You have already applied to this internship.');
-      }
+        
+        setNotification({
+          message: `A student has applied for your internship: ${selectedJob.title}.`,
+          email: 'h@h.com'
+        });
+
+        // Also store in sessionStorage to persist after navigation
+        sessionStorage.setItem('companyNotification', JSON.stringify({
+          message: `A student has applied for your internship: ${selectedJob.title}.`,
+          email: 'h@h.com'
+        }));
+
+        // change el name ba3den
+
+      //  } else {
+      //   alert('You have already applied to this internship.');
+      // }
     } else {
       alert('Please select an internship to apply.');
     }

@@ -13,10 +13,8 @@ function CompanyPage() {
     salary: '',
     skills: '',
     description: '',
+    industry: '',
   });
-
-
-  
   const [postedJobs, setPostedJobs] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterPaid, setFilterPaid] = useState({ paid: false, unpaid: false });
@@ -25,56 +23,56 @@ function CompanyPage() {
     '2 months': false,
     '3 months': false,
   });
-
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+  const [selectedJobApplicants, setSelectedJobApplicants] = useState(null);
+  const [isApplicantsModalOpen, setIsApplicantsModalOpen] = useState(false);
+  const [selectedApplicant, setSelectedApplicant] = useState(null);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
   const storedCompany = location.state?.company;
+
   useEffect(() => {
     const storedCompany = location.state?.company;
 
     if (storedCompany) {
-        setCompanyName(storedCompany.companyName || storedCompany.companyEmail);
-      // Load existing jobs for this company from localStorage
+      setCompanyName(storedCompany.companyName || storedCompany.companyEmail);
       const storedJobs = localStorage.getItem(`companyJobs_${storedCompany.companyEmail}`);
       if (storedJobs) {
         setPostedJobs(JSON.parse(storedJobs));
-        console.log('Loaded jobs:', JSON.parse(storedJobs));
       }
     }
-    //  else {
-    //   navigate('/'); // Redirect if no company object
-    // }
   }, [location, navigate]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
-    }, 500); // Delay for 500ms (debounce time)
+    }, 500);
 
-    return () => clearTimeout(timer); // Cleanup on every change to searchQuery
+    return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Save jobs to localStorage whenever postedJobs changes AND companyUser exists
   useEffect(() => {
     const storedCompany = location.state?.company;
     if (storedCompany) {
-       setCompanyName(storedCompany.companyName || storedCompany.companyEmail);
+      setCompanyName(storedCompany.companyName || storedCompany.companyEmail);
       localStorage.setItem(`companyJobs_${storedCompany.companyEmail}`, JSON.stringify(postedJobs));
-      // Update the global jobs list (for jobs.js)
-      updateGlobalJobList(storedCompany.companyName || storedCompany.companyEmail, postedJobs);
+      updateGlobalJobList(
+        storedCompany.companyName || storedCompany.companyEmail,
+        storedCompany.companyEmail,
+        postedJobs
+      );
     }
   }, [postedJobs, location.state?.company]);
 
-  const updateGlobalJobList = (companyName, companyJobs) => {
+  const updateGlobalJobList = (companyName, companyEmail, companyJobs) => {
     const allJobsString = localStorage.getItem('allJobs') || '[]';
     const allJobs = JSON.parse(allJobsString);
 
-    // Filter out existing jobs from this company and then add the updated ones
-    const updatedAllJobs = allJobs.filter(job => job.companyName !== companyName);
+    const updatedAllJobs = allJobs.filter(job => job.companyEmail !== companyEmail);
     companyJobs.forEach(job => {
-      updatedAllJobs.push({ ...job, companyName });
+      updatedAllJobs.push({ ...job, companyName, companyEmail });
     });
 
     localStorage.setItem('allJobs', JSON.stringify(updatedAllJobs));
@@ -96,6 +94,7 @@ function CompanyPage() {
       salary: '',
       skills: '',
       description: '',
+      industry: '',
     });
   };
 
@@ -107,29 +106,28 @@ function CompanyPage() {
     }));
   };
 
-const handleJobSubmit = (e) => {
+  const handleJobSubmit = (e) => {
     e.preventDefault();
     const updatedJobs = [...postedJobs];
     if (editingIndex !== null) {
-        updatedJobs[editingIndex] = jobData;
+      updatedJobs[editingIndex] = jobData;
     } else {
-        // Initialize applicants array for new job
-        const newJob = { ...jobData, applicants: [] };
-        updatedJobs.push(newJob);
+      const newJob = { ...jobData, applicants: [] };
+      updatedJobs.push(newJob);
     }
     setPostedJobs(updatedJobs);
     setEditingIndex(null);
     setIsJobModalOpen(false);
     setJobData({
-        title: '',
-        duration: '',
-        isPaid: false,
-        salary: '',
-        skills: '',
-        description: '',
+      title: '',
+      duration: '',
+      isPaid: false,
+      salary: '',
+      skills: '',
+      description: '',
+      industry: '',
     });
-};
-  
+  };
 
   const handleEditJob = (index) => {
     setEditingIndex(index);
@@ -137,8 +135,37 @@ const handleJobSubmit = (e) => {
     setIsJobModalOpen(true);
   };
 
-  const handleDeleteJob = (index) => {
-    setPostedJobs(prev => prev.filter((_, i) => i !== index));
+  const handleDeleteJob = (indexToDelete) => {
+    const jobToDelete = postedJobs[indexToDelete];
+    const updatedPostedJobs = postedJobs.filter((_, index) => index !== indexToDelete);
+    setPostedJobs(updatedPostedJobs);
+
+    const allJobsString = localStorage.getItem('allJobs') || '[]';
+    const allJobs = JSON.parse(allJobsString);
+    const updatedAllJobs = allJobs.filter(
+      job => !(job.companyEmail === storedCompany?.companyEmail && job.title === jobToDelete.title)
+    );
+    localStorage.setItem('allJobs', JSON.stringify(updatedAllJobs));
+  };
+
+  const handleViewApplicants = (job) => {
+    setSelectedJobApplicants(job.applicants || []);
+    setIsApplicantsModalOpen(true);
+  };
+
+  const handleCloseApplicantsModal = () => {
+    setIsApplicantsModalOpen(false);
+    setSelectedJobApplicants(null);
+  };
+
+  const handleViewApplicantProfile = (applicant) => {
+    setSelectedApplicant(applicant);
+    setIsProfileModalOpen(true);
+  };
+
+  const handleCloseProfileModal = () => {
+    setIsProfileModalOpen(false);
+    setSelectedApplicant(null);
   };
 
   const filteredJobs = postedJobs.filter(job => {
@@ -181,14 +208,14 @@ const handleJobSubmit = (e) => {
       >
         {menuOpen && (
           <ul style={{ listStyleType: 'none', padding: 0, marginTop: '50px' }}>
-            <li style={{ margin: '15px 0' }}><Link to="/company/dashboard" state={{storedCompany}}> Dashboard</Link></li>
+            <li style={{ margin: '15px 0' }}><Link to="/company/dashboard" state={{ storedCompany }}> Dashboard</Link></li>
             <li style={{ margin: '15px 0' }}><Link to="/company/profile">Profile</Link></li>
             <li style={{ margin: '15px 0' }}>
               <button onClick={handleJobModalToggle} style={{ background: 'none', border: 'none', padding: 0, color: '#007bff', textDecoration: 'underline', cursor: 'pointer', font: 'inherit' }}>
                 Post a Job
               </button>
             </li>
-            <li><Link to="/allpostedjobs" state={{storedCompany}}>All posted Jobs</Link></li>
+            <li><Link to="/allpostedjobs" state={{ storedCompany }}>All posted Jobs</Link></li>
             <li style={{ margin: '15px 0' }}><Link to="/companyapplications">View Applications</Link></li>
             <li style={{ margin: '15px 0' }}><Link to="/company/interns">Your Interns</Link></li>
             <li style={{ margin: '15px 0' }}><Link to="/company/settings">Settings</Link></li>
@@ -272,6 +299,7 @@ const handleJobSubmit = (e) => {
               <th>Title</th>
               <th>Duration</th>
               <th>Paid</th>
+              <th>Applicants</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -281,9 +309,11 @@ const handleJobSubmit = (e) => {
                 <td>{job.title}</td>
                 <td>{job.duration}</td>
                 <td>{job.isPaid ? 'Yes' : 'No'}</td>
+                <td>{job.applicants ? job.applicants.length : 0}</td>
                 <td>
                   <button onClick={() => handleEditJob(index)}>Edit</button>
                   <button onClick={() => handleDeleteJob(index)}>Delete</button>
+                  <button onClick={() => handleViewApplicants(job)}>Applicants Details</button>
                 </td>
               </tr>
             ))}
@@ -338,6 +368,10 @@ const handleJobSubmit = (e) => {
                   <label>Description</label>
                   <textarea name="description" value={jobData.description} onChange={handleJobInputChange} style={{ width: '100%', padding: '8px', borderRadius: '4px' }} />
                 </div>
+                <div style={{ marginBottom: '10px' }}>
+                  <label>Industry</label>
+                  <input type="text" name="industry" value={jobData.industry} onChange={handleJobInputChange} style={{ width: '100%', padding: '8px', borderRadius: '4px' }} />
+                </div>
                 <button type="submit" style={{ backgroundColor: '#007bff', color: 'white', padding: '10px', width: '100%' }}>
                   {editingIndex !== null ? 'Update Job' : 'Post Job'}
                 </button>
@@ -354,6 +388,164 @@ const handleJobSubmit = (e) => {
                 }}
               >
                 Close
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Applicants Modal */}
+        {isApplicantsModalOpen && selectedJobApplicants && (
+          <div style={{
+            position: 'fixed',
+            top: '0',
+            left: '0',
+            width: '100%',
+            height: '100%',
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 1200,
+          }}>
+            <div style={{ 
+              background: 'white', 
+              padding: '20px', 
+              borderRadius: '4px', 
+              maxHeight: '80vh', 
+              overflowY: 'auto', 
+              width: '80%' 
+            }}>
+              <h3>Applicants</h3>
+              {selectedJobApplicants.length > 0 ? (
+                <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Email</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selectedJobApplicants.map((applicant, index) => (
+                      <tr key={index}>
+                        <td>{applicant.name || 'N/A'}</td>
+                        <td>{applicant.email || 'N/A'}</td>
+                        <td>
+                          <button 
+                            onClick={() => handleViewApplicantProfile(applicant)}
+                            style={{
+                              padding: '5px 10px',
+                              backgroundColor: '#007bff',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '4px',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            View Profile
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <p>No applicants for this job yet.</p>
+              )}
+              <button 
+                onClick={handleCloseApplicantsModal} 
+                style={{ 
+                  padding: '8px 15px', 
+                  backgroundColor: '#6c757d', 
+                  color: 'white', 
+                  border: 'none', 
+                  borderRadius: '4px', 
+                  cursor: 'pointer' 
+                }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Applicant Profile Modal */}
+        {isProfileModalOpen && selectedApplicant && (
+          <div style={{
+            position: 'fixed',
+            top: '0',
+            left: '0',
+            width: '100%',
+            height: '100%',
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 1300,
+          }}>
+            <div style={{ 
+              background: 'white', 
+              padding: '30px', 
+              borderRadius: '8px', 
+              maxHeight: '90vh', 
+              overflowY: 'auto', 
+              width: '80%',
+              maxWidth: '800px',
+              boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h2 style={{ margin: 0 }}>
+                  {selectedApplicant.name || 'Applicant Profile'}
+                </h2>
+                <button 
+                  onClick={handleCloseProfileModal}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    fontSize: '20px',
+                    cursor: 'pointer',
+                    color: '#6c757d'
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+
+              <div style={{ marginBottom: '20px' }}>
+                <h3 style={{ borderBottom: '1px solid #eee', paddingBottom: '10px' }}>Basic Information</h3>
+                <p><strong>Name:</strong> {selectedApplicant.name || 'N/A'}</p>
+                <p><strong>Email:</strong> {selectedApplicant.email || 'N/A'}</p>
+              </div>
+
+              <div style={{ marginBottom: '20px' }}>
+                <h3 style={{ borderBottom: '1px solid #eee', paddingBottom: '10px' }}>Job Interests</h3>
+                <p>{selectedApplicant.jobInterests || 'No job interests specified'}</p>
+              </div>
+
+              <div style={{ marginBottom: '20px' }}>
+                <h3 style={{ borderBottom: '1px solid #eee', paddingBottom: '10px' }}>Experience</h3>
+                <p><strong>Internships:</strong> {selectedApplicant.internships || 'N/A'}</p>
+                <p><strong>Part-time Jobs:</strong> {selectedApplicant.partTimeJobs || 'N/A'}</p>
+              </div>
+
+              <div style={{ marginBottom: '20px' }}>
+                <h3 style={{ borderBottom: '1px solid #eee', paddingBottom: '10px' }}>College Activities</h3>
+                <p>{selectedApplicant.collegeActivities || 'No college activities listed'}</p>
+              </div>
+
+              <button 
+                onClick={handleCloseProfileModal} 
+                style={{ 
+                  padding: '10px 20px', 
+                  backgroundColor: '#007bff', 
+                  color: 'white', 
+                  border: 'none', 
+                  borderRadius: '4px', 
+                  cursor: 'pointer',
+                  fontSize: '16px'
+                }}
+              >
+                Close Profile
               </button>
             </div>
           </div>

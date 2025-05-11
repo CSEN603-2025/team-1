@@ -63,7 +63,7 @@ function App() {
       sessionStorage.setItem('user', JSON.stringify(user));
 
       if (user.role === 'student') {
-        navigate('/studentpage', { state: { user } });
+        navigate('/studentpage', { state: { user } });      
       } else if (user.role === 'scad') {
         navigate('/scadpage', { state: { user } });
       } else if (user.role === 'faculty') {

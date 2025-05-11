@@ -1,37 +1,43 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 function StudentPage() {
   const [menuOpen, setMenuOpen] = useState(true);
-  const [selectedMajor, setSelectedMajor] = useState('');
-  const [selectedSemester, setSelectedSemester] = useState('');
+  const [selectedMajor, setSelectedMajor] = useState("");
+  const [selectedSemester, setSelectedSemester] = useState("");
   const [showProfile, setShowProfile] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [profile, setProfile] = useState({
-    name: '',
-    email: '',
-    jobInterests: '',
-    internships: '',
-    partTimeJobs: '',
-    collegeActivities: '',
+    name: "",
+    email: "",
+    jobInterests: "",
+    internships: "",
+    partTimeJobs: "",
+    collegeActivities: "",
   });
   const [draftProfile, setDraftProfile] = useState({ ...profile });
-  const [activeSidebarItem, setActiveSidebarItem] = useState('home');
+  const [activeSidebarItem, setActiveSidebarItem] = useState("home");
   const navigate = useNavigate();
   const location = useLocation();
   const student = location.state?.user;
   const [showCompanies, setShowCompanies] = useState(false); // State to control visibility of companies list
-  const companies = JSON.parse(localStorage.getItem('companies')) || [];
+  const companies = JSON.parse(localStorage.getItem("companies")) || [];
+  const [isMajorsOpen, setIsMajorsOpen] = useState(false);
+  const [showCourses, setShowCourses] = useState(false);
+  const [localMajor, setLocalMajor] = useState("");
+  const [localSemester, setLocalSemester] = useState("");
+  const [courses, setCourses] = useState([]); // To hold courses for the selected major
+
   useEffect(() => {
-    const savedProfile = JSON.parse(localStorage.getItem('studentProfile'));
+    const savedProfile = JSON.parse(localStorage.getItem("studentProfile"));
     const initialProfile = savedProfile || {
-      name: '',
-      email: student?.email || '',
-      jobInterests: '',
-      internships: '',
-      partTimeJobs: '',
-      collegeActivities: '',
+      name: "",
+      email: student?.email || "",
+      jobInterests: "",
+      internships: "",
+      partTimeJobs: "",
+      collegeActivities: "",
     };
 
     setProfile(initialProfile);
@@ -47,120 +53,155 @@ function StudentPage() {
     setDraftProfile(profile);
   };
 
- const handleDraftChange = (e) => {
+  const handleDraftChange = (e) => {
+    const { name, value } = e.target;
 
-    const { name, value } = e.target;
-
-    if (name !== 'email') {
-
-      setDraftProfile(prev => ({ ...prev, [name]: value }));
-
-    }
-
-  };
+    if (name !== "email") {
+      setDraftProfile((prev) => ({ ...prev, [name]: value }));
+    }
+  };
 
   const handleSaveProfile = () => {
     setProfile(draftProfile);
-    localStorage.setItem('studentProfile', JSON.stringify(draftProfile));
+    localStorage.setItem("studentProfile", JSON.stringify(draftProfile));
     setIsEditingProfile(false);
-    alert('Profile updated!');
+    alert("Profile updated!");
   };
-
-  const [isMajorsOpen, setIsMajorsOpen] = useState(false);
 
   const handleMajorsToggle = () => {
     setIsMajorsOpen(!isMajorsOpen);
+    setShowCourses(false); // Hide courses when toggling majors
+    setSelectedMajor(""); // Reset selected major
+    setSelectedSemester(""); // Reset selected semester
   };
 
   const handleProfileClick = () => {
     setShowProfile(true);
     setShowCompanies(false); // Ensure other views are hidden
+    setShowCourses(false); // Ensure other views are hidden
     setIsEditingProfile(false);
-    setActiveSidebarItem('profile');
+    setActiveSidebarItem("profile");
   };
 
   const handleHomeClick = () => {
     setShowProfile(false);
     setShowCompanies(false); // Hide companies when going to home
     setIsMajorsOpen(false);
-    setActiveSidebarItem('home');
+    setShowCourses(false);
+    setActiveSidebarItem("home");
   };
 
   const handleBrowseJobsClick = () => {
     setShowCompanies(false); // Hide companies when going to jobs
     setShowProfile(false); // Ensure other views are hidden
     setIsMajorsOpen(false);
-    setActiveSidebarItem('jobs');
-    navigate('/jobspage');
-    console.log('Browse Jobs clicked');
+    setShowCourses(false);
+    setActiveSidebarItem("jobs");
+    navigate("/jobspage");
+    console.log("Browse Jobs clicked");
   };
 
   const handleMyApplicationsClick = () => {
-    setShowCompanies(false);  // Hide companies when going to applications
+    setShowCompanies(false); // Hide companies when going to applications
     setShowProfile(false); // Ensure other views are hidden
     setIsMajorsOpen(false);
-    setActiveSidebarItem('applications');
-    navigate('/studentapplications');
-    console.log('My Applications clicked');
+    setShowCourses(false);
+    setActiveSidebarItem("applications");
+    navigate("/studentapplications");
+    console.log("My Applications clicked");
   };
 
   const handleSettingsClick = () => {
     setShowCompanies(false); // Hide companies when going to settings
     setShowProfile(false); // Ensure other views are hidden
     setIsMajorsOpen(false);
-    setActiveSidebarItem('settings');
-    console.log('Settings clicked');
+    setShowCourses(false);
+    setActiveSidebarItem("settings");
+    console.log("Settings clicked");
   };
 
-    const handleCompaniesClick = () => {
+  const handleCompaniesClick = () => {
     setShowProfile(false); // Hide profile when going to companies
-    // setShowMajorsOpen(false);
+    setIsMajorsOpen(false);
+    setShowCourses(false);
     setShowCompanies(true); // Show the companies list
-    setActiveSidebarItem('companies');
+    setActiveSidebarItem("companies");
   };
 
- const sidebarButtonStyle = (isActive) => ({
-    backgroundColor: isActive ? '#5D6D7E' : 'transparent',
-    border: 'none',
-    padding: '10px 20px',
-    color: isActive ? '#F1C40F' : 'white',
-    textDecoration: 'none',
-    cursor: 'pointer',
-    font: 'inherit',
-    width: '100%',
-    textAlign: 'left',
-    display: 'block',
-    borderRadius: '5px',
-    marginBottom: '5px',
-    '&:hover': {
-      backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    },
-  });
+  const handleViewCourses = () => {
+    if (localMajor && localSemester) {
+      console.log(
+        "Viewing Courses for:",
+        localMajor,
+        "Semester:",
+        localSemester
+      );
+      // In a real application, you would fetch courses based on selectedMajor and selectedSemester
+      // For now, let's just display a message and some dummy data
+      setCourses([
+        `Course 101 for ${localMajor} (Semester ${localSemester})`,
+        `Course 102 for ${localMajor} (Semester ${localSemester})`,
+        // Add more dummy courses here based on major and semester
+      ]);
+      setShowCourses(true);
+    } else {
+      alert("Please select a major and a semester first.");
+    }
+  };
+
+  const handleSelectMajor = () => {
+    if (selectedMajor && selectedSemester) {
+      console.log("Selected:", selectedMajor, "Semester:", selectedSemester);
+      setLocalMajor(selectedMajor);
+      setLocalSemester(selectedSemester);
+      setIsMajorsOpen(false); // Close the majors selection
+    } else {
+      alert("Please select a major and a semester.");
+    }
+  };
+
+  const sidebarButtonStyle = (isActive) => ({
+    backgroundColor: isActive ? "#5D6D7E" : "transparent",
+    border: "none",
+    padding: "10px 20px",
+    color: isActive ? "#F1C40F" : "white",
+    textDecoration: "none",
+    cursor: "pointer",
+    font: "inherit",
+    width: "100%",
+    textAlign: "left",
+    display: "block",
+    borderRadius: "5px",
+    marginBottom: "5px",
+    "&:hover": {
+      backgroundColor: "rgba(255, 255, 255, 0.15)",
+    },
+  });
 
   return (
-    <div style={{ display: 'flex' }}>
+    <div style={{ display: "flex" }}>
       {/* Sidebar */}
       <div
         style={{
-          width: menuOpen ? '180px' : '0',
-          height: '100vh',
-          backgroundColor: '#34495E',
-          transition: '0.3s',
-          padding: menuOpen ? '20px' : '0',
-          boxShadow: menuOpen ? '2px 0 5px rgba(0,0,0,0.2)' : 'none',
-          overflowY: menuOpen ? 'auto' : 'hidden', // Add scrollbar when open
-          position: 'fixed', // Make sidebar fixed
-          top: 0,           // Stick to the top
-          left: 0,          // Stick to the left
+          width: menuOpen ? "180px" : "0",
+          height: "100vh",
+          backgroundColor: "#34495E",
+          transition: "0.3s",
+          padding: menuOpen ? "20px" : "0",
+          boxShadow: menuOpen ? "2px 0 5px rgba(0,0,0,0.2)" : "none",
+          overflowY: menuOpen ? "auto" : "hidden", // Add scrollbar when open
+          position: "fixed", // Make sidebar fixed
+          top: 0, // Stick to the top
+          left: 0, // Stick to the left
           zIndex: 2,
         }}
       >
         {menuOpen && (
-          <ul style={{ listStyleType: 'none', padding: 0, marginTop: '20px' }}>
+          <ul style={{ listStyleType: "none", padding: 0, marginTop: "20px" }}>
             <li>
               <button
                 onClick={handleHomeClick}
-                style={sidebarButtonStyle(activeSidebarItem === 'home')}
+                style={sidebarButtonStyle(activeSidebarItem === "home")}
               >
                 Home Page
               </button>
@@ -168,7 +209,7 @@ function StudentPage() {
             <li>
               <button
                 onClick={handleProfileClick}
-                style={sidebarButtonStyle(activeSidebarItem === 'profile')}
+                style={sidebarButtonStyle(activeSidebarItem === "profile")}
               >
                 Profile
               </button>
@@ -176,7 +217,7 @@ function StudentPage() {
             <li>
               <button
                 onClick={handleBrowseJobsClick}
-                style={sidebarButtonStyle(activeSidebarItem === 'jobs')}
+                style={sidebarButtonStyle(activeSidebarItem === "jobs")}
               >
                 Jobs
               </button>
@@ -184,31 +225,23 @@ function StudentPage() {
             <li>
               <button
                 onClick={handleMyApplicationsClick}
-                style={sidebarButtonStyle(activeSidebarItem === 'applications')}
+                style={sidebarButtonStyle(activeSidebarItem === "applications")}
               >
                 Applications
-              </button>
-            </li>
-            <li style={{ marginBottom: '10px' }}>
-              <button
-                onClick={handleMajorsToggle}
-                style={sidebarButtonStyle(activeSidebarItem === 'majors')}
-              >
-                Majors
               </button>
             </li>
             <li>
               <button
                 onClick={handleSettingsClick}
-                style={sidebarButtonStyle(activeSidebarItem === 'settings')}
+                style={sidebarButtonStyle(activeSidebarItem === "settings")}
               >
                 Settings
               </button>
             </li>
-             <li>
+            <li>
               <button
                 onClick={handleCompaniesClick}
-                style={sidebarButtonStyle(activeSidebarItem === 'companies')}
+                style={sidebarButtonStyle(activeSidebarItem === "companies")}
               >
                 Companies
               </button>
@@ -218,28 +251,78 @@ function StudentPage() {
       </div>
 
       {/* Main Content */}
-      <div style={{ flexGrow: 1, padding: '20px', marginLeft: menuOpen ? '300px' : '0', transition: '0.3s' }}>
+      <div
+        style={{
+          flexGrow: 1,
+          padding: "20px",
+          marginLeft: menuOpen ? "220px" : "20px", // Adjusted marginLeft
+          transition: "0.3s",
+        }}
+      >
         <button
-          onClick={() => setMenuOpen(prev => !prev)}
+          onClick={() => setMenuOpen((prev) => !prev)}
           style={{
-            fontSize: '24px',
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            position: 'absolute',
-            top: '10px',
-            left: menuOpen ? '300px' : '20px', // Adjust left position based on menuOpen
-            color: 'black',
-            transition: 'left 0.3s' // Add smooth transition
+            fontSize: "24px",
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            position: "absolute",
+            top: "10px",
+            left: menuOpen ? "200px" : "20px", // Adjusted left position
+            color: "black",
+            transition: "left 0.3s", // Add smooth transition
+            zIndex: 1, // Ensure it's above other content
           }}
         >
           ☰
         </button>
 
-        {!showProfile && !isMajorsOpen && !showCompanies && (
+        {!showProfile && !isMajorsOpen && !showCompanies && !showCourses && (
           <div>
             <h1>Welcome to the SCAD Managment System(SMS)</h1>
             <p>Use the sidebar to navigate.</p>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-start",
+              }}
+            >
+              <button
+                onClick={handleMajorsToggle}
+                style={{
+                  padding: "10px 20px",
+                  backgroundColor: "#007bff",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "5px",
+                  cursor: "pointer",
+                  marginTop: "20px",
+                  width: "200px",
+                  textAlign: "center",
+                }}
+              >
+                Majors
+              </button>
+              {localMajor && (
+                <button
+                  onClick={handleViewCourses}
+                  style={{
+                    width: "200px",
+                    padding: "10px",
+                    backgroundColor: "#28a745",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                    marginTop: "20px",
+                    textAlign: "center",
+                  }}
+                >
+                  View Courses
+                </button>
+              )}
+            </div>
           </div>
         )}
 
@@ -248,55 +331,128 @@ function StudentPage() {
             <h1>Student Profile</h1>
             {!isEditingProfile ? (
               <div>
-                <p><strong>Name:</strong> {profile.name}</p>
-                <p><strong>Email:</strong> {student.email}</p>
-                <p><strong>Job Interests:</strong> {profile.jobInterests || 'Not specified'}</p>
-                <p><strong>Previous Internships:</strong> {profile.internships || 'No internships specified'}</p>
-                <p><strong>Part-time Jobs:</strong> {profile.partTimeJobs || 'No part-time jobs specified'}</p>
-                <p><strong>College Activities:</strong> {profile.collegeActivities || 'No activities specified'}</p>
-                <button onClick={handleEditClick} style={{ padding: '8px 15px', backgroundColor: '#007bff', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', marginTop: '10px' }}>
+                <p>
+                  <strong>Name:</strong> {profile.name}
+                </p>
+                <p>
+                  <strong>Email:</strong> {student.email}
+                </p>
+                <p>
+                  <strong>Job Interests:</strong>{" "}
+                  {profile.jobInterests || "Not specified"}
+                </p>
+                <p>
+                  <strong>Previous Internships:</strong>{" "}
+                  {profile.internships || "No internships specified"}
+                </p>
+                <p>
+                  <strong>Part-time Jobs:</strong>{" "}
+                  {profile.partTimeJobs || "No part-time jobs specified"}
+                </p>
+                <p>
+                  <strong>College Activities:</strong>{" "}
+                  {profile.collegeActivities || "No activities specified"}
+                </p>
+                <button
+                  onClick={handleEditClick}
+                  style={{
+                    padding: "8px 15px",
+                    backgroundColor: "#007bff",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                    marginTop: "10px",
+                  }}
+                >
                   Edit Profile
                 </button>
               </div>
             ) : (
-              <div style={{ maxWidth: '600px', marginTop: '20px' }}>
+              <div style={{ maxWidth: "600px", marginTop: "20px" }}>
                 <label>Name:</label>
                 <input
                   name="name"
                   value={draftProfile.name}
                   onChange={handleDraftChange}
-                  style={{ width: '100%', marginBottom: '10px', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+                  style={{
+                    width: "100%",
+                    marginBottom: "10px",
+                    padding: "8px",
+                    border: "1px solid #ccc",
+                    borderRadius: "4px",
+                  }}
                 />
                 <label>Email:</label>
                 <input
                   name="email"
                   value={draftProfile.email}
                   onChange={handleDraftChange}
-                  style={{ width: '100%', marginBottom: '10px', padding: '8px', border: '1px solid #ccc', borderRadius: '4px', backgroundColor: '#f0f0f0' }}
+                  style={{
+                    width: "100%",
+                    marginBottom: "10px",
+                    padding: "8px",
+                    border: "1px solid #ccc",
+                    borderRadius: "4px",
+                    backgroundColor: "#f0f0f0",
+                  }}
                   readOnly
                 />
-                <p style={{ fontSize: '0.9em', color: '#666', marginBottom: '10px' }}>Email is not editable.</p>
+                <p
+                  style={{
+                    fontSize: "0.9em",
+                    color: "#666",
+                    marginBottom: "10px",
+                  }}
+                >
+                  Email is not editable.
+                </p>
                 <label>Job Interests:</label>
                 <textarea
                   name="jobInterests"
                   value={draftProfile.jobInterests}
                   onChange={handleDraftChange}
-                  style={{ width: '100%', marginBottom: '10px', padding: '8px', border: '1px solid #ccc', borderRadius: '4px', minHeight: '80px' }}
+                  style={{
+                    width: "100%",
+                    marginBottom: "10px",
+                    padding: "8px",
+                    border: "1px solid #ccc",
+                    borderRadius: "4px",
+                    minHeight: "80px",
+                  }}
                 />
-                <label>Previous Internships (Responsibilities, Duration, Company):</label>
+                <label>
+                  Previous Internships (Responsibilities, Duration, Company):
+                </label>
                 <textarea
                   name="internships"
                   value={draftProfile.internships}
                   onChange={handleDraftChange}
-                  style={{ width: '100%', marginBottom: '10px', padding: '8px', border: '1px solid #ccc', borderRadius: '4px', minHeight: '100px' }}
+                  style={{
+                    width: "100%",
+                    marginBottom: "10px",
+                    padding: "8px",
+                    border: "1px solid #ccc",
+                    borderRadius: "4px",
+                    minHeight: "100px",
+                  }}
                   placeholder="e.g., Software Development Intern - Developed features X and Y (3 months, Tech Company Inc.)"
                 />
-                <label>Part-time Jobs (Responsibilities, Duration, Company):</label>
+                <label>
+                  Part-time Jobs (Responsibilities, Duration, Company):
+                </label>
                 <textarea
                   name="partTimeJobs"
                   value={draftProfile.partTimeJobs}
                   onChange={handleDraftChange}
-                  style={{ width: '100%', marginBottom: '10px', padding: '8px', border: '1px solid #ccc', borderRadius: '4px', minHeight: '100px' }}
+                  style={{
+                    width: "100%",
+                    marginBottom: "10px",
+                    padding: "8px",
+                    border: "1px solid #ccc",
+                    borderRadius: "4px",
+                    minHeight: "100px",
+                  }}
                   placeholder="e.g., Customer Service Representative - Handled inquiries (6 months, Retail Corp.)"
                 />
                 <label>College Activities:</label>
@@ -304,13 +460,41 @@ function StudentPage() {
                   name="collegeActivities"
                   value={draftProfile.collegeActivities}
                   onChange={handleDraftChange}
-                  style={{ width: '100%', marginBottom: '10px', padding: '8px', border: '1px solid #ccc', borderRadius: '4px', minHeight: '80px' }}
+                  style={{
+                    width: "100%",
+                    marginBottom: "10px",
+                    padding: "8px",
+                    border: "1px solid #ccc",
+                    borderRadius: "4px",
+                    minHeight: "80px",
+                  }}
                   placeholder="e.g., Member of Robotics Club, Volunteer at Campus Events"
                 />
-                <button onClick={handleSaveProfile} style={{ padding: '10px 20px', backgroundColor: '#28a745', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', marginRight: '10px' }}>
+                <button
+                  onClick={handleSaveProfile}
+                  style={{
+                    padding: "10px 20px",
+                    backgroundColor: "#28a745",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                    marginRight: "10px",
+                  }}
+                >
                   Save
                 </button>
-                <button onClick={handleCancelEdit} style={{ padding: '10px 20px', backgroundColor: '#dc3545', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+                <button
+                  onClick={handleCancelEdit}
+                  style={{
+                    padding: "10px 20px",
+                    backgroundColor: "#dc3545",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                  }}
+                >
                   Cancel
                 </button>
               </div>
@@ -321,29 +505,29 @@ function StudentPage() {
         {isMajorsOpen && (
           <div
             style={{
-              position: 'fixed',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              width: '300px',
-              backgroundColor: 'white',
-              border: '1px solid #ccc',
-              borderRadius: '5px',
-              padding: '20px',
-              boxShadow: '0 0 10px rgba(0,0,0,0.1)',
+              position: "fixed",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: "300px",
+              backgroundColor: "white",
+              border: "1px solid #ccc",
+              borderRadius: "5px",
+              padding: "20px",
+              boxShadow: "0 0 10px rgba(0,0,0,0.1)",
               zIndex: 1000,
             }}
           >
             <button
               onClick={handleMajorsToggle}
               style={{
-                position: 'absolute',
-                top: '10px',
-                right: '10px',
-                border: 'none',
-                background: 'transparent',
-                fontSize: '18px',
-                cursor: 'pointer',
+                position: "absolute",
+                top: "10px",
+                right: "10px",
+                border: "none",
+                background: "transparent",
+                fontSize: "18px",
+                cursor: "pointer",
               }}
             >
               ×
@@ -351,8 +535,11 @@ function StudentPage() {
 
             <h3 style={{ marginTop: 0 }}>Select Your Major</h3>
 
-            <div style={{ marginBottom: '15px' }}>
-              <label htmlFor="majors" style={{ display: 'block', marginBottom: '5px' }}>
+            <div style={{ marginBottom: "15px" }}>
+              <label
+                htmlFor="majors"
+                style={{ display: "block", marginBottom: "5px" }}
+              >
                 Major:
               </label>
               <select
@@ -360,23 +547,28 @@ function StudentPage() {
                 value={selectedMajor}
                 onChange={(e) => setSelectedMajor(e.target.value)}
                 style={{
-                  width: '100%',
-                  padding: '8px',
-                  borderRadius: '4px',
-                  border: '1px solid #ddd',
+                  width: "100%",
+                  padding: "8px",
+                  borderRadius: "4px",
+                  border: "1px solid #ddd",
                 }}
               >
                 <option value="">Select a major</option>
                 <option value="MET">MET</option>
                 <option value="IET">IET</option>
                 <option value="Mechatronics">Mechatronics</option>
-                <option value="Business Informatics">Business Informatics</option>
+                <option value="Business Informatics">
+                  Business Informatics
+                </option>
                 <option value="Pharmacy">Pharmacy</option>
               </select>
             </div>
 
-            <div style={{ marginBottom: '20px' }}>
-              <label htmlFor="semester" style={{ display: 'block', marginBottom: '5px' }}>
+            <div style={{ marginBottom: "20px" }}>
+              <label
+                htmlFor="semester"
+                style={{ display: "block", marginBottom: "5px" }}
+              >
                 Semester:
               </label>
               <select
@@ -384,10 +576,10 @@ function StudentPage() {
                 value={selectedSemester}
                 onChange={(e) => setSelectedSemester(e.target.value)}
                 style={{
-                  width: '100%',
-                  padding: '8px',
-                  borderRadius: '4px',
-                  border: '1px solid #ddd',
+                  width: "100%",
+                  padding: "8px",
+                  borderRadius: "4px",
+                  border: "1px solid #ddd",
                 }}
               >
                 <option value="">Select semester</option>
@@ -400,33 +592,58 @@ function StudentPage() {
             </div>
 
             <button
-              onClick={() => {
-                console.log('Selected:', selectedMajor, 'Semester:', selectedSemester);
-              }}
+              onClick={handleSelectMajor}
               style={{
-                width: '100%',
-                padding: '10px',
-                backgroundColor: '#007bff',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
+                width: "100%",
+                padding: "10px",
+                backgroundColor: "#007bff",
+                color: "white",
+                border: "none",
+                borderRadius: "4px",
+                cursor: "pointer",
+                marginBottom: "10px", // Added some margin
               }}
             >
               Select
             </button>
           </div>
         )}
-         {showCompanies && (
-            <div>
-              <h1>Companies</h1>
+        {showCourses && (
+          <div>
+            <h2>
+              Courses for {localMajor} (Semester {localSemester})
+            </h2>
+            {courses.length > 0 ? (
               <ul>
-                <li> <p><strong>Companies:</strong> {companies.email}</p></li>
-                <li>Company 2</li>
-                {/* Add more companies as needed */}
+                {courses.map((course, index) => (
+                  <li key={index}>{course}</li>
+                ))}
               </ul>
-            </div>
-          )}
+            ) : (
+              <p>No courses available for the selected major and semester.</p>
+            )}
+            <button onClick={() => setShowCourses(false)}>Close Courses</button>
+          </div>
+        )}
+        {showCompanies && (
+          <div>
+            <h1>Companies</h1>
+            <ul>
+              {companies.map((company, index) => (
+                <li key={index}>
+                  <p>
+                    <strong>Name:</strong> {company.name}
+                  </p>
+                  <p>
+                    <strong>Email:</strong> {company.email}
+                  </p>
+                  {/* Add more company details as needed */}
+                </li>
+              ))}
+              {companies.length === 0 && <p>No companies listed yet.</p>}
+            </ul>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -14,6 +14,9 @@ function CompanyPage() {
     skills: '',
     description: '',
   });
+
+
+  
   const [postedJobs, setPostedJobs] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterPaid, setFilterPaid] = useState({ paid: false, unpaid: false });
@@ -27,20 +30,22 @@ function CompanyPage() {
 
   const navigate = useNavigate();
   const location = useLocation();
-
+  const storedCompany = location.state?.company;
   useEffect(() => {
-    const storedCompany = location.state?.companyUser;
+    const storedCompany = location.state?.company;
 
     if (storedCompany) {
-      setCompanyName(storedCompany.companyName || storedCompany.companyEmail);
+        setCompanyName(storedCompany.companyName || storedCompany.companyEmail);
       // Load existing jobs for this company from localStorage
       const storedJobs = localStorage.getItem(`companyJobs_${storedCompany.companyEmail}`);
       if (storedJobs) {
         setPostedJobs(JSON.parse(storedJobs));
+        console.log('Loaded jobs:', JSON.parse(storedJobs));
       }
-    } else {
-      navigate('/'); // Redirect if no company object
     }
+    //  else {
+    //   navigate('/'); // Redirect if no company object
+    // }
   }, [location, navigate]);
 
   useEffect(() => {
@@ -53,13 +58,14 @@ function CompanyPage() {
 
   // Save jobs to localStorage whenever postedJobs changes AND companyUser exists
   useEffect(() => {
-    const storedCompany = location.state?.companyUser;
+    const storedCompany = location.state?.company;
     if (storedCompany) {
+       setCompanyName(storedCompany.companyName || storedCompany.companyEmail);
       localStorage.setItem(`companyJobs_${storedCompany.companyEmail}`, JSON.stringify(postedJobs));
       // Update the global jobs list (for jobs.js)
       updateGlobalJobList(storedCompany.companyName || storedCompany.companyEmail, postedJobs);
     }
-  }, [postedJobs, location.state?.companyUser]);
+  }, [postedJobs, location.state?.company]);
 
   const updateGlobalJobList = (companyName, companyJobs) => {
     const allJobsString = localStorage.getItem('allJobs') || '[]';
@@ -175,14 +181,14 @@ const handleJobSubmit = (e) => {
       >
         {menuOpen && (
           <ul style={{ listStyleType: 'none', padding: 0, marginTop: '50px' }}>
-            <li style={{ margin: '15px 0' }}><Link to="/company/dashboard">Dashboard</Link></li>
+            <li style={{ margin: '15px 0' }}><Link to="/company/dashboard" state={{storedCompany}}> Dashboard</Link></li>
             <li style={{ margin: '15px 0' }}><Link to="/company/profile">Profile</Link></li>
             <li style={{ margin: '15px 0' }}>
               <button onClick={handleJobModalToggle} style={{ background: 'none', border: 'none', padding: 0, color: '#007bff', textDecoration: 'underline', cursor: 'pointer', font: 'inherit' }}>
                 Post a Job
               </button>
             </li>
-            <li><Link to="/allpostedjobs">All posted Jobs</Link></li>
+            <li><Link to="/allpostedjobs" state={{storedCompany}}>All posted Jobs</Link></li>
             <li style={{ margin: '15px 0' }}><Link to="/companyapplications">View Applications</Link></li>
             <li style={{ margin: '15px 0' }}><Link to="/company/interns">Your Interns</Link></li>
             <li style={{ margin: '15px 0' }}><Link to="/company/settings">Settings</Link></li>

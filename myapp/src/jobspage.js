@@ -13,22 +13,16 @@ function Jobs() {
     const storedApplied = localStorage.getItem('appliedInternships');
     return storedApplied ? JSON.parse(storedApplied) : [];
   });
+  const savedProfile = JSON.parse(localStorage.getItem('studentProfile'));
   const [extraDocuments, setExtraDocuments] = useState([]);
-  const [editingJob, setEditingJob] = useState(null);
-  const [editedJobData, setEditedJobData] = useState({
-    title: '',
-    duration: '',
-    isPaid: false,
-    salary: '',
-    skills: '',
-    description: ''
-  });
   const navigate = useNavigate();
 
   useEffect(() => {
     const allJobsString = localStorage.getItem('allJobs');
+
     if (allJobsString) {
       setJobs(JSON.parse(allJobsString));
+      console.log(JSON.parse(allJobsString));
     } else {
       setJobs([]);
     }
@@ -84,24 +78,74 @@ function Jobs() {
     setExtraDocuments(files);
   };
 
-  const handleApply = () => {
-    if (selectedJob) {
-      const alreadyApplied = appliedInternships.some(
-        (applied) => applied.title === selectedJob.title && applied.companyName === selectedJob.companyName
-      );
-      if (!alreadyApplied) {
-        const newApplication = { ...selectedJob, status: 'pending', documents: extraDocuments.map(file => file.name) };
-        setAppliedInternships([...appliedInternships, newApplication]);
-        alert(`Applied to ${selectedJob.title} at ${selectedJob.companyName}! Status: Pending. Documents uploaded: ${extraDocuments.map(file => file.name).join(', ')}`);
-        setSelectedJob(null);
-        setExtraDocuments([]);
+// In Jobs.js
+
+const handleApply = () => {
+  console.log('selectedJob:', selectedJob);
+  console.log('savedProfile:', savedProfile);
+  if (selectedJob && savedProfile) {
+    const alreadyApplied = appliedInternships.some(
+      (applied) => applied.title === selectedJob.title && applied.companyName === selectedJob.companyName
+    );
+    if (!alreadyApplied) {
+      const newApplication = {
+        ...selectedJob,
+        status: 'pending',
+        documents: extraDocuments.map(file => file.name),
+        studentProfile: savedProfile, // Include the saved profile here (in appliedInternships)
+      };
+      setAppliedInternships([...appliedInternships, newApplication]);
+      alert(`Applied to ${selectedJob.title} at ${selectedJob.companyName}! Status: Pending. Documents uploaded: ${extraDocuments.map(file => file.name).join(', ')}`);
+      setSelectedJob(null);
+      setExtraDocuments([]);
+
+      // --- Update the global jobs list ---
+      const updatedAllJobs = jobs.map(job => {
+        if (job.title === selectedJob.title && job.companyName === selectedJob.companyName) {
+          return { ...job, applicants: [...(job.applicants || []), savedProfile] };
+        }
+        return job;
+      });
+      localStorage.setItem('allJobs', JSON.stringify(updatedAllJobs));
+      setJobs(updatedAllJobs); // Update local state
+
+      // --- Update the company-specific jobs list ---
+      // 1. Construct the localStorage key for the company's jobs
+      const companyJobsKey = `companyJobs_${selectedJob.companyEmail}`; // Assuming selectedJob has companyEmail
+
+      // 2. Retrieve the company's jobs from localStorage
+      const companyJobsString = localStorage.getItem(companyJobsKey);
+      if (companyJobsString) {
+        const companyJobs = JSON.parse(companyJobsString);
+
+        // 3. Update the applicants array for the specific job
+        const updatedCompanyJobs = companyJobs.map(job => {
+          if (job.title === selectedJob.title) { // Match based on a unique identifier if possible (e.g., job.id)
+            return { ...job, applicants: [...(job.applicants || []), savedProfile] };
+          }
+          return job;
+        });
+
+        // 4. Save the updated company jobs back to localStorage
+        localStorage.setItem(companyJobsKey, JSON.stringify(updatedCompanyJobs));
+
+        // --- Optionally, you might want to update the local state of postedJobs in CompanyPage ---
+        // This is tricky as Jobs doesn't have direct access to CompanyPage's state.
+        // A more robust solution would involve a global state management system.
       } else {
-        alert('You have already applied to this internship.');
+        console.warn(`Company jobs not found in localStorage for key: ${companyJobsKey}`);
       }
+      // --- End of company-specific update ---
+
     } else {
-      alert('Please select an internship to apply.');
+      alert('You have already applied to this internship.');
     }
-  };
+  } else if (!selectedJob) {
+    alert('Please select an internship to apply.');
+  } else if (!savedProfile) {
+    alert('Student profile not found. Please ensure your profile is saved.');
+  }
+};
 
   const handleGoToMyApplications = () => {
     navigate('/studentapplications');
@@ -114,32 +158,6 @@ function Jobs() {
   const isAlreadyApplied = (job) => {
     return appliedInternships.some(applied => applied.title === job.title && applied.companyName === job.companyName);
   }
-
-  
-
-  const handleEditInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setEditedJobData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
-  };
-
-  const handleSaveEdit = () => {
-    const updatedJobs = jobs.map(job => 
-      job.title === editingJob.title && job.companyName === editingJob.companyName 
-        ? { ...job, ...editedJobData } 
-        : job
-    );
-    
-    setJobs(updatedJobs);
-    localStorage.setItem('allJobs', JSON.stringify(updatedJobs));
-    setEditingJob(null);
-  };
-
-  const handleCancelEdit = () => {
-    setEditingJob(null);
-  };
 
   return (
     <div style={{
@@ -183,6 +201,7 @@ function Jobs() {
           <option value="1 month">1 Month</option>
           <option value="2 months">2 Months</option>
           <option value="3 months">3 Months</option>
+          {/* Add more duration options as needed */}
         </select>
 
         {/* Paid/Unpaid Filter */}
@@ -262,7 +281,6 @@ function Jobs() {
                       borderRadius: '5px',
                       cursor: 'pointer',
                       fontSize: '14px',
-                      marginRight: '5px',
                     }}
                   >
                     {isAlreadyApplied(job) ? 'Applied' : 'Apply'}
@@ -331,116 +349,6 @@ function Jobs() {
           </button>
         </div>
       )}
-
-      {editingJob && (
-        <div style={{ marginTop: '30px', border: '1px solid #ccc', borderRadius: '8px', padding: '20px' }}>
-          <h2 style={{ color: '#007bff', marginBottom: '15px' }}>Edit Internship</h2>
-          
-          <div style={{ marginBottom: '15px' }}>
-            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Job Title</label>
-            <input
-              type="text"
-              name="title"
-              value={editedJobData.title}
-              onChange={handleEditInputChange}
-              style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
-            />
-          </div>
-
-          <div style={{ marginBottom: '15px' }}>
-            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Duration</label>
-            <select
-              name="duration"
-              value={editedJobData.duration}
-              onChange={handleEditInputChange}
-              style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
-            >
-              <option value="1 month">1 month</option>
-              <option value="2 months">2 months</option>
-              <option value="3 months">3 months</option>
-            </select>
-          </div>
-
-          <div style={{ marginBottom: '15px' }}>
-            <label>
-              <input
-                type="checkbox"
-                name="isPaid"
-                checked={editedJobData.isPaid}
-                onChange={handleEditInputChange}
-                style={{ marginRight: '5px' }}
-              />
-              Paid
-            </label>
-          </div>
-
-          {editedJobData.isPaid && (
-            <div style={{ marginBottom: '15px' }}>
-              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Salary</label>
-              <input
-                type="text"
-                name="salary"
-                value={editedJobData.salary}
-                onChange={handleEditInputChange}
-                style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
-              />
-            </div>
-          )}
-
-          <div style={{ marginBottom: '15px' }}>
-            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Skills</label>
-            <input
-              type="text"
-              name="skills"
-              value={editedJobData.skills}
-              onChange={handleEditInputChange}
-              style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
-            />
-          </div>
-
-          <div style={{ marginBottom: '15px' }}>
-            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Description</label>
-            <textarea
-              name="description"
-              value={editedJobData.description}
-              onChange={handleEditInputChange}
-              style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ddd', minHeight: '100px' }}
-            />
-          </div>
-
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <button
-              onClick={handleSaveEdit}
-              style={{
-                padding: '10px 15px',
-                backgroundColor: '#28a745',
-                color: 'white',
-                border: 'none',
-                borderRadius: '5px',
-                cursor: 'pointer',
-                fontSize: '16px',
-              }}
-            >
-              Save Changes
-            </button>
-            <button
-              onClick={handleCancelEdit}
-              style={{
-                padding: '10px 15px',
-                backgroundColor: '#6c757d',
-                color: 'white',
-                border: 'none',
-                borderRadius: '5px',
-                cursor: 'pointer',
-                fontSize: '16px',
-              }}
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
-
       <button onClick={handleBack} style={{ marginTop: '20px', padding: '10px 15px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '14px' }}>
         Back to Student Page
       </button>

@@ -13,13 +13,19 @@ import ALLJobs from './allpostedjob';
 
 function App() {
   // Manage notification state
-  const [notificationMessage, setNotificationMessage] = useState('');
+ const [notification, setNotification] = useState({ message: '', email: '' });
+
 
   // Dummy users for login
   const dummyUsers = [
     {
       role: 'student',
       email: 'student@example.com',
+      password: 'student123',
+    },
+    {
+      role: 'student',
+      email: 'student2@example.com',
       password: 'student123',
     },
     {
@@ -76,7 +82,7 @@ function App() {
       setPasswordError('Wrong password');
     } else {
       sessionStorage.setItem('currentCompany', JSON.stringify(companyUser)); // store as 'currentCompany' to match useEffect
-      navigate('/company-dashboard', { state: { companyUser } });
+      navigate('/company-dashboard', { state: { company:companyUser } });
     }
   } else {
     valid = false;
@@ -219,19 +225,19 @@ function App() {
 
         {/* Other Pages */}
         <Route path="/company-register" element={<CompanyRegister />} />
-        <Route path="/view-registration" element={<ViewRegistration setNotificationMessage={setNotificationMessage} />} />
+        <Route path="/view-registration" element={<ViewRegistration setNotification={setNotification} />} />
         <Route path="/company-login" element={<CompanyLogin />} />
         <Route path="/studentpage" element={<StudentPage />} />
         <Route path="/scadpage" element={<SCADPage />} />
         <Route path="/company-dashboard" element={<CompanyPage />} />
         <Route path="/facultypage" element={<FacultyPage />} />
-        <Route path="/jobspage" element={<Jobs/>} />
+        <Route path="/jobspage" element={<Jobs setNotification={setNotification} />} />
         <Route path="/studentapplications" element={<MyApplications/>}/>
         <Route path= "/allpostedjobs" element={<ALLJobs/>}/>
       </Routes>
 
       {/* Display Notification Message */}
-      {notificationMessage && (
+       {notification.message && (
         <div
           style={{
             position: 'fixed',
@@ -244,7 +250,7 @@ function App() {
             borderRadius: '4px',
           }}
         >
-          {notificationMessage}
+          <strong>{notification.email}</strong>: {notification.message}
         </div>
       )}
     </div>

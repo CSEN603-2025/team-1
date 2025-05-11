@@ -10,10 +10,11 @@ import ViewRegistration from './viewregistration';
 import Jobs from './jobspage';
 import MyApplications from "./studentapplications";
 import ALLJobs from './allpostedjob';
-
+import AllStudents from './allstudents';
 function App() {
   // Manage notification state
  const [notification, setNotification] = useState({ message: '', email: '' });
+  localStorage.setItem('studentusers', JSON.stringify([]));
 
 
   // Dummy users for login
@@ -69,7 +70,7 @@ function App() {
       sessionStorage.setItem('user', JSON.stringify(user));
 
       if (user.role === 'student') {
-        navigate('/studentpage', { state: { user } });
+        navigate('/studentpage', { state: { user } });      
       } else if (user.role === 'scad') {
         navigate('/scadpage', { state: { user } });
       } else if (user.role === 'faculty') {
@@ -93,29 +94,29 @@ function App() {
 };
 
   
-  const isInitialLoad = useState(true);
+const isInitialLoad = useState(true);
   useEffect(() => {
     // Check if the user is already logged in via localStorage
     // Check for existing user sessions on initial load
     if (isInitialLoad.current) {
       isInitialLoad.current = false; // Prevent this block from running again
 
-      const storedUser = localStorage.getItem('user');
-      if (storedUser) {
-        const user = JSON.parse(storedUser);
-        if (user.role === 'student') {
-          navigate('/studentpage');
-        } else if (user.role === 'scad') {
-          navigate('/scadpage');
-        } else if (user.role === 'faculty') {
-          navigate('/facultypage');
-        }
-      }
+      // const storedUser = localStorage.getItem('user');
+      // if (storedUser) {
+      //   const user = JSON.parse(storedUser);
+      //   if (user.role === 'student') {
+      //     navigate('/studentpage');
+      //   } else if (user.role === 'scad') {
+      //     navigate('/scadpage');
+      //   } else if (user.role === 'faculty') {
+      //     navigate('/facultypage');
+      //   }
+      // }
 
       const raw = sessionStorage.getItem('currentCompany');
       if (raw) {
         const companyUser = JSON.parse(raw);
-        navigate('/company-dashboard', { state: { companyUser } });
+        navigate('/company-dashboard', { state: {company:companyUser } });
       }
     }
   }, [navigate,isInitialLoad]);
@@ -234,6 +235,8 @@ function App() {
         <Route path="/jobspage" element={<Jobs setNotification={setNotification} />} />
         <Route path="/studentapplications" element={<MyApplications/>}/>
         <Route path= "/allpostedjobs" element={<ALLJobs/>}/>
+        <Route path="/allstudents" element={<AllStudents />} />
+        
       </Routes>
 
       {/* Display Notification Message */}

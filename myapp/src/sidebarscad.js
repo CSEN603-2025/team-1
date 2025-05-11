@@ -7,7 +7,7 @@ const Sidebar = ({ menuOpen, toggleMenu }) => {
   const navButtons = [
     { label: 'Homepage', path: '/scadpage' },
     { label: 'Company Registrations', path: '/view-registration' },
-    { label: 'View All Students', path: '/view-students' },
+    { label: 'View All Students', path: '/allstudents' },
     { label: 'Approve Internships', path: '/approve-internships' },
     { label: 'Available Internships', path: '/allpostedjobs' },
     { label: 'Messages', path: '/messages' },

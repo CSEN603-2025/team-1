@@ -10,10 +10,11 @@ import ViewRegistration from './viewregistration';
 import Jobs from './jobspage';
 import MyApplications from "./studentapplications";
 import ALLJobs from './allpostedjob';
-
+import AllStudents from './allstudents';
 function App() {
   // Manage notification state
  const [notification, setNotification] = useState({ message: '', email: '' });
+  localStorage.setItem('studentusers', JSON.stringify([]));
 
 
   // Dummy users for login
@@ -234,6 +235,8 @@ const isInitialLoad = useState(true);
         <Route path="/jobspage" element={<Jobs setNotification={setNotification} />} />
         <Route path="/studentapplications" element={<MyApplications/>}/>
         <Route path= "/allpostedjobs" element={<ALLJobs/>}/>
+        <Route path="/allstudents" element={<AllStudents />} />
+        
       </Routes>
 
       {/* Display Notification Message */}

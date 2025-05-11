@@ -1,6 +1,12 @@
+<<<<<<< HEAD
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useNavigate, useLocation } from "react-router-dom";
+=======
+import React, { useState, useEffect } from 'react';
+// import { Link } from 'react-router-dom';
+import {useNavigate, useLocation } from 'react-router-dom';
+>>>>>>> e723127d448cfcc246c4cc265310b284c1c5f702
 
 function StudentPage() {
   const [menuOpen, setMenuOpen] = useState(true);
@@ -8,6 +14,7 @@ function StudentPage() {
   const [selectedSemester, setSelectedSemester] = useState("");
   const [showProfile, setShowProfile] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
+  
   const [profile, setProfile] = useState({
     name: "",
     email: "",
@@ -22,6 +29,7 @@ function StudentPage() {
   const location = useLocation();
   const student = location.state?.user;
   const [showCompanies, setShowCompanies] = useState(false); // State to control visibility of companies list
+<<<<<<< HEAD
   const companies = JSON.parse(localStorage.getItem("companies")) || [];
   const [isMajorsOpen, setIsMajorsOpen] = useState(false);
   const [showCourses, setShowCourses] = useState(false);
@@ -29,6 +37,9 @@ function StudentPage() {
   const [localSemester, setLocalSemester] = useState("");
   const [courses, setCourses] = useState([]); // To hold courses for the selected major
 
+=======
+ const companies = JSON.parse(localStorage.getItem('companies')) || [];
+>>>>>>> e723127d448cfcc246c4cc265310b284c1c5f702
   useEffect(() => {
     const savedProfile = JSON.parse(localStorage.getItem("studentProfile"));
     const initialProfile = savedProfile || {
@@ -65,7 +76,15 @@ function StudentPage() {
     setProfile(draftProfile);
     localStorage.setItem("studentProfile", JSON.stringify(draftProfile));
     setIsEditingProfile(false);
+<<<<<<< HEAD
     alert("Profile updated!");
+=======
+    alert('Profile updated!');
+    const studentUsers = JSON.parse(localStorage.getItem('studentusers'));
+    studentUsers.push(draftProfile);
+    localStorage.setItem('studentusers', JSON.stringify(studentUsers));
+    // console.log('Retrieved students from localStorage:', studentUsers);
+>>>>>>> e723127d448cfcc246c4cc265310b284c1c5f702
   };
 
   const handleMajorsToggle = () => {
@@ -95,20 +114,32 @@ function StudentPage() {
     setShowCompanies(false); // Hide companies when going to jobs
     setShowProfile(false); // Ensure other views are hidden
     setIsMajorsOpen(false);
+<<<<<<< HEAD
     setShowCourses(false);
     setActiveSidebarItem("jobs");
     navigate("/jobspage");
     console.log("Browse Jobs clicked");
+=======
+    setActiveSidebarItem('jobs');
+    navigate('/jobspage',{ state: { student } });
+    console.log('Browse Jobs clicked');
+>>>>>>> e723127d448cfcc246c4cc265310b284c1c5f702
   };
 
   const handleMyApplicationsClick = () => {
     setShowCompanies(false); // Hide companies when going to applications
     setShowProfile(false); // Ensure other views are hidden
     setIsMajorsOpen(false);
+<<<<<<< HEAD
     setShowCourses(false);
     setActiveSidebarItem("applications");
     navigate("/studentapplications");
     console.log("My Applications clicked");
+=======
+    setActiveSidebarItem('applications');
+    navigate('/studentapplications',{ state: { student } });
+    console.log('My Applications clicked');
+>>>>>>> e723127d448cfcc246c4cc265310b284c1c5f702
   };
 
   const handleSettingsClick = () => {
@@ -615,9 +646,23 @@ function StudentPage() {
             </h2>
             {courses.length > 0 ? (
               <ul>
+<<<<<<< HEAD
                 {courses.map((course, index) => (
                   <li key={index}>{course}</li>
                 ))}
+=======
+                <li> <p><strong>Companies:</strong> {companies.email}</p></li>
+                {companies.map((company, index) => (
+                <li>
+                  <h3>{company.companyName}</h3>
+                  <p><strong>companyEmail:</strong> {company.email}</p>
+                  <p><strong>industry:</strong> {company.industry}</p>
+                  <p><strong>size:</strong> {company.companySize}</p>
+                  <p><strong>Jobs:</strong> {company.jobs}</p>
+                </li>
+              ))}
+                {/* Add more companies as needed */}
+>>>>>>> e723127d448cfcc246c4cc265310b284c1c5f702
               </ul>
             ) : (
               <p>No courses available for the selected major and semester.</p>

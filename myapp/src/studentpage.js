@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { useNavigate, useLocation } from 'react-router-dom';
+// import { Link } from 'react-router-dom';
+import {useNavigate, useLocation } from 'react-router-dom';
 
 function StudentPage() {
   const [menuOpen, setMenuOpen] = useState(true);
@@ -8,6 +8,7 @@ function StudentPage() {
   const [selectedSemester, setSelectedSemester] = useState('');
   const [showProfile, setShowProfile] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
+  
   const [profile, setProfile] = useState({
     name: '',
     email: '',
@@ -22,9 +23,7 @@ function StudentPage() {
   const location = useLocation();
   const student = location.state?.user;
   const [showCompanies, setShowCompanies] = useState(false); // State to control visibility of companies list
-  const companies = JSON.parse(localStorage.getItem('companies')) || [];
-  
-
+  const companies = JSON.parse(localStorage.getItem('companies')) ;
   useEffect(() => {
     const savedProfile = JSON.parse(localStorage.getItem('studentProfile'));
     const initialProfile = savedProfile || {
@@ -66,6 +65,10 @@ function StudentPage() {
     localStorage.setItem('studentProfile', JSON.stringify(draftProfile));
     setIsEditingProfile(false);
     alert('Profile updated!');
+    const studentUsers = JSON.parse(localStorage.getItem('studentusers'));
+    studentUsers.push(draftProfile);
+    localStorage.setItem('studentusers', JSON.stringify(studentUsers));
+    // console.log('Retrieved students from localStorage:', studentUsers);
   };
 
   const [isMajorsOpen, setIsMajorsOpen] = useState(false);
@@ -93,7 +96,7 @@ function StudentPage() {
     setShowProfile(false); // Ensure other views are hidden
     setIsMajorsOpen(false);
     setActiveSidebarItem('jobs');
-    navigate('/jobspage');
+    navigate('/jobspage',{ state: { student } });
     console.log('Browse Jobs clicked');
   };
 
@@ -102,7 +105,7 @@ function StudentPage() {
     setShowProfile(false); // Ensure other views are hidden
     setIsMajorsOpen(false);
     setActiveSidebarItem('applications');
-    navigate('/studentapplications');
+    navigate('/studentapplications',{ state: { student } });
     console.log('My Applications clicked');
   };
 
@@ -424,7 +427,15 @@ function StudentPage() {
               <h1>Companies</h1>
               <ul>
                 <li> <p><strong>Companies:</strong> {companies.email}</p></li>
-                <li>Company 2</li>
+                {companies.map((company, index) => (
+                <li>
+                  <h3>{company.companyName}</h3>
+                  <p><strong>companyEmail:</strong> {company.email}</p>
+                  <p><strong>industry:</strong> {company.industry}</p>
+                  <p><strong>size:</strong> {company.companySize}</p>
+                  <p><strong>Jobs:</strong> {company.jobs}</p>
+                </li>
+              ))}
                 {/* Add more companies as needed */}
               </ul>
             </div>

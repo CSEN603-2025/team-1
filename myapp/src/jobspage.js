@@ -22,7 +22,6 @@ function Jobs() {
 
     if (allJobsString) {
       setJobs(JSON.parse(allJobsString));
-      console.log(JSON.parse(allJobsString));
     } else {
       setJobs([]);
     }
@@ -78,12 +77,8 @@ function Jobs() {
     setExtraDocuments(files);
   };
 
-// In Jobs.js
-
 const handleApply = () => {
-  console.log('selectedJob:', selectedJob);
-  console.log('savedProfile:', savedProfile);
-  if (selectedJob && savedProfile) {
+  if (selectedJob && selectedJob.companyEmail && savedProfile) {
     const alreadyApplied = appliedInternships.some(
       (applied) => applied.title === selectedJob.title && applied.companyName === selectedJob.companyName
     );
@@ -108,10 +103,9 @@ const handleApply = () => {
       });
       localStorage.setItem('allJobs', JSON.stringify(updatedAllJobs));
       setJobs(updatedAllJobs); // Update local state
-
       // --- Update the company-specific jobs list ---
       // 1. Construct the localStorage key for the company's jobs
-      const companyJobsKey = `companyJobs_${selectedJob.companyEmail}`; // Assuming selectedJob has companyEmail
+      const companyJobsKey = `companyJobs_${selectedJob.companyEmail}`;
 
       // 2. Retrieve the company's jobs from localStorage
       const companyJobsString = localStorage.getItem(companyJobsKey);
@@ -142,11 +136,13 @@ const handleApply = () => {
     }
   } else if (!selectedJob) {
     alert('Please select an internship to apply.');
+  } else if (!selectedJob.companyEmail) {
+    console.error('Error: selectedJob is missing companyEmail', selectedJob);
+    alert('Error applying: Internship details missing company information.');
   } else if (!savedProfile) {
     alert('Student profile not found. Please ensure your profile is saved.');
   }
 };
-
   const handleGoToMyApplications = () => {
     navigate('/studentapplications');
   };

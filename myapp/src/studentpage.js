@@ -23,6 +23,8 @@ function StudentPage() {
   const student = location.state?.user;
   const [showCompanies, setShowCompanies] = useState(false); // State to control visibility of companies list
   const companies = JSON.parse(localStorage.getItem('companies')) || [];
+  
+
   useEffect(() => {
     const savedProfile = JSON.parse(localStorage.getItem('studentProfile'));
     const initialProfile = savedProfile || {

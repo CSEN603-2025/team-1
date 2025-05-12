@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate ,useLocation } from 'react-router-dom';
 
 function Jobs() {
   const [jobs, setJobs] = useState([]);
@@ -16,7 +16,8 @@ function Jobs() {
   const savedProfile = JSON.parse(localStorage.getItem('studentProfile'));
   const [extraDocuments, setExtraDocuments] = useState([]);
   const navigate = useNavigate();
-
+  const location = useLocation();
+  const studentj = location.state?.student;
   useEffect(() => {
     const allJobsString = localStorage.getItem('allJobs');
 
@@ -148,7 +149,8 @@ const handleApply = () => {
   };
 
   const handleBack = () => {
-    navigate('/studentpage');
+    
+    navigate('/studentpage',{ state: { studentj } });
   };
 
   const isAlreadyApplied = (job) => {

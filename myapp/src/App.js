@@ -14,8 +14,8 @@ import AllStudents from './allstudents';
 function App() {
   // Manage notification state
  const [notification, setNotification] = useState({ message: '', email: '' });
-  localStorage.setItem('studentusers', JSON.stringify([]));
-
+ 
+  
 
   // Dummy users for login
   const dummyUsers = [

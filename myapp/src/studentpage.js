@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-// import { Link } from 'react-router-dom';
-import {useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 function StudentPage() {
   const [menuOpen, setMenuOpen] = useState(true);
@@ -8,7 +7,8 @@ function StudentPage() {
   const [selectedSemester, setSelectedSemester] = useState('');
   const [showProfile, setShowProfile] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
-  
+  const status = null;
+
   const [profile, setProfile] = useState({
     name: '',
     email: '',
@@ -21,23 +21,27 @@ function StudentPage() {
   const [activeSidebarItem, setActiveSidebarItem] = useState('home');
   const navigate = useNavigate();
   const location = useLocation();
-  const student = location.state?.user;
-  const [showCompanies, setShowCompanies] = useState(false); // State to control visibility of companies list
-  const companies = JSON.parse(localStorage.getItem('companies')) ;
+  const student = location.state?.user || location.state?.studentj;
+  const [showCompanies, setShowCompanies] = useState(false);
+  const companies = JSON.parse(localStorage.getItem('companies')) || [];
+
+  // Use a unique key for each student's profile in localStorage
+  const profileKey = student ? `studentProfile_${student.email}` : 'studentProfile';
+
   useEffect(() => {
-    const savedProfile = JSON.parse(localStorage.getItem('studentProfile'));
-    const initialProfile = savedProfile || {
+    // Fetch profile using the unique key
+    const savedProfile = localStorage.getItem(profileKey);
+    const initialProfile = savedProfile ? JSON.parse(savedProfile) : {
       name: '',
-      email: student?.email || '',
+      email: student?.email || '', // Ensure email is initialized
       jobInterests: '',
       internships: '',
       partTimeJobs: '',
       collegeActivities: '',
     };
-
     setProfile(initialProfile);
     setDraftProfile(initialProfile);
-  }, [student]);
+  }, [student, profileKey]); // Add profileKey as a dependency
 
   const handleEditClick = () => {
     setIsEditingProfile(true);
@@ -48,27 +52,37 @@ function StudentPage() {
     setDraftProfile(profile);
   };
 
- const handleDraftChange = (e) => {
+  const handleDraftChange = (e) => {
+    const { name, value } = e.target;
+    if (name !== 'email') {
+      setDraftProfile(prev => ({ ...prev, [name]: value }));
+    }
+  };
 
-    const { name, value } = e.target;
-
-    if (name !== 'email') {
-
-      setDraftProfile(prev => ({ ...prev, [name]: value }));
-
-    }
-
-  };
 
   const handleSaveProfile = () => {
-    setProfile(draftProfile);
-    localStorage.setItem('studentProfile', JSON.stringify(draftProfile));
+    // Save profile using the unique key
+    localStorage.setItem(profileKey, JSON.stringify(draftProfile));
+
+    // Also, update the studentusers list, if needed.  This part is tricky, and depends on exactly how you want that list to work.
+    const profileWithStatus = { ...draftProfile, status };
+    let studentUsers = JSON.parse(localStorage.getItem('studentusers')) || [];
+
+    // 1.  Check if the user is already in the list:
+    const existingUserIndex = studentUsers.findIndex(user => user.email === draftProfile.email);
+
+    if (existingUserIndex > -1) {
+      // 2.  If they are, update their entry:
+      studentUsers[existingUserIndex] = profileWithStatus;
+    } else {
+      // 3.  If they are not, add a new entry:
+      studentUsers.push(profileWithStatus);
+    }
+    localStorage.setItem('studentusers', JSON.stringify(studentUsers));
+    console.log('Updated student users in localStorage:', studentUsers);
+    setProfile(draftProfile);  // Update the profile state
     setIsEditingProfile(false);
     alert('Profile updated!');
-    const studentUsers = JSON.parse(localStorage.getItem('studentusers'));
-    studentUsers.push(draftProfile);
-    localStorage.setItem('studentusers', JSON.stringify(studentUsers));
-    // console.log('Retrieved students from localStorage:', studentUsers);
   };
 
   const [isMajorsOpen, setIsMajorsOpen] = useState(false);
@@ -79,68 +93,68 @@ function StudentPage() {
 
   const handleProfileClick = () => {
     setShowProfile(true);
-    setShowCompanies(false); // Ensure other views are hidden
+    setShowCompanies(false);
     setIsEditingProfile(false);
     setActiveSidebarItem('profile');
   };
 
   const handleHomeClick = () => {
     setShowProfile(false);
-    setShowCompanies(false); // Hide companies when going to home
+    setShowCompanies(false);
     setIsMajorsOpen(false);
     setActiveSidebarItem('home');
   };
 
   const handleBrowseJobsClick = () => {
-    setShowCompanies(false); // Hide companies when going to jobs
-    setShowProfile(false); // Ensure other views are hidden
+    setShowCompanies(false);
+    setShowProfile(false);
     setIsMajorsOpen(false);
     setActiveSidebarItem('jobs');
-    navigate('/jobspage',{ state: { student } });
+    navigate('/jobspage', { state: { student } });
     console.log('Browse Jobs clicked');
   };
 
   const handleMyApplicationsClick = () => {
-    setShowCompanies(false);  // Hide companies when going to applications
-    setShowProfile(false); // Ensure other views are hidden
+    setShowCompanies(false);
+    setShowProfile(false);
     setIsMajorsOpen(false);
     setActiveSidebarItem('applications');
-    navigate('/studentapplications',{ state: { student } });
+    navigate('/studentapplications', { state: { student } });
     console.log('My Applications clicked');
   };
 
   const handleSettingsClick = () => {
-    setShowCompanies(false); // Hide companies when going to settings
-    setShowProfile(false); // Ensure other views are hidden
+    setShowCompanies(false);
+    setShowProfile(false);
     setIsMajorsOpen(false);
     setActiveSidebarItem('settings');
     console.log('Settings clicked');
   };
 
-    const handleCompaniesClick = () => {
-    setShowProfile(false); // Hide profile when going to companies
+  const handleCompaniesClick = () => {
+    setShowProfile(false);
     // setShowMajorsOpen(false);
-    setShowCompanies(true); // Show the companies list
+    setShowCompanies(true);
     setActiveSidebarItem('companies');
   };
 
- const sidebarButtonStyle = (isActive) => ({
-    backgroundColor: isActive ? '#5D6D7E' : 'transparent',
-    border: 'none',
-    padding: '10px 20px',
-    color: isActive ? '#F1C40F' : 'white',
-    textDecoration: 'none',
-    cursor: 'pointer',
-    font: 'inherit',
-    width: '100%',
-    textAlign: 'left',
-    display: 'block',
-    borderRadius: '5px',
-    marginBottom: '5px',
-    '&:hover': {
-      backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    },
-  });
+  const sidebarButtonStyle = (isActive) => ({
+    backgroundColor: isActive ? '#5D6D7E' : 'transparent',
+    border: 'none',
+    padding: '10px 20px',
+    color: isActive ? '#F1C40F' : 'white',
+    textDecoration: 'none',
+    cursor: 'pointer',
+    font: 'inherit',
+    width: '100%',
+    textAlign: 'left',
+    display: 'block',
+    borderRadius: '5px',
+    marginBottom: '5px',
+    '&:hover': {
+      backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    },
+  });
 
   return (
     <div style={{ display: 'flex' }}>
@@ -153,10 +167,10 @@ function StudentPage() {
           transition: '0.3s',
           padding: menuOpen ? '20px' : '0',
           boxShadow: menuOpen ? '2px 0 5px rgba(0,0,0,0.2)' : 'none',
-          overflowY: menuOpen ? 'auto' : 'hidden', // Add scrollbar when open
-          position: 'fixed', // Make sidebar fixed
-          top: 0,           // Stick to the top
-          left: 0,          // Stick to the left
+          overflowY: menuOpen ? 'auto' : 'hidden',
+          position: 'fixed',
+          top: 0,
+          left: 0,
           zIndex: 2,
         }}
       >
@@ -210,7 +224,7 @@ function StudentPage() {
                 Settings
               </button>
             </li>
-             <li>
+            <li>
               <button
                 onClick={handleCompaniesClick}
                 style={sidebarButtonStyle(activeSidebarItem === 'companies')}
@@ -233,9 +247,9 @@ function StudentPage() {
             cursor: 'pointer',
             position: 'absolute',
             top: '10px',
-            left: menuOpen ? '300px' : '20px', // Adjust left position based on menuOpen
+            left: menuOpen ? '300px' : '20px',
             color: 'black',
-            transition: 'left 0.3s' // Add smooth transition
+            transition: 'left 0.3s'
           }}
         >
           ☰
@@ -275,7 +289,7 @@ function StudentPage() {
                 <label>Email:</label>
                 <input
                   name="email"
-                  value={draftProfile.email}
+                  value={student.email}
                   onChange={handleDraftChange}
                   style={{ width: '100%', marginBottom: '10px', padding: '8px', border: '1px solid #ccc', borderRadius: '4px', backgroundColor: '#f0f0f0' }}
                   readOnly
@@ -422,24 +436,26 @@ function StudentPage() {
             </button>
           </div>
         )}
-         {showCompanies && (
-            <div>
-              <h1>Companies</h1>
-              <ul>
-                <li> <p><strong>Companies:</strong> {companies.email}</p></li>
-                {companies.map((company, index) => (
-                <li>
-                  <h3>{company.companyName}</h3>
-                  <p><strong>companyEmail:</strong> {company.email}</p>
-                  <p><strong>industry:</strong> {company.industry}</p>
-                  <p><strong>size:</strong> {company.companySize}</p>
-                  <p><strong>Jobs:</strong> {company.jobs}</p>
-                </li>
-              ))}
-                {/* Add more companies as needed */}
-              </ul>
-            </div>
-          )}
+        {showCompanies && (
+          <div>
+            <h1>Companies</h1>
+            <ul>
+              {companies.length > 0 ? (
+                companies.map((company, index) => (
+                  <li key={index}>
+                    <h3>{company.companyName}</h3>
+                    <p><strong>Email:</strong> {company.email}</p>
+                    <p><strong>Industry:</strong> {company.industry}</p>
+                    <p><strong>Size:</strong> {company.companySize}</p>
+                    <p><strong>Jobs:</strong> {company.jobs}</p>
+                  </li>
+                ))
+              ) : (
+                <li>No companies available.</li>
+              )}
+            </ul>
+          </div>
+        )}
       </div>
     </div>
   );

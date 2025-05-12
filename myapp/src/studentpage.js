@@ -52,11 +52,13 @@ function StudentPage() {
     setDraftProfile(profile);
   };
 
-  const handleDraftChange = (e) => {
+ const handleDraftChange = (e) => {
+
     const { name, value } = e.target;
     if (name !== 'email') {
       setDraftProfile(prev => ({ ...prev, [name]: value }));
     }
+
   };
 
 
@@ -83,6 +85,7 @@ function StudentPage() {
     setProfile(draftProfile);  // Update the profile state
     setIsEditingProfile(false);
     alert('Profile updated!');
+
   };
 
   const [isMajorsOpen, setIsMajorsOpen] = useState(false);
@@ -224,7 +227,7 @@ function StudentPage() {
                 Settings
               </button>
             </li>
-            <li>
+             <li>
               <button
                 onClick={handleCompaniesClick}
                 style={sidebarButtonStyle(activeSidebarItem === 'companies')}

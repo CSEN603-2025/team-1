@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-
+import {  getNotification, clearNotifications } from './notification';
 function StudentPage() {
     const [menuOpen, setMenuOpen] = useState(true);
     const [selectedMajor, setSelectedMajor] = useState('');
@@ -30,6 +30,8 @@ function StudentPage() {
     const companies = JSON.parse(localStorage.getItem('companies')) || [];
     const [filteredCompanies, setFilteredCompanies] = useState([]);
     const [showFiltered, setShowFiltered] = useState(false);
+    const [isPopupOpen, setIsPopupOpen] = useState(false);
+    const [notifications, setNotifications] = useState([]);
 
     const profileKey = student ? `studentProfile_${student.email}` : 'studentProfile';
 
@@ -193,6 +195,32 @@ function StudentPage() {
         },
     });
 
+    //    useEffect(() => {
+    //     const fetchedNotifications = getNotification(profileKey);
+    //     setNotifications(fetchedNotifications);
+    // }, [profileKey]);
+
+    useEffect(() => {
+    const interval = setInterval(() => {
+        const newNotifications = getNotification(student.email) || [];
+        setNotifications(newNotifications);
+    }, 3000); // check every 3 seconds (you can adjust timing)
+
+    return () => clearInterval(interval); // cleanup on unmount
+}, [student.email]);
+
+    const handleBellClick = () => {
+    const fetchedNotifications = getNotification(student.email) || [];
+    setNotifications(fetchedNotifications);
+    setIsPopupOpen(prev => !prev);
+};
+   const handleClosePopup = () => {
+    clearNotifications(student.email); // clear from storage
+    setNotifications([]);              // clear from state
+    setIsPopupOpen(false);             // close popup
+};
+
+
     return (
         <div style={{ display: 'flex' }}>
             {/* Sidebar */}
@@ -299,6 +327,48 @@ function StudentPage() {
                     </div>
                 )}
 
+
+                 <div>
+      {/* Bell Icon */}
+      <div onClick={handleBellClick} style={{ cursor: 'pointer', position: 'relative' }}>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405a2.993 2.993 0 0 0 .405-2.25V9a6 6 0 0 0-4.267-5.732A2.99 2.99 0 0 0 12 2a2.99 2.99 0 0 0-3.138 1.268A6 6 0 0 0 4 9v4.345a2.993 2.993 0 0 0 .405 2.25L4 17h5m6 0v1a3 3 0 1 1-6 0v-1h6z" />
+        </svg>
+        {notifications.length > 0 && (
+          <span style={{
+            position: 'absolute', top: '0', right: '0', backgroundColor: 'red',
+            color: 'white', borderRadius: '50%', padding: '0.2em 0.5em', fontSize: '12px'
+          }}>
+            {notifications.length}
+          </span>
+        )}
+      </div>
+
+      {/* Popup Notification */}
+      {isPopupOpen && (
+    <div style={{
+        position: 'absolute', top: '50px', right: '20px', backgroundColor: 'white',
+        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)', padding: '20px', borderRadius: '8px',
+        width: '250px', zIndex: 9999
+    }}>
+        <button onClick={handleClosePopup} style={{
+            position: 'absolute', top: '5px', right: '5px', background: 'transparent', border: 'none',
+            fontSize: '16px', cursor: 'pointer'
+        }}>X</button>
+        <h4>Notifications</h4>
+        {notifications.length === 0 ? (
+            <p>No notifications</p>
+        ) : (
+            notifications.map((notification, index) => (
+                <div key={index} style={{ marginBottom: '10px' }}>
+                    <p><strong>{notification.message}</strong></p>
+                    <p>{new Date(notification.timestamp).toLocaleString()}</p>
+                </div>
+            ))
+        )}
+    </div>
+)}
+    </div>
                 {showmyinternships && (
                   <div>
 

@@ -1,41 +1,55 @@
 // src/notificationUtils.js
 
+// Add a new notification to the list
 export function setNotification(message, email, clearAfterRead = false) {
-  const notificationData = {
+  const newNotification = {
     message,
     email,
     timestamp: new Date().toISOString(),
-    clearAfterRead,  // Optionally set to clear after being read
+    clearAfterRead,
   };
 
-  localStorage.setItem('notification', JSON.stringify(notificationData));
+  // Get existing notifications
+  const existingData = localStorage.getItem('notifications');
+  const notifications = existingData ? JSON.parse(existingData) : [];
+
+  // Add new notification to the array
+  notifications.push(newNotification);
+
+  // Save updated array back to localStorage
+  localStorage.setItem('notifications', JSON.stringify(notifications));
 }
 
+// Get all notifications for a specific email
 export function getNotification(email) {
-  const data = localStorage.getItem('notification');
-  
-  // If no notification exists in localStorage, return an empty array instead of null
-  if (!data) {
-    return ['no notification'];
-  }
-  
-  const notificationData = JSON.parse(data);
+  const data = localStorage.getItem('notifications');
+//   console.log(data);
+  let notifications = JSON.parse(data);
 
-  // Check if the email from the notification matches the given email
-  if (notificationData.email === email) {
-    // If 'clearAfterRead' is true, remove the notification from localStorage after reading it
-    if (notificationData.clearAfterRead) {
-      localStorage.removeItem('notification');
-    }
+  // Filter notifications for the given email
+  const userNotifications = notifications.filter(n => n.email === email);
+  console.log(userNotifications);
 
-    // Return the notifications in an array form
-    return [notificationData];  // Wrap the notificationData in an array to match the expected format
+  // Remove those marked as 'clearAfterRead'
+  notifications = notifications.filter(n => !(n.email === email && n.clearAfterRead));
+
+  // Update localStorage (if any were cleared)
+  localStorage.setItem('notifications', JSON.stringify(notifications));
+
+  return userNotifications;
+}
+
+// Clear all notifications for a specific email (optional)
+export function clearNotifications(email = null) {
+  if (!email) {
+    // Remove all notifications
+    localStorage.removeItem('notifications');
   } else {
-    return [];  // Email doesn't match, return empty array
+    const data = localStorage.getItem('notifications');
+    if (!data) return;
+
+    const notifications = JSON.parse(data);
+    const remaining = notifications.filter(n => n.email !== email);
+    localStorage.setItem('notifications', JSON.stringify(remaining));
   }
-};
-
-
-export function clearNotification() {
-  localStorage.removeItem('notification');
 }

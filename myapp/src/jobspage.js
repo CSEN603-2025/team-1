@@ -13,7 +13,7 @@ function Jobs() {
     const storedApplied = localStorage.getItem('appliedInternships');
     return storedApplied ? JSON.parse(storedApplied) : [];
   });
-  // const savedProfile = JSON.parse(localStorage.getItem('studentProfile'));
+  const savedProfile = JSON.parse(localStorage.getItem('studentProfile'));
   const [extraDocuments, setExtraDocuments] = useState([]);
   const navigate = useNavigate();
   const location = useLocation();

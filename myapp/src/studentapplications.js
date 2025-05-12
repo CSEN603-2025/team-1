@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 
 function MyApplications() {
   const [myApplications, setMyApplications] = useState([]);
-  const savedProfile = JSON.parse(localStorage.getItem('studentProfile'));
+  const location=useLocation();
+  // const savedProfile = JSON.parse(localStorage.getItem('studentProfile'));
+  const savedProfile=location.state?.studentj;
 
   const loadApplications = useCallback(() => {
-    const storedApplied = JSON.parse(localStorage.getItem('appliedInternships') || '[]');
+    const storedApplied = JSON.parse(localStorage.getItem('appliedInternships') );
     if (savedProfile?.email) {
       const studentApps = storedApplied.filter(app => 
         app.studentProfile?.email === savedProfile.email

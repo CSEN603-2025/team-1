@@ -447,10 +447,27 @@ function StudentPage() {
                 companies.map((company, index) => (
                   <li key={index}>
                     <h3>{company.companyName}</h3>
-                    <p><strong>Email:</strong> {company.email}</p>
+                    <p><strong>Email:</strong> {company.companyEmail}</p>
                     <p><strong>Industry:</strong> {company.industry}</p>
                     <p><strong>Size:</strong> {company.companySize}</p>
-                    <p><strong>Jobs:</strong> {company.jobs}</p>
+                    <p><strong>Jobs:</strong></p>
+                    <ul>
+                      {Array.isArray(company.jobs) && company.jobs.length > 0 ? (
+                        company.jobs.map((job, jobIndex) => (
+                          <li key={jobIndex}>
+                            <p><strong>Title:</strong> {job.title}</p>
+                            <p><strong>Duration:</strong> {job.duration}</p>
+                            <p><strong>Salary:</strong> {job.salary}</p>
+                            <p><strong>Industry:</strong> {job.industry}</p>
+                            <p><strong>Skills:</strong> {job.skills}</p>
+                            <p><strong>Description:</strong> {job.description}</p>
+                            <p><strong>Applicants:</strong> {job.applicants.join(', ')}</p>
+                          </li>
+                        ))
+                      ) : (
+                        <li>No jobs available.</li>
+                      )}
+                    </ul>
                   </li>
                 ))
               ) : (

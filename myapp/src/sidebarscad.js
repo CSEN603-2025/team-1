@@ -12,6 +12,8 @@ const Sidebar = ({ menuOpen, toggleMenu }) => {
     { label: 'Available Internships', path: '/allpostedjobs' },
     { label: 'Messages', path: '/messages' },
     { label: 'Reports', path: '/allreports' },
+    { label: 'All Workshops', path: '/workshop' },
+    { label: 'Upcoming Workshops', path: '/viewworkshop' },
     { label: 'Settings', path: '/settings' },
   ];
 

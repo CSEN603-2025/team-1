@@ -11,6 +11,8 @@ import Jobs from './jobspage';
 import MyApplications from "./studentapplications";
 import ALLJobs from './allpostedjob';
 import AllStudents from './allstudents';
+import WorkshopPage from './workshop';
+import ViewWorkshopsPage from './viewworkshop';
 function App() {
   // Manage notification state
  const [notification, setNotification] = useState({ message: '', email: '' });
@@ -40,6 +42,8 @@ function App() {
       password: 'faculty123',
     },
   ];
+
+  localStorage.setItem('allUsers', JSON.stringify(dummyUsers));
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -217,7 +221,15 @@ const isInitialLoad = useState(true);
                   >
                     Register as a Company
                   </a>
-                  
+                  <button
+      onClick={() => {
+        localStorage.clear();
+        alert('Local storage cleared!');
+      }}
+    >
+      Clear Local Storage
+    </button>
+
                 </form>
               </div>
             </div>
@@ -236,6 +248,8 @@ const isInitialLoad = useState(true);
         <Route path="/studentapplications" element={<MyApplications/>}/>
         <Route path= "/allpostedjobs" element={<ALLJobs/>}/>
         <Route path="/allstudents" element={<AllStudents />} />
+        <Route path="/workshop" element={<WorkshopPage />} />
+        <Route path="/viewworkshop" element={<ViewWorkshopsPage />} />
         
       </Routes>
 

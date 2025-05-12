@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from './sidebarscad';
+import { setNotification } from './notification';
+
 
 function SCADPage() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -18,11 +20,31 @@ function SCADPage() {
     }
   }, []);
 
+
   const handleDateSubmit = () => {
-    localStorage.setItem('scadStartDate', startDate);
-    localStorage.setItem('scadEndDate', endDate);
-    setShowDateModal(false);
-  };
+  // Set start and end date in localStorage
+  localStorage.setItem('scadStartDate', startDate);
+  localStorage.setItem('scadEndDate', endDate);
+
+  // Close the date modal
+  setShowDateModal(false);
+  // const loggedInUserEmail = localStorage.getItem('loggedInUserEmail'); // Modify this key as needed
+  
+  // Generate the notification message
+  const message = `The internship cycle will start on ${startDate} and end on ${endDate}.`;
+
+  // Retrieve all users from localStorage (assuming you have a list of users)
+  const allUsers = JSON.parse(localStorage.getItem('allUsers')) ;
+
+  // Find all users with the 'student' role and send them notifications
+  allUsers.forEach(user => {
+    if (user.role === 'student') {
+      setNotification(message, user.email);
+    console.log(`Sending notification to ${user.email}: ${message}`);
+    }
+  });
+};
+
 
   return (
     <div style={{ display: 'flex', width: '100%' }}>
@@ -61,7 +83,6 @@ function SCADPage() {
 
         <h1 style={{ color: '#385e72' }}>SCAD Page Content</h1>
         <p style={{ color: '#333' }}>Insert your page content here. Customize as needed.</p>
-
         {!(startDate && endDate) && (
           <button
             onClick={() => setShowDateModal(true)}

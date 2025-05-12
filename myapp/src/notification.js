@@ -24,6 +24,7 @@ export function setNotification(message, email, clearAfterRead = false) {
 export function getNotification(email) {
   const data = localStorage.getItem('notifications');
 //   console.log(data);
+if (!data) return [];
   let notifications = JSON.parse(data);
 
   // Filter notifications for the given email

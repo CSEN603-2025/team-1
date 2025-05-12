@@ -5,7 +5,7 @@ function MyApplications() {
   const [myApplications, setMyApplications] = useState([]);
   const location=useLocation();
   // const savedProfile = JSON.parse(localStorage.getItem('studentProfile'));
-  const savedProfile=location.state?.studentj;
+  const savedProfile=location.state?.studentj  || location.state?.student;
 
   const loadApplications = useCallback(() => {
     const storedApplied = JSON.parse(localStorage.getItem('appliedInternships') );

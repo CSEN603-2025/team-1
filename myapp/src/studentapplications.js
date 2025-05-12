@@ -1,46 +1,42 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 function MyApplications() {
-  const [appliedInternships, setAppliedInternships] = useState([]);
-  const savedProfile = JSON.parse(localStorage.getItem('studentProfile'));
   const [myApplications, setMyApplications] = useState([]);
+  const savedProfile = JSON.parse(localStorage.getItem('studentProfile'));
+
+  const loadApplications = useCallback(() => {
+    const storedApplied = JSON.parse(localStorage.getItem('appliedInternships') || '[]');
+    if (savedProfile?.email) {
+      const studentApps = storedApplied.filter(app => 
+        app.studentProfile?.email === savedProfile.email
+      );
+      setMyApplications(studentApps);
+    }
+  }, [savedProfile]);
 
   useEffect(() => {
-    const loadApplications = () => {
-      const storedApplied = localStorage.getItem('appliedInternships');
-      if (storedApplied) {
-        setAppliedInternships(JSON.parse(storedApplied));
-      } else {
-        setAppliedInternships([]);
-      }
-    };
-
+    // Load immediately
     loadApplications();
 
-    const handleStorageChange = (e) => {
-      if (e.key === 'appliedInternships') {
+    // Set up event listeners
+    const handleStatusUpdate = (e) => {
+      if (e.detail?.applicantEmail === savedProfile?.email) {
         loadApplications();
       }
     };
 
+    const handleStorageChange = () => {
+      loadApplications();
+    };
+
+    window.addEventListener('applicationStatusUpdated', handleStatusUpdate);
     window.addEventListener('storage', handleStorageChange);
 
     return () => {
+      window.removeEventListener('applicationStatusUpdated', handleStatusUpdate);
       window.removeEventListener('storage', handleStorageChange);
     };
-  }, []); // Empty dependency array - runs once after initial render
-
-  useEffect(() => {
-    // Filter the applied internships to show only those applied by the current student
-    if (savedProfile && appliedInternships.length > 0) {
-      const studentApplications = appliedInternships.filter(
-        (app) => app.studentProfile && app.studentProfile.email === savedProfile.email
-      );
-      setMyApplications(studentApplications);
-    } else {
-      setMyApplications([]);
-    }
-  }, [appliedInternships, savedProfile]); // Dependencies: appliedInternships and savedProfile
+  }, [loadApplications, savedProfile]);
 
   return (
     <div style={{
@@ -84,8 +80,10 @@ function MyApplications() {
                     color: appliedJob.status === 'accepted' ? 'green' :
                       appliedJob.status === 'rejected' ? 'red' :
                         appliedJob.status === 'finalized' ? 'blue' :
-                          'orange' // pending
-                  }}>{appliedJob.status || 'pending'}</span>
+                          'orange'
+                  }}>
+                    {appliedJob.status || 'pending'}
+                  </span>
                 </td>
                 <td style={{ padding: '12px 15px' }}>
                   {appliedJob.documents && appliedJob.documents.length > 0

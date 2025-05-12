@@ -28,6 +28,10 @@ function CompanyPage() {
   const [isApplicantsModalOpen, setIsApplicantsModalOpen] = useState(false);
   const [selectedApplicant, setSelectedApplicant] = useState(null);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [applicantFilter, setApplicantFilter] = useState({
+    status: '',
+    search: ''
+  });
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -151,6 +155,7 @@ function CompanyPage() {
   const handleViewApplicants = (job) => {
     setSelectedJobApplicants(job.applicants || []);
     setIsApplicantsModalOpen(true);
+    setApplicantFilter({ status: '', search: '' }); // Reset filters when opening
   };
 
   const handleCloseApplicantsModal = () => {
@@ -166,6 +171,45 @@ function CompanyPage() {
   const handleCloseProfileModal = () => {
     setIsProfileModalOpen(false);
     setSelectedApplicant(null);
+  };
+
+  const handleUpdateApplicantStatus = (jobIndex, applicantEmail, newStatus) => {
+    const updatedJobs = [...postedJobs];
+    const job = updatedJobs[jobIndex];
+    
+    // Update status in company's job applicants
+    if (job.applicants) {
+      const updatedApplicants = job.applicants.map(applicant => {
+        if (applicant.email === applicantEmail) {
+          return { ...applicant, status: newStatus };
+        }
+        return applicant;
+      });
+      updatedJobs[jobIndex].applicants = updatedApplicants;
+    }
+
+    // Update status in global applications (appliedInternships)
+    const allApplied = JSON.parse(localStorage.getItem('appliedInternships') || '[]');
+    const updatedApplied = allApplied.map(app => {
+      if (app.studentProfile?.email === applicantEmail && app.title === job.title && app.companyName === job.companyName) {
+        return { ...app, status: newStatus };
+      }
+      return app;
+    });
+    localStorage.setItem('appliedInternships', JSON.stringify(updatedApplied));
+
+    // Update the applicants modal if open
+    if (selectedJobApplicants) {
+      setSelectedJobApplicants(prev => prev.map(applicant => {
+        if (applicant.email === applicantEmail) {
+          return { ...applicant, status: newStatus };
+        }
+        return applicant;
+      }));
+    }
+
+    setPostedJobs(updatedJobs);
+    setSelectedApplicant(prev => prev && { ...prev, status: newStatus });
   };
 
   const filteredJobs = postedJobs.filter(job => {
@@ -186,6 +230,15 @@ function CompanyPage() {
       selectedDurations.length === 0 || selectedDurations.includes(job.duration);
 
     return matchesSearchQuery && matchesPaid && matchesDuration;
+  });
+
+  // Filter applicants based on status and search
+  const filteredApplicants = selectedJobApplicants?.filter(applicant => {
+    const matchesStatus = !applicantFilter.status || applicant.status === applicantFilter.status;
+    const matchesSearch = !applicantFilter.search || 
+      (applicant.name && applicant.name.toLowerCase().includes(applicantFilter.search.toLowerCase())) ||
+      (applicant.email && applicant.email.toLowerCase().includes(applicantFilter.search.toLowerCase()));
+    return matchesStatus && matchesSearch;
   });
 
   return (
@@ -416,20 +469,61 @@ function CompanyPage() {
               width: '80%' 
             }}>
               <h3>Applicants</h3>
-              {selectedJobApplicants.length > 0 ? (
+              
+              {/* Filter Controls */}
+              <div style={{ marginBottom: '20px', display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
+                <div>
+                  <label style={{ marginRight: '10px' }}>Status:</label>
+                  <select
+                    value={applicantFilter.status}
+                    onChange={(e) => setApplicantFilter({...applicantFilter, status: e.target.value})}
+                    style={{ padding: '5px', borderRadius: '4px' }}
+                  >
+                    <option value="">All</option>
+                    <option value="pending">Pending</option>
+                    <option value="finalized">Finalized</option>
+                    <option value="accepted">Accepted</option>
+                    <option value="rejected">Rejected</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ marginRight: '10px' }}>Search:</label>
+                  <input
+                    type="text"
+                    placeholder="Search applicants..."
+                    value={applicantFilter.search}
+                    onChange={(e) => setApplicantFilter({...applicantFilter, search: e.target.value})}
+                    style={{ padding: '5px', borderRadius: '4px', border: '1px solid #ddd' }}
+                  />
+                </div>
+              </div>
+
+              {filteredApplicants && filteredApplicants.length > 0 ? (
                 <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
                   <thead>
                     <tr>
                       <th>Name</th>
                       <th>Email</th>
+                      <th>Status</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {selectedJobApplicants.map((applicant, index) => (
+                    {filteredApplicants.map((applicant, index) => (
                       <tr key={index}>
                         <td>{applicant.name || 'N/A'}</td>
                         <td>{applicant.email || 'N/A'}</td>
+                        <td>
+                          <span style={{
+                            fontWeight: 'bold',
+                            color: applicant.status === 'accepted' ? 'green' :
+                              applicant.status === 'rejected' ? 'red' :
+                                applicant.status === 'finalized' ? 'blue' :
+                                  'orange'
+                          }}>
+                            {applicant.status || 'pending'}
+                          </span>
+                        </td>
                         <td>
                           <button 
                             onClick={() => handleViewApplicantProfile(applicant)}
@@ -450,7 +544,7 @@ function CompanyPage() {
                   </tbody>
                 </table>
               ) : (
-                <p>No applicants for this job yet.</p>
+                <p>No applicants match your filters.</p>
               )}
               <button 
                 onClick={handleCloseApplicantsModal} 
@@ -533,6 +627,66 @@ function CompanyPage() {
                 <p>{selectedApplicant.collegeActivities || 'No college activities listed'}</p>
               </div>
 
+              <div style={{ marginTop: '20px' }}>
+                <h3 style={{ borderBottom: '1px solid #eee', paddingBottom: '10px' }}>Application Status</h3>
+                <p>Current Status: 
+                  <span style={{
+                    fontWeight: 'bold',
+                    color: selectedApplicant.status === 'accepted' ? 'green' :
+                          selectedApplicant.status === 'rejected' ? 'red' :
+                          selectedApplicant.status === 'finalized' ? 'blue' :
+                          'orange'
+                  }}>
+                    {selectedApplicant.status || 'pending'}
+                  </span>
+                </p>
+                
+                <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                  <button 
+                    onClick={() => {
+                      const jobIndex = postedJobs.findIndex(job => 
+                        job.applicants?.some(app => app.email === selectedApplicant.email)
+                      );
+                      if (jobIndex !== -1) {
+                        handleUpdateApplicantStatus(jobIndex, selectedApplicant.email, 'finalized');
+                        setSelectedApplicant({...selectedApplicant, status: 'finalized'});
+                      }
+                    }}
+                    style={{ padding: '8px 12px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px' }}
+                  >
+                    Mark as Finalized
+                  </button>
+                  <button 
+                    onClick={() => {
+                      const jobIndex = postedJobs.findIndex(job => 
+                        job.applicants?.some(app => app.email === selectedApplicant.email)
+                      );
+                      if (jobIndex !== -1) {
+                        handleUpdateApplicantStatus(jobIndex, selectedApplicant.email, 'accepted');
+                        setSelectedApplicant({...selectedApplicant, status: 'accepted'});
+                      }
+                    }}
+                    style={{ padding: '8px 12px', backgroundColor: '#28a745', color: 'white', border: 'none', borderRadius: '4px' }}
+                  >
+                    Accept
+                  </button>
+                  <button 
+                    onClick={() => {
+                      const jobIndex = postedJobs.findIndex(job => 
+                        job.applicants?.some(app => app.email === selectedApplicant.email)
+                      );
+                      if (jobIndex !== -1) {
+                        handleUpdateApplicantStatus(jobIndex, selectedApplicant.email, 'rejected');
+                        setSelectedApplicant({...selectedApplicant, status: 'rejected'});
+                      }
+                    }}
+                    style={{ padding: '8px 12px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '4px' }}
+                  >
+                    Reject
+                  </button>
+                </div>
+              </div>
+
               <button 
                 onClick={handleCloseProfileModal} 
                 style={{ 
@@ -542,7 +696,8 @@ function CompanyPage() {
                   border: 'none', 
                   borderRadius: '4px', 
                   cursor: 'pointer',
-                  fontSize: '16px'
+                  fontSize: '16px',
+                  marginTop: '20px'
                 }}
               >
                 Close Profile

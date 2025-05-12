@@ -22,22 +22,24 @@ export function setNotification(message, email, clearAfterRead = false) {
 
 // Get all notifications for a specific email
 export function getNotification(email) {
-  const data = localStorage.getItem('notifications');
-//   console.log(data);
-if (!data) return [];
-  let notifications = JSON.parse(data);
+    const data = localStorage.getItem('notifications');
+    console.log(data);
+    const user= JSON.parse(localStorage.getItem('allUsers')) ;
+    console.log(user);
+    if (!data) return [];
+    let notifications = JSON.parse(data);
 
-  // Filter notifications for the given email
-  const userNotifications = notifications.filter(n => n.email === email);
-  console.log(userNotifications);
+    // Filter notifications for the given email
+    const userNotifications = notifications.filter(n => n.email === email);
+    console.log(userNotifications);
 
-  // Remove those marked as 'clearAfterRead'
-  notifications = notifications.filter(n => !(n.email === email && n.clearAfterRead));
+    // Remove those marked as 'clearAfterRead'
+    notifications = notifications.filter(n => !(n.email === email && n.clearAfterRead));
 
-  // Update localStorage (if any were cleared)
-  localStorage.setItem('notifications', JSON.stringify(notifications));
+    // Update localStorage (if any were cleared)
+    localStorage.setItem('notifications', JSON.stringify(notifications));
 
-  return userNotifications;
+    return userNotifications;
 }
 
 // Clear all notifications for a specific email (optional)

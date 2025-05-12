@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate ,useLocation } from 'react-router-dom';
+import { setNotification } from './notification';
 
 function Jobs() {
   const [jobs, setJobs] = useState([]);
@@ -84,6 +85,9 @@ const handleApply = () => {
       (applied) => applied.title === selectedJob.title && applied.companyName === selectedJob.companyName
     );
     if (!alreadyApplied) {
+      const message = `${studentj.email} has applied to ${selectedJob.title}.`;
+       setNotification(message, selectedJob.companyEmail);
+       console.log(`Sending notification to ${selectedJob.companyEmail}: ${message}`);
       const newApplication = {
         ...selectedJob,
         status: 'pending',

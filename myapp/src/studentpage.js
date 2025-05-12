@@ -229,7 +229,7 @@ function StudentPage() {
                 Settings
               </button>
             </li>
-             <li>
+            <li>
               <button
                 onClick={handleCompaniesClick}
                 style={sidebarButtonStyle(activeSidebarItem === 'companies')}

@@ -25,6 +25,8 @@ function StudentPage() {
   const [showCompanies, setShowCompanies] = useState(false);
   const companies = JSON.parse(localStorage.getItem('companies')) || [];
 
+  const [isMajorsOpen, setIsMajorsOpen] = useState(false);
+
   // Use a unique key for each student's profile in localStorage
   const profileKey = student ? `studentProfile_${student.email}` : 'studentProfile';
 
@@ -88,7 +90,7 @@ function StudentPage() {
 
   };
 
-  const [isMajorsOpen, setIsMajorsOpen] = useState(false);
+
 
   const handleMajorsToggle = () => {
     setIsMajorsOpen(!isMajorsOpen);
@@ -136,7 +138,7 @@ function StudentPage() {
 
   const handleCompaniesClick = () => {
     setShowProfile(false);
-    // setShowMajorsOpen(false);
+    setIsMajorsOpen(false);
     setShowCompanies(true);
     setActiveSidebarItem('companies');
   };

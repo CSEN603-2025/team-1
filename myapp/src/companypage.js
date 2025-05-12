@@ -141,6 +141,19 @@ function CompanyPage() {
       description: '',
       industry: '',
     });
+    const companies = JSON.parse(localStorage.getItem('companies')) || [];
+  const companyIndex = companies.findIndex(company => company.companyEmail === storedCompany.companyEmail);
+
+  if (companyIndex !== -1) {
+    const company = companies[companyIndex];
+
+    const updatedCompany = {
+      ...company,
+      jobs: updatedJobs,  
+    };
+    companies[companyIndex] = updatedCompany;
+    localStorage.setItem('companies', JSON.stringify(companies));
+  }
   };
 
   const handleEditJob = (index) => {
@@ -160,6 +173,20 @@ function CompanyPage() {
       job => !(job.companyEmail === storedCompany?.companyEmail && job.title === jobToDelete.title)
     );
     localStorage.setItem('allJobs', JSON.stringify(updatedAllJobs));
+    const companies = JSON.parse(localStorage.getItem('companies')) || [];
+     const companyIndex = companies.findIndex(company => company.companyEmail === storedCompany.companyEmail);
+    if (companyIndex !== -1) {
+    const company = companies[companyIndex];
+    const updatedCompanyJobs = company.jobs.filter(
+      job => !(job.title === jobToDelete.title)
+    );
+    const updatedCompany = {
+      ...company,
+      jobs: updatedCompanyJobs  // Update the company's jobs
+    };
+    companies[companyIndex] = updatedCompany; 
+    localStorage.setItem('companies', JSON.stringify(companies));  // Save to localStorage
+  }
   };
 
   const handleViewApplicants = (job) => {

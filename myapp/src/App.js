@@ -11,6 +11,7 @@ import Jobs from './jobspage';
 import MyApplications from "./studentapplications";
 import ALLJobs from './allpostedjob';
 import AllStudents from './allstudents';
+import CompanyInterns from './companyinterns';
 function App() {
   // Manage notification state
  const [notification, setNotification] = useState({ message: '', email: '' });
@@ -236,6 +237,7 @@ const isInitialLoad = useState(true);
         <Route path="/studentapplications" element={<MyApplications/>}/>
         <Route path= "/allpostedjobs" element={<ALLJobs/>}/>
         <Route path="/allstudents" element={<AllStudents />} />
+        <Route path="/company/interns" element={<CompanyInterns />} />
         
       </Routes>
 

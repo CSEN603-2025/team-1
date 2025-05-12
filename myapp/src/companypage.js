@@ -32,6 +32,7 @@ function CompanyPage() {
     status: '',
     search: ''
   });
+  const [acceptedInterns, setAcceptedInterns] = useState([]);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -42,9 +43,18 @@ function CompanyPage() {
 
     if (storedCompany) {
       setCompanyName(storedCompany.companyName || storedCompany.companyEmail);
+      
+      // Load posted jobs
       const storedJobs = localStorage.getItem(`companyJobs_${storedCompany.companyEmail}`);
       if (storedJobs) {
         setPostedJobs(JSON.parse(storedJobs));
+      }
+      
+      // Load accepted interns
+      const companyInternsKey = `companyInterns_${storedCompany.companyEmail}`;
+      const storedInterns = localStorage.getItem(companyInternsKey);
+      if (storedInterns) {
+        setAcceptedInterns(JSON.parse(storedInterns));
       }
     }
   }, [location, navigate]);
@@ -208,6 +218,38 @@ function CompanyPage() {
       }));
     }
 
+    // Add to accepted interns if status is accepted and not already added
+    if (newStatus === 'accepted') {
+      const acceptedApplicant = job.applicants?.find(applicant => applicant.email === applicantEmail);
+      if (acceptedApplicant && storedCompany?.companyEmail) {
+        const companyInternsKey = `companyInterns_${storedCompany.companyEmail}`;
+        const currentInterns = JSON.parse(localStorage.getItem(companyInternsKey)) || [];
+        
+        // Check if this intern is already in the list
+        const isAlreadyAdded = currentInterns.some(intern => 
+          intern.email === acceptedApplicant.email && 
+          intern.jobTitle === job.title
+        );
+        
+        if (!isAlreadyAdded) {
+          const newIntern = {
+            ...acceptedApplicant,
+            jobTitle: job.title,
+            jobDuration: job.duration,
+            isPaid: job.isPaid,
+            salary: job.salary || '',
+            acceptedDate: new Date().toISOString(),
+            companyName: storedCompany.companyName || storedCompany.companyEmail,
+            status: 'current' // Default status
+          };
+          
+          const updatedInterns = [...currentInterns, newIntern];
+          localStorage.setItem(companyInternsKey, JSON.stringify(updatedInterns));
+          setAcceptedInterns(updatedInterns);
+        }
+      }
+    }
+
     setPostedJobs(updatedJobs);
     setSelectedApplicant(prev => prev && { ...prev, status: newStatus });
   };
@@ -241,6 +283,16 @@ function CompanyPage() {
     return matchesStatus && matchesSearch;
   });
 
+  // Function to navigate to Accepted Interns page with accepted interns list
+  const navigateToAcceptedInterns = () => {
+    navigate('/company/interns', { 
+      state: { 
+        acceptedInterns,
+        storedCompany 
+      } 
+    });
+  };
+
   return (
     <div style={{ display: 'flex' }}>
       {/* Sidebar */}
@@ -270,7 +322,22 @@ function CompanyPage() {
             </li>
             <li><Link to="/allpostedjobs" state={{ storedCompany }}>All posted Jobs</Link></li>
             <li style={{ margin: '15px 0' }}><Link to="/companyapplications">View Applications</Link></li>
-            <li style={{ margin: '15px 0' }}><Link to="/company/interns">Your Interns</Link></li>
+            <li style={{ margin: '15px 0' }}>
+              <button 
+                onClick={navigateToAcceptedInterns} 
+                style={{ 
+                  background: 'none', 
+                  border: 'none', 
+                  padding: 0, 
+                  color: '#007bff', 
+                  textDecoration: 'underline', 
+                  cursor: 'pointer', 
+                  font: 'inherit' 
+                }}
+              >
+                Your Interns
+              </button>
+            </li>
             <li style={{ margin: '15px 0' }}><Link to="/company/settings">Settings</Link></li>
             <li style={{ margin: '15px 0', cursor: 'pointer' }} onClick={handleLogout}>Logout</li>
           </ul>

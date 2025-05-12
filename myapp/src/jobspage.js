@@ -13,7 +13,7 @@ function Jobs() {
     const storedApplied = localStorage.getItem('appliedInternships');
     return storedApplied ? JSON.parse(storedApplied) : [];
   });
-  const savedProfile = JSON.parse(localStorage.getItem('studentProfile'));
+  //const savedProfile = JSON.parse(localStorage.getItem('studentProfile'));
   const [extraDocuments, setExtraDocuments] = useState([]);
   const navigate = useNavigate();
   const location = useLocation();
@@ -79,7 +79,7 @@ function Jobs() {
   };
 
 const handleApply = () => {
-  if (selectedJob && selectedJob.companyEmail && savedProfile) {
+  if (selectedJob && selectedJob.companyEmail && studentj) {
     const alreadyApplied = appliedInternships.some(
       (applied) => applied.title === selectedJob.title && applied.companyName === selectedJob.companyName
     );
@@ -88,7 +88,7 @@ const handleApply = () => {
         ...selectedJob,
         status: 'pending',
         documents: extraDocuments.map(file => file.name),
-        studentProfile: savedProfile, // Include the saved profile here (in appliedInternships)
+        studentProfile: studentj, // Include the saved profile here (in appliedInternships)
       };
       setAppliedInternships([...appliedInternships, newApplication]);
       alert(`Applied to ${selectedJob.title} at ${selectedJob.companyName}! Status: Pending. Documents uploaded: ${extraDocuments.map(file => file.name).join(', ')}`);
@@ -98,7 +98,7 @@ const handleApply = () => {
       // --- Update the global jobs list ---
       const updatedAllJobs = jobs.map(job => {
         if (job.title === selectedJob.title && job.companyName === selectedJob.companyName) {
-          return { ...job, applicants: [...(job.applicants || []), savedProfile] };
+          return { ...job, applicants: [...(job.applicants || []), studentj] };
         }
         return job;
       });
@@ -116,7 +116,7 @@ const handleApply = () => {
         // 3. Update the applicants array for the specific job
         const updatedCompanyJobs = companyJobs.map(job => {
           if (job.title === selectedJob.title) { // Match based on a unique identifier if possible (e.g., job.id)
-            return { ...job, applicants: [...(job.applicants || []), savedProfile] };
+            return { ...job, applicants: [...(job.applicants || []), studentj] };
           }
           return job;
         });
@@ -140,12 +140,12 @@ const handleApply = () => {
   } else if (!selectedJob.companyEmail) {
     console.error('Error: selectedJob is missing companyEmail', selectedJob);
     alert('Error applying: Internship details missing company information.');
-  } else if (!savedProfile) {
+  } else if (!studentj) {
     alert('Student profile not found. Please ensure your profile is saved.');
   }
 };
   const handleGoToMyApplications = () => {
-    navigate('/studentapplications');
+    navigate('/studentapplications',{ state: { studentj } });
   };
 
   const handleBack = () => {

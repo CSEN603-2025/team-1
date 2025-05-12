@@ -43,8 +43,13 @@ function App() {
       password: 'faculty123',
     },
   ];
+  const users = JSON.parse(localStorage.getItem('allUsers')) || [];
 
-  localStorage.setItem('allUsers', JSON.stringify(dummyUsers));
+if (users.length === 0) {
+  // Add dummy users only if the array is empty
+  users.push(...dummyUsers); // Use spread syntax to add all dummy users individually
+  localStorage.setItem('allUsers', JSON.stringify(users));
+}
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

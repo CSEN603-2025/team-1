@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import {  getNotification, clearNotifications } from './notification';
 
 function CompanyPage() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -33,7 +34,8 @@ function CompanyPage() {
     search: ''
   });
   const [acceptedInterns, setAcceptedInterns] = useState([]);
-
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
   const navigate = useNavigate();
   const location = useLocation();
   const storedCompany = location.state?.company;
@@ -326,6 +328,28 @@ function CompanyPage() {
     });
   };
 
+
+   useEffect(() => {
+      const interval = setInterval(() => {
+          const newNotifications = getNotification(storedCompany.companyEmail) || [];
+          setNotifications(newNotifications);
+      }, 3000); // check every 3 seconds (you can adjust timing)
+  
+      return () => clearInterval(interval); // cleanup on unmount
+  }, [storedCompany.companyEmail]);
+  
+      const handleBellClick = () => {
+      const fetchedNotifications = getNotification(storedCompany.companyEmail) || [];
+      setNotifications(fetchedNotifications);
+      setIsPopupOpen(prev => !prev);
+  };
+     const handleClosePopup = () => {
+      clearNotifications(storedCompany.companyEmail); // clear from storage
+      setNotifications([]);              // clear from state
+      setIsPopupOpen(false);             // close popup
+  };
+
+
   return (
     <div style={{ display: 'flex' }}>
       {/* Sidebar */}
@@ -398,6 +422,89 @@ function CompanyPage() {
 
         <h1>Welcome, {companyName}</h1>
         <p>This is your company dashboard. Use the menu to navigate between sections.</p>
+      <div>
+  {/* Bell Icon */}
+  <div
+    onClick={handleBellClick}
+    style={{
+      cursor: 'pointer',
+      position: 'fixed', // This will keep the bell fixed in the top-right corner
+      top: '20px', // Adjust the distance from the top
+      right: '20px', // Adjust the distance from the right
+      fontSize: '40px', // Make the bell icon larger
+      color: '#1E90FF', // Blue shade for the bell icon
+      zIndex: 9999, // Ensure it stays on top of other elements
+    }}
+  >
+    <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="72" height="72"
+          fill="#385e72"
+          viewBox="0 0 24 24"
+        >
+          <path d="M12 2C10.34 2 9 3.34 9 5v1.07C6.72 7.25 5.14 9.36 5 12v5l-1 1v1h16v-1l-1-1v-5c-.14-2.64-1.72-4.75-4-5.93V5c0-1.66-1.34-3-3-3zm1 19h-2c0 1.1.9 2 2 2s2-.9 2-2z"/>
+        </svg>
+    {notifications.length > 0 && (
+      <span
+        style={{
+          position: 'absolute',
+          top: '-5px',
+          right: '-5px',
+          backgroundColor: 'red',
+          color: 'white',
+          borderRadius: '50%',
+          padding: '0.2em 0.5em',
+          fontSize: '14px', // Adjust notification number font size
+        }}
+      >
+        {notifications.length}
+      </span>
+    )}
+  </div>
+
+  {/* Popup Notification */}
+  {isPopupOpen && (
+    <div
+      style={{
+        position: 'absolute',
+        top: '50px',
+        right: '20px',
+        backgroundColor: 'white',
+        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+        padding: '20px',
+        borderRadius: '8px',
+        width: '250px',
+        zIndex: 9999,
+      }}
+    >
+      <button
+        onClick={handleClosePopup}
+        style={{
+          position: 'absolute',
+          top: '5px',
+          right: '5px',
+          background: 'transparent',
+          border: 'none',
+          fontSize: '16px',
+          cursor: 'pointer',
+        }}
+      >
+        X
+      </button>
+      <h4>Notifications</h4>
+      {notifications.length === 0 ? (
+        <p>No notifications</p>
+      ) : (
+        notifications.map((notification, index) => (
+          <div key={index} style={{ marginBottom: '10px' }}>
+            <p><strong>{notification.message}</strong></p>
+            <p>{new Date(notification.timestamp).toLocaleString()}</p>
+          </div>
+        ))
+      )}
+    </div>
+  )}
+</div>
 
         {/* Filter Section */}
         <div style={{ marginBottom: '20px' }}>

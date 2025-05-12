@@ -94,7 +94,9 @@ function CompanyRegister() {
         isAccepted: false,
         hasNotification: false,
         jobs: [],
+        role: 'company',
       };
+
 
       if (existingLocal.length >= maxCompanies) {
         existingLocal.shift();
@@ -104,6 +106,12 @@ function CompanyRegister() {
       localStorage.setItem('companies', JSON.stringify(existingLocal));
       localStorage.setItem('currentCompany', JSON.stringify(fullCompany));
       localStorage.setItem('companiesUpdated', Date.now());
+      const user= JSON.parse(localStorage.getItem('allUsers')) ;
+      user.push(fullCompany);
+      localStorage.setItem('allUsers', JSON.stringify(user));
+      const t=JSON.parse(localStorage.getItem('allUsers')) ;
+      console.log(t);
+
 
       const existingSession = JSON.parse(sessionStorage.getItem('companies')) || [];
       existingSession.push(fullCompany);

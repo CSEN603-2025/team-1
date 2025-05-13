@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { getNotification, clearNotifications } from './notification';
 
 function CompanyPage() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -179,10 +180,6 @@ function CompanyPage() {
     const companies = JSON.parse(localStorage.getItem('companies')) || [];
     const companyIndex = companies.findIndex(company => company.companyEmail === storedCompany.companyEmail);
     if (companyIndex !== -1) {
-      ...company,
-    };
-    companies[companyIndex] = updatedCompany; 
-    localStorage.setItem('companies', JSON.stringify(companies));  // Save to localStorage
       const company = companies[companyIndex];
       const updatedCompanyJobs = company.jobs.filter(
         job => !(job.title === jobToDelete.title)
@@ -198,13 +195,15 @@ function CompanyPage() {
 
   const handleViewApplicants = (job, index) => {
     setSelectedJobApplicants(job.applicants || []);
+    setCurrentJobIndex(index); // Store the job index
     setIsApplicantsModalOpen(true);
-    setApplicantFilter({ status: '', search: '' }); // Reset filters when opening
+    setApplicantFilter({ status: '', search: '' });
   };
 
   const handleCloseApplicantsModal = () => {
     setIsApplicantsModalOpen(false);
     setSelectedJobApplicants(null);
+    setCurrentJobIndex(null);
   };
 
   const handleViewApplicantProfile = (applicant) => {
@@ -217,9 +216,14 @@ function CompanyPage() {
     setSelectedApplicant(null);
   };
 
-  const handleUpdateApplicantStatus = (jobIndex, applicantEmail, newStatus) => {
+  const handleUpdateApplicantStatus = (applicantEmail, newStatus) => {
+    if (currentJobIndex === null || currentJobIndex >= postedJobs.length) {
+      console.error("Invalid job index:", currentJobIndex);
+      return;
+    }
+
     const updatedJobs = [...postedJobs];
-    const job = updatedJobs[jobIndex];
+    const job = updatedJobs[currentJobIndex];
     
     // Update status in company's job applicants
     if (job.applicants) {
@@ -229,14 +233,16 @@ function CompanyPage() {
         }
         return applicant;
       });
-      updatedJobs[jobIndex].applicants = updatedApplicants;
+      
       updatedJobs[currentJobIndex].applicants = updatedApplicants;
     }
 
     // Update status in global applications (appliedInternships)
     const allApplied = JSON.parse(localStorage.getItem('appliedInternships') || '[]');
     const updatedApplied = allApplied.map(app => {
-      if (app.studentProfile?.email === applicantEmail && app.title === job.title && app.companyName === job.companyName) {
+      if (app.studentProfile?.email === applicantEmail && 
+          app.title === job.title && 
+          app.companyEmail === storedCompany?.companyEmail) {
         return { ...app, status: newStatus };
       }
       return app;

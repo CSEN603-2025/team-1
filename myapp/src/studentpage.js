@@ -253,10 +253,14 @@ function StudentPage() {
     };
 
     const handleMyInternshipsClick = () => {
-        setshowmyinternships(true);
-        setShowCompanies(false);
+
+         // Hide local sections before navigating
         setShowProfile(false);
+        setShowCompanies(false);
+        setshowmyinternships(false);
         setShowCourses(false); // Hide courses
+        navigate('/myinternships', { state: { student } });
+        console.log('My Internahips clicked');
         setActiveSidebarItem('internships');
         // Add logic here to fetch/display internships
     };

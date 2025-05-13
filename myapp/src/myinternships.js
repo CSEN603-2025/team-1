@@ -6,7 +6,8 @@ function MyInternshipsPage() {
     const navigate = useNavigate();
     const student = location.state?.student; // { email: '...', name: '...' }
 
-    const [internships, setInternships] = useState([]);
+    const [allInternships, setAllInternships] = useState([]); // To store all fetched internships
+    const [internships, setInternships] = useState([]); // To store the internships to display
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'current', 'completed'
     const [filterStartDate, setFilterStartDate] = useState('');
@@ -15,6 +16,7 @@ function MyInternshipsPage() {
 
     useEffect(() => {
         if (student?.email) {
+            const foundInternships = [];
             const foundCompanies = [];
 
             for (let i = 0; i < localStorage.length; i++) {
@@ -24,16 +26,21 @@ function MyInternshipsPage() {
                     const companyEmail = key.split('companyInterns_')[1];
                     const interns = JSON.parse(localStorage.getItem(key)) || [];
 
-                    const matched = interns.find(intern => intern.email === student.email);
-                    if (matched) {
-                        foundCompanies.push({
-                            companyEmail,
-                            jobTitle: matched.jobTitle,
-                            status: matched.status
-                        });
-                    }
+                    interns.forEach(intern => {
+                        if (intern.email === student.email) {
+                            foundInternships.push({
+                                ...intern,
+                                companyEmail // Add companyEmail to the internship object
+                            });
+                            // Add to companies list if not already present
+                            if (!foundCompanies.some(c => c.companyEmail === companyEmail)) {
+                                foundCompanies.push({ companyEmail });
+                            }
+                        }
+                    });
                 }
             }
+            setAllInternships(foundInternships); // Store all fetched internships
             setCompanies(foundCompanies); // Set the companies array
         } else {
             console.warn("Student data not found in location state. Using fallback or redirecting.");
@@ -46,24 +53,31 @@ function MyInternshipsPage() {
     }, [companies]);
 
     const processedInternships = useMemo(() => {
-        return internships.map(internship => ({
+        return allInternships.map(internship => ({
             ...internship,
             derivedStatus: internship.endDate ? 'completed' : 'current',
             startDateObj: new Date(internship.startDate),
             endDateObj: internship.endDate ? new Date(internship.endDate) : null
         }));
-    }, [internships]);
+    }, [allInternships]);
 
-    const filteredInternships = useMemo(() => {
-        return processedInternships.filter(internship => {
-            const lowerSearchTerm = searchTerm.toLowerCase();
-            const matchesSearch =
-                internship.jobTitle.toLowerCase().includes(lowerSearchTerm) ||
-                internship.companyName.toLowerCase().includes(lowerSearchTerm);
+    const handleSearch = () => {
+        const lowerSearchTerm = searchTerm.toLowerCase();
+        const filtered = processedInternships.filter(internship =>
+            internship.jobTitle.toLowerCase().includes(lowerSearchTerm) ||
+            (internship.companyEmail && internship.companyEmail.toLowerCase().includes(lowerSearchTerm)) // Search by company email
+        );
+        setInternships(filtered);
+    };
 
-            const matchesStatus =
-                statusFilter === 'all' || internship.derivedStatus === statusFilter;
+    const filteredByStatus = useMemo(() => {
+        return internships.filter(internship =>
+            statusFilter === 'all' || internship.derivedStatus === statusFilter
+        );
+    }, [internships, statusFilter]);
 
+    const filteredByDate = useMemo(() => {
+        return filteredByStatus.filter(internship => {
             let matchesDate = true;
             if (filterStartDate && filterEndDate) {
                 const filterStart = new Date(filterStartDate);
@@ -83,17 +97,45 @@ function MyInternshipsPage() {
                 const filterEnd = new Date(filterEndDate);
                 matchesDate = internship.startDateObj <= filterEnd;
             }
-
-            return matchesSearch && matchesStatus && matchesDate;
+            return matchesDate;
         });
-    }, [processedInternships, searchTerm, statusFilter, filterStartDate, filterEndDate]);
+    }, [filteredByStatus, filterStartDate, filterEndDate]);
 
     const clearFilters = () => {
         setSearchTerm('');
         setStatusFilter('all');
         setFilterStartDate('');
         setFilterEndDate('');
+        setInternships(processedInternships); // Reset to all fetched internships
     };
+
+    useEffect(() => {
+        // Apply initial filters when processedInternships change (after fetching)
+        setInternships(processedInternships);
+    }, [processedInternships]);
+
+    // Apply status and date filters whenever their states change
+    useEffect(() => {
+        let tempFiltered = processedInternships.filter(internship =>
+            statusFilter === 'all' || internship.derivedStatus === statusFilter
+        );
+
+        if (filterStartDate) {
+            const filterStart = new Date(filterStartDate);
+            tempFiltered = tempFiltered.filter(internship =>
+                (internship.endDateObj || new Date('2999-12-31')) >= filterStart
+            );
+        }
+
+        if (filterEndDate) {
+            const filterEnd = new Date(filterEndDate);
+            tempFiltered = tempFiltered.filter(internship =>
+                internship.startDateObj <= filterEnd
+            );
+        }
+
+        setInternships(tempFiltered);
+    }, [statusFilter, filterStartDate, filterEndDate, processedInternships]);
 
     if (!student?.email) {
         return (
@@ -121,9 +163,7 @@ function MyInternshipsPage() {
                     <ul>
                         {companies.map((company, index) => (
                             <li key={index}>
-                                <strong>Company Email:</strong> {company.companyEmail},
-                                <strong>Job Title:</strong> {company.jobTitle},
-                                <strong>Status:</strong> {company.status}
+                                <strong>Company Email:</strong> {company.companyEmail}
                             </li>
                         ))}
                     </ul>
@@ -135,11 +175,12 @@ function MyInternshipsPage() {
             <div style={styles.filtersSection}>
                 <input
                     type="text"
-                    placeholder="Search by Job Title or Company..."
+                    placeholder="Search by Job Title or Company Email..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     style={styles.searchInput}
                 />
+                <button onClick={handleSearch} style={styles.button}>Search</button>
                 <div style={styles.filterGroup}>
                     <label htmlFor="statusFilter" style={styles.filterLabel}>Status:</label>
                     <select
@@ -176,12 +217,12 @@ function MyInternshipsPage() {
                 <button onClick={clearFilters} style={{ ...styles.button, ...styles.clearButton }}>Clear Filters</button>
             </div>
 
-            {filteredInternships.length > 0 ? (
+            {filteredByDate.length > 0 ? (
                 <div style={styles.internshipList}>
-                    {filteredInternships.map(internship => (
+                    {filteredByDate.map(internship => (
                         <div key={internship.id} style={styles.internshipCard}>
                             <h2 style={styles.internshipTitle}>{internship.jobTitle}</h2>
-                            <p style={styles.companyName}>{internship.companyName}</p>
+                            <p style={styles.companyName}>{internship.companyEmail}</p> {/* Display company email */}
                             <p style={styles.dates}>
                                 <strong>Start:</strong> {internship.startDateObj.toLocaleDateString()}
                                 {internship.endDateObj && (
@@ -247,7 +288,7 @@ const styles = {
         boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
     },
     searchInput: {
-        flex: '2 1 300px', // Allow more space for search
+        flex: '2 1 250px', // Adjusted width
         padding: '10px',
         border: '1px solid #ccc',
         borderRadius: '4px',

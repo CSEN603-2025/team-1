@@ -355,74 +355,159 @@ function CompanyPage() {
   };
 
   return (
-    <div style={{ display: 'flex' }}>
-      {/* Sidebar */}
-      <div
+<div style={{ display: 'flex', backgroundColor: '#e6f2ff', minHeight: '100vh' }}>
+  {/* Sidebar - Dark Blue with modern styling */}
+  <div
+    style={{
+      width: menuOpen ? '180px' : '0',
+      height: '100vh',
+      backgroundColor: '#34495E', // Slightly darker blue for more sophistication
+      overflowX: 'hidden',
+      transition: 'all 0.3s ease-in-out',
+      padding: menuOpen ? '30px 20px' : '0',
+      boxShadow: menuOpen ? '4px 0 15px rgba(0, 0, 0, 0.1)' : 'none',
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      zIndex: 1000,
+      color: 'white',
+      borderRadius: '0 20px 20px 0', // Rounded right corners
+      borderRight: '1px solid rgba(255, 255, 255, 0.1)' // Subtle border
+    }}
+  >
+    {/* Close button (X) - positioned top right */}
+    {menuOpen && (
+      <button 
+        onClick={toggleMenu}
         style={{
-          width: menuOpen ? '250px' : '0',
-          height: '100vh',
-          backgroundColor: '#f8f9fa',
-          overflowX: 'hidden',
-          transition: '0.3s',
-          padding: menuOpen ? '20px' : '0',
-          boxShadow: menuOpen ? '2px 0 5px rgba(0,0,0,0.2)' : 'none',
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          zIndex: 1000,
+          position: 'absolute',
+          top: '20px',
+          right: '20px',
+          background: 'none',
+          border: 'none',
+          color: 'white',
+          fontSize: '24px',
+          cursor: 'pointer',
+          transition: 'transform 0.2s',
+          padding: '5px',
+          borderRadius: '50%',
+          width: '40px',
+          height: '40px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          ':hover': {
+            transform: 'rotate(90deg)',
+            backgroundColor: 'rgba(255, 255, 255, 0.1)'
+          }
         }}
       >
-        {menuOpen && (
-          <ul style={{ listStyleType: 'none', padding: 0, marginTop: '50px' }}>
-            <li style={{ margin: '15px 0' }}><Link to="/company/dashboard" state={{ storedCompany }}> Dashboard</Link></li>
-            <li style={{ margin: '15px 0' }}><Link to="/company/profile">Profile</Link></li>
-            <li style={{ margin: '15px 0' }}>
-              <button onClick={handleJobModalToggle} style={{ background: 'none', border: 'none', padding: 0, color: '#007bff', textDecoration: 'underline', cursor: 'pointer', font: 'inherit' }}>
-                Post a Job
-              </button>
-            </li>
-            <li><Link to="/allpostedjobs" state={{ storedCompany }}>All posted Jobs</Link></li>
-            <li style={{ margin: '15px 0' }}><Link to="/companyapplications">View Applications</Link></li>
-            <li style={{ margin: '15px 0' }}>
+        &times;
+      </button>
+    )}
+    
+    {menuOpen && (
+      <ul style={{ 
+        listStyleType: 'none', 
+        padding: 0, 
+        marginTop: '60px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '15px'
+      }}>
+        {[
+          { to: "/companyprofile", text: "Profile", onClick: null },
+          { text: "Post a Job", onClick: handleJobModalToggle },
+          { to: "/allpostedjobs", text: "All Posted Jobs", state: { storedCompany } },
+          { to: "/companyapplications", text: "View Applications" },
+          { text: "Your Interns", onClick: navigateToAcceptedInterns },
+          { text: "Logout", onClick: handleLogout }
+        ].map((item, index) => (
+          <li key={index} style={{ 
+            margin: '10px 0',
+            transition: 'all 0.2s ease',
+            ':hover': {
+              transform: 'translateX(5px)'
+            }
+          }}>
+            {item.to ? (
+              <Link 
+                to={item.to}
+                state={item.state || {}}
+                style={{ 
+                  color: 'white', 
+                  textDecoration: 'none',
+                  fontSize: '18px',
+                  fontWeight: '400',
+                  display: 'block',
+                  padding: '12px 15px',
+                  borderRadius: '8px',
+                  transition: 'all 0.2s',
+                  ':hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    fontSize: '19px'
+                  }
+                }}
+              >
+                {item.text}
+              </Link>
+            ) : (
               <button 
-                onClick={navigateToAcceptedInterns} 
+                onClick={item.onClick}
                 style={{ 
                   background: 'none', 
                   border: 'none', 
-                  padding: 0, 
-                  color: '#007bff', 
-                  textDecoration: 'underline', 
-                  cursor: 'pointer', 
-                  font: 'inherit' 
+                  color: 'white', 
+                  textDecoration: 'none',
+                  fontSize: '18px',
+                  fontWeight: '400',
+                  cursor: 'pointer',
+                  padding: '12px 15px',
+                  width: '100%',
+                  textAlign: 'left',
+                  borderRadius: '8px',
+                  transition: 'all 0.2s',
+                  ':hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    fontSize: '19px'
+                  }
                 }}
               >
-                Your Interns
+                {item.text}
               </button>
-            </li>
-            <li style={{ margin: '15px 0' }}><Link to="/company/settings">Settings</Link></li>
-            <li style={{ margin: '15px 0', cursor: 'pointer' }} onClick={handleLogout}>Logout</li>
-          </ul>
-        )}
-      </div>
+            )}
+          </li>
+        ))}
+      </ul>
+    )}
+  </div>
 
-      {/* Main Content */}
-      <div style={{ marginLeft: menuOpen ? '250px' : '0', transition: 'margin-left 0.3s', padding: '20px', width: '100%' }}>
-        <button
-          onClick={toggleMenu}
-          style={{
-            fontSize: '28px',
-            fontWeight: 'bold',
-            background: 'transparent',
-            border: 'none',
-            cursor: 'pointer',
-            zIndex: 1101,
-            position: 'absolute',
-            top: '20px',
-            left: '20px',
-          }}
-        >
-          ☰
-        </button>
+  {/* Main Content - Light Blue Background */}
+  <div style={{ 
+    marginLeft: menuOpen ? '250px' : '0', 
+    transition: 'margin-left 0.3s', 
+    padding: '20px', 
+    width: '100%',
+    backgroundColor: 'white' // Light blue background
+  }}>
+    {/* Menu Button - Dark Blue */}
+    <button
+      onClick={toggleMenu}
+      style={{
+        fontSize: '28px',
+        fontWeight: 'bold',
+        background: 'transparent',
+        border: 'none',
+        cursor: 'pointer',
+        zIndex: 1101,
+        position: 'absolute',
+        top: '20px',
+        left: '20px',
+        color: '#34495E' // Dark blue color to match sidebar
+      }}
+    >
+      ☰
+    </button>
 
         <h1>Welcome, {companyName}</h1>
         <p>This is your company dashboard. Use the menu to navigate between sections.</p>
@@ -637,7 +722,7 @@ function CompanyPage() {
                   <label>Industry</label>
                   <input type="text" name="industry" value={jobData.industry} onChange={handleJobInputChange} style={{ width: '100%', padding: '8px', borderRadius: '4px' }} />
                 </div>
-                <button type="submit" style={{ backgroundColor: '#007bff', color: 'white', padding: '10px', width: '100%' }}>
+                <button type="submit" style={{ backgroundColor: '#007bff', color: 'white', padding: '10px', width: '100%', }}>
                   {editingIndex !== null ? 'Update Job' : 'Post Job'}
                 </button>
               </form>

@@ -9,7 +9,7 @@ function CompanyInterns() {
 
     // Get data from location.state
     const { acceptedInterns: initialInterns = [], storedCompany } = location.state || {};
-    const [interns, setInterns] = useState(initialInterns);
+    const [interns, setInterns] = useState(initialInterns.map(intern => ({ ...intern, status: intern.status || 'current' })));
 
     const [selectedInternForEvaluation, setSelectedInternForEvaluation] = useState(null);
     const [evaluation, setEvaluation] = useState('');
@@ -20,17 +20,18 @@ function CompanyInterns() {
         if (storedCompany?.companyEmail) {
             const companyInternsKey = `companyInterns_${storedCompany.companyEmail}`;
             const storedInterns = JSON.parse(localStorage.getItem(companyInternsKey)) || [];
-            setInterns(storedInterns);
+            // Ensure default status is 'current' if not already set
+            setInterns(storedInterns.map(intern => ({ ...intern, status: intern.status || 'current' })));
         }
     }, [storedCompany]);
 
     // Update intern status in both state and localStorage
-    const updateInternStatus = (email, newStatus, jobTitle) => {
+    const updateInternStatus = (email, jobTitle) => {
         if (!storedCompany?.companyEmail) return;
 
         const updatedInterns = interns.map(intern => {
             if (intern.email === email && intern.jobTitle === jobTitle) {
-                return { ...intern, status: newStatus };
+                return { ...intern, status: 'completed' };
             }
             return intern;
         });
@@ -52,14 +53,13 @@ function CompanyInterns() {
 
         const matchesStatus =
             statusFilter === 'all' ||
-            intern.status === statusFilter ||
-            (!intern.status && statusFilter === 'current');
+            intern.status === statusFilter;
 
         return matchesSearch && matchesStatus;
     });
 
     // Function to handle selecting an intern for evaluation
-      const handleSelectIntern = (email, jobTitle) => { // Modified to accept jobTitle
+    const handleSelectIntern = (email, jobTitle) => { // Modified to accept jobTitle
         const selectedIntern = interns.find((i) => i.email === email && i.jobTitle === jobTitle); // Find by both email and jobTitle
         setSelectedInternForEvaluation(selectedIntern);
         const evaluationKey = `evaluation_${email}_${jobTitle}`; // Include jobTitle in key
@@ -180,18 +180,18 @@ function CompanyInterns() {
                             alignItems: 'center'
                         }}>
                             <div>
-                                 <div style={{
-                                    position: 'absolute',
-                                    top: '10px',
-                                    right: '10px',
-                                    padding: '5px 10px',
-                                    borderRadius: '4px',
-                                    backgroundColor: intern.status === 'completed' ? '#28a745' : '#007bff',
-                                    color: 'white',
-                                    fontSize: '14px'
-                                }}>
-                                    {intern.status === 'completed' ? 'Completed' : 'Current'}
-                                </div>
+                                   <div style={{
+                                        position: 'absolute',
+                                        top: '10px',
+                                        right: '10px',
+                                        padding: '5px 10px',
+                                        borderRadius: '4px',
+                                        backgroundColor: intern.status === 'completed' ? '#28a745' : '#007bff',
+                                        color: 'white',
+                                        fontSize: '14px'
+                                    }}>
+                                        {intern.status === 'completed' ? 'Completed' : 'Current'}
+                                    </div>
 
                                 <h2 style={{ margin: '0 0 10px 0', fontSize: '20px', color: '#333' }}>
                                     {intern.name || 'No Name Provided'}
@@ -205,28 +205,13 @@ function CompanyInterns() {
                                 <p style={{ margin: '5px 0', color: '#666' }}>
                                     <strong>Duration:</strong> {intern.jobDuration || 'N/A'}
                                 </p>
-                                {/* Status Buttons */}
-                                <div style={{ marginTop: '15px', display: 'flex', gap: '10px' }}>
+                                {/* Status Button */}
+                                <div style={{ marginTop: '15px' }}>
                                     <button
-                                        onClick={() => updateInternStatus(intern.email, 'current', intern.jobTitle)} // Added intern.jobTitle
+                                        onClick={() => updateInternStatus(intern.email, intern.jobTitle)}
                                         style={{
                                             padding: '8px 15px',
-                                            backgroundColor: intern.status !== 'completed' ? '#007bff' : '#6c757d',
-                                            color: 'white',
-                                            border: 'none',
-                                            borderRadius: '4px',
-                                            cursor: 'pointer',
-                                            fontSize: '14px'
-                                        }}
-                                        disabled={intern.status !== 'completed'}
-                                    >
-                                        Mark as Current
-                                    </button>
-                                    <button
-                                         onClick={() => updateInternStatus(intern.email, 'completed', intern.jobTitle)} // Added intern.jobTitle
-                                        style={{
-                                            padding: '8px 15px',
-                                            backgroundColor: intern.status === 'completed' ? '#28a745' : '#6c757d',
+                                            backgroundColor: intern.status !== 'completed' ? '#28a745' : '#6c757d',
                                             color: 'white',
                                             border: 'none',
                                             borderRadius: '4px',
@@ -268,7 +253,7 @@ function CompanyInterns() {
                     {filteredInterns
                         .filter(intern => intern.status === 'completed') // Filter only completed interns
                         .map(intern => (
-                            <option key={`${intern.email}__${intern.jobTitle}`}  // Combine email and jobTitle for key
+                            <option key={`${intern.email}__${intern.jobTitle}`}   // Combine email and jobTitle for key
                                     value={`${intern.email}__${intern.jobTitle}`}>
                                 {intern.name} - {intern.jobTitle}
                             </option>

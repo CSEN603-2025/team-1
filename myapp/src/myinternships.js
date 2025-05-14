@@ -1,6 +1,93 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+const majorsWithCourses = [
+  {
+    major: "Computer Science",
+    courses: [
+      "Data Structures and Algorithms",
+      "Operating Systems",
+      "Database Management Systems",
+      "Computer Networks",
+      "Artificial Intelligence",
+      "Web Development",
+      "Machine Learning"
+    ]
+  },
+  {
+    major: "Electrical Engineering",
+    courses: [
+      "Circuit Analysis",
+      "Electromagnetics",
+      "Digital Logic Design",
+      "Control Systems",
+      "Power Systems",
+      "Microprocessors",
+      "Signal Processing"
+    ]
+  },
+  {
+    major: "Mechanical Engineering",
+    courses: [
+      "Thermodynamics",
+      "Fluid Mechanics",
+      "Machine Design",
+      "Heat Transfer",
+      "Manufacturing Processes",
+      "Dynamics of Machinery",
+      "Engineering Drawing"
+    ]
+  },
+  {
+    major: "Business Administration",
+    courses: [
+      "Principles of Management",
+      "Marketing Fundamentals",
+      "Financial Accounting",
+      "Organizational Behavior",
+      "Business Ethics",
+      "Operations Management",
+      "Strategic Management"
+    ]
+  },
+  {
+    major: "Psychology",
+    courses: [
+      "Introduction to Psychology",
+      "Developmental Psychology",
+      "Cognitive Psychology",
+      "Abnormal Psychology",
+      "Social Psychology",
+      "Research Methods",
+      "Psychological Assessment"
+    ]
+  },
+  {
+    major: "Civil Engineering",
+    courses: [
+      "Structural Analysis",
+      "Geotechnical Engineering",
+      "Transportation Engineering",
+      "Concrete Design",
+      "Surveying",
+      "Construction Management",
+      "Environmental Engineering"
+    ]
+  },
+  {
+    major: "Biology",
+    courses: [
+      "Cell Biology",
+      "Genetics",
+      "Ecology",
+      "Human Anatomy and Physiology",
+      "Microbiology",
+      "Evolutionary Biology",
+      "Biochemistry"
+    ]
+  }
+];
+
 function MyInternshipsPage() {
     const location = useLocation();
     const navigate = useNavigate();
@@ -12,25 +99,54 @@ function MyInternshipsPage() {
     const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'current', 'completed'
     const [filterStartDate, setFilterStartDate] = useState('');
     const [filterEndDate, setFilterEndDate] = useState('');
+    const [companyname,setcompanyName] = useState('');
     const [companies, setCompanies] = useState([]); // To store the companies data
+    const [showEvaluationPopup, setShowEvaluationPopup] = useState(false);
+    const [showReportPopup, setShowReportPopup] = useState(false);
+    const [reportErrors, setReportErrors] = useState({});
+    const [reportSubmitted, setReportSubmitted] = useState(false);
+    const [reportData, setReportData] = useState({
+    title: "",
+    introduction: "",
+    body: "",
+    major: "",
+    courses: [],
+    pdfFile: null
+});
+        
+    const [evaluationData, setEvaluationData] = useState({
+        text: '',
+        recommend: false,
+    });
+    const [evaluationError, setEvaluationError] = useState('');
+    const [evaluationSubmitted, setEvaluationSubmitted] = useState(false);
+
+        
 
     useEffect(() => {
         if (student?.email) {
             const foundInternships = [];
             const foundCompanies = [];
-
+            const allcomp= JSON.parse(localStorage.getItem('companies'));
+            console.log(allcomp);
             for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);
 
                 if (key.startsWith('companyInterns_')) {
                     const companyEmail = key.split('companyInterns_')[1];
                     const interns = JSON.parse(localStorage.getItem(key)) || [];
-
+                    const company=allcomp.filter(c=>c.companyEmail===companyEmail);
+                    const name= company[0].companyName;
+                    setcompanyName(name);
+                    console.log(name);
+                  
                     interns.forEach(intern => {
                         if (intern.email === student.email) {
                             foundInternships.push({
                                 ...intern,
-                                companyEmail // Add companyEmail to the internship object
+                                companyEmail,// Add companyEmail to the internship object
+                                companyname,
+                            
                             });
                             // Add to companies list if not already present
                             if (!foundCompanies.some(c => c.companyEmail === companyEmail)) {
@@ -43,19 +159,19 @@ function MyInternshipsPage() {
             setAllInternships(foundInternships); // Store all fetched internships
             setCompanies(foundCompanies); // Set the companies array
         } else {
-            console.warn("Student data not found in location state. Using fallback or redirecting.");
+            // console.warn("Student data not found in location state. Using fallback or redirecting.");
         }
-    }, [student]);
+    }, [student, companyname]);
 
     // Log the companies array
     useEffect(() => {
-        console.log("Companies associated with the student:", companies);
+        // console.log("Companies associated with the student:", companies);
     }, [companies]);
 
     const processedInternships = useMemo(() => {
         return allInternships.map(internship => ({
             ...internship,
-            derivedStatus: internship.endDate ? 'completed' : 'current',
+            derivedStatus: internship.status ,
             startDateObj: new Date(internship.startDate),
             endDateObj: internship.endDate ? new Date(internship.endDate) : null
         }));
@@ -65,7 +181,8 @@ function MyInternshipsPage() {
         const lowerSearchTerm = searchTerm.toLowerCase();
         const filtered = processedInternships.filter(internship =>
             internship.jobTitle.toLowerCase().includes(lowerSearchTerm) ||
-            (internship.companyEmail && internship.companyEmail.toLowerCase().includes(lowerSearchTerm)) // Search by company email
+            (internship.companyEmail && internship.companyEmail.toLowerCase().includes(lowerSearchTerm)) ||
+            (internship.companyname?.toLowerCase().includes(lowerSearchTerm))// Search by company email
         );
         setInternships(filtered);
     };
@@ -164,6 +281,7 @@ function MyInternshipsPage() {
                         {companies.map((company, index) => (
                             <li key={index}>
                                 <strong>Company Email:</strong> {company.companyEmail}
+                                <strong>Company Name:</strong> {companyname}
                             </li>
                         ))}
                     </ul>
@@ -175,7 +293,7 @@ function MyInternshipsPage() {
             <div style={styles.filtersSection}>
                 <input
                     type="text"
-                    placeholder="Search by Job Title or Company Email..."
+                    placeholder="Search by Job Title or Company Name..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     style={styles.searchInput}
@@ -222,7 +340,8 @@ function MyInternshipsPage() {
                     {filteredByDate.map(internship => (
                         <div key={internship.id} style={styles.internshipCard}>
                             <h2 style={styles.internshipTitle}>{internship.jobTitle}</h2>
-                            <p style={styles.companyName}>{internship.companyEmail}</p> {/* Display company email */}
+                            <p><strong>Company Name:</strong>{internship.companyName}</p>
+                            <p style={styles.companyName}>Company Email:{internship.companyEmail}</p> {/* Display company email */}
                             <p style={styles.dates}>
                                 <strong>Start:</strong> {internship.startDateObj.toLocaleDateString()}
                                 {internship.endDateObj && (
@@ -236,8 +355,182 @@ function MyInternshipsPage() {
                                 </span>
                             </p>
                             <p style={styles.description}>{internship.description}</p>
+                            {internship.derivedStatus === 'completed' && (
+                            <div style={{ marginTop: '10px' }}>
+                                <button
+                                    onClick={() => setShowEvaluationPopup(true)}
+                                    style={styles.popupButton}
+                                >
+                                    {evaluationSubmitted ? "Edit Company Evaluation" : "Add Company Evaluation"}
+                                </button>
+
+                                <button
+                                    onClick={() => setShowReportPopup(true)}
+                                    style={styles.popupButton}
+                                >
+                                    {reportSubmitted ? "Edit Internship Report" : "Add Internship Report"}
+                                    
+                                </button>
+                                
+                            </div>
+                        )}
+
+                        </div>
+                        
+                    ))}
+                    {showEvaluationPopup && (
+                        <div style={styles.popupOverlay}>
+                            <div style={styles.popupContent}>
+                                <h3>Company Evaluation</h3>
+
+                                <textarea
+                                    placeholder="Write your evaluation of the company..."
+                                    value={evaluationData.text}
+                                    onChange={(e) => setEvaluationData({ ...evaluationData, text: e.target.value })}
+                                    rows={4}
+                                    style={{ width: '100%', marginBottom: '10px' }}
+                                />
+
+                                <label style={{ display: 'block', marginBottom: '10px' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={evaluationData.recommend}
+                                        onChange={(e) => setEvaluationData({ ...evaluationData, recommend: e.target.checked })}
+                                    />
+                                    {' '}I recommend this company
+                                </label>
+
+                                {evaluationError && (
+                                    <p style={{ color: 'red', marginBottom: '10px' }}>{evaluationError}</p>
+                                )}
+
+                                <button onClick={() => setShowEvaluationPopup(false)} style={styles.popupButton}>Close</button>
+                                <button
+                                    onClick={() => {
+                                        if (!evaluationData.text.trim()) {
+                                            setEvaluationError("Evaluation cannot be empty.");
+                                        } else {
+                                            console.log("Evaluation Submitted:", evaluationData);
+                                            setEvaluationError('');
+                                            setEvaluationSubmitted(true); // ✅ Mark as submitted
+                                            setShowEvaluationPopup(false); // ✅ Close the popup
+                                        }
+                                    }}
+                                    style={styles.popupButton}
+                                >
+                                    Save
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+
+                  {showReportPopup && (
+                    <div style={styles.popupOverlay}>
+                        <div style={styles.popupContent}>
+                            <h3>Internship Report</h3>
+
+                            <input
+                                type="text"
+                                placeholder="Report Title"
+                                value={reportData.title}
+                                onChange={(e) => setReportData({ ...reportData, title: e.target.value })}
+                                style={{ width: '100%', marginBottom: '10px', borderColor: reportErrors.title ? 'red' : undefined }}
+                            />
+                            {reportErrors.title && <p style={{ color: 'red' }}>{reportErrors.title}</p>}
+
+                            <textarea
+                                placeholder="Introduction"
+                                value={reportData.introduction}
+                                onChange={(e) => setReportData({ ...reportData, introduction: e.target.value })}
+                                rows={3}
+                                style={{ width: '100%', marginBottom: '10px', borderColor: reportErrors.introduction ? 'red' : undefined }}
+                            />
+                            {reportErrors.introduction && <p style={{ color: 'red' }}>{reportErrors.introduction}</p>}
+
+                            <textarea
+                                placeholder="Body"
+                                value={reportData.body}
+                                onChange={(e) => setReportData({ ...reportData, body: e.target.value })}
+                                rows={5}
+                                style={{ width: '100%', marginBottom: '10px', borderColor: reportErrors.body ? 'red' : undefined }}
+                            />
+                            {reportErrors.body && <p style={{ color: 'red' }}>{reportErrors.body}</p>}
+
+                            <select
+                                value={reportData.major}
+                                onChange={(e) => setReportData({ ...reportData, major: e.target.value, courses: [] })}
+                                style={{ width: '100%', marginBottom: '10px', borderColor: reportErrors.major ? 'red' : undefined }}
+                            >
+                                <option value="">Select Major</option>
+                                {majorsWithCourses.map((m, idx) => (
+                                    <option key={idx} value={m.major}>{m.major}</option>
+                     ))}
+            </select>
+            {reportErrors.major && <p style={{ color: 'red' }}>{reportErrors.major}</p>}
+
+            {reportData.major && (
+                <div style={{ marginBottom: '10px' }}>
+                    <p style={{ fontWeight: 'bold' }}>Pick courses that helped:</p>
+                    {majorsWithCourses.find(m => m.major === reportData.major)?.courses.map((course, idx) => (
+                        <div key={idx}>
+                            <label>
+                                <input
+                                    type="checkbox"
+                                    value={course}
+                                    checked={reportData.courses.includes(course)}
+                                    onChange={(e) => {
+                                        const selected = reportData.courses.includes(course)
+                                            ? reportData.courses.filter(c => c !== course)
+                                            : [...reportData.courses, course];
+                                        setReportData({ ...reportData, courses: selected });
+                                    }}
+                                />
+                                {` ${course}`}
+                            </label>
                         </div>
                     ))}
+                    {reportErrors.courses && <p style={{ color: 'red' }}>{reportErrors.courses}</p>}
+                </div>
+            )}
+
+            <input
+                type="file"
+                accept=".pdf"
+                onChange={(e) => setReportData({ ...reportData, pdfFile: e.target.files[0] })}
+                style={{ marginBottom: '10px', borderColor: reportErrors.pdfFile ? 'red' : undefined }}
+            />
+            {reportErrors.pdfFile && <p style={{ color: 'red' }}>{reportErrors.pdfFile}</p>}
+
+            <button onClick={() => setShowReportPopup(false)} style={styles.popupButton}>Close</button>
+            <button
+                onClick={() => {
+                   const errors = {};
+                        if (!reportData.title.trim()) errors.title = "Title is required.";
+                        if (!reportData.introduction.trim()) errors.introduction = "Introduction is required.";
+                        if (!reportData.body.trim()) errors.body = "Body is required.";
+                        if (!reportData.major) errors.major = "Major must be selected.";
+                        if (reportData.courses.length === 0) errors.courses = "Select at least one course.";
+                        if (!reportData.pdfFile) errors.pdfFile = "Upload a PDF file.";
+
+                        setReportErrors(errors);
+
+                        if (Object.keys(errors).length === 0) {
+                            console.log("Report Submitted:", reportData);
+                            setReportSubmitted(true); // ✅ Mark as submitted
+                            setShowReportPopup(false); // ✅ Close the popup
+                        }
+                    
+
+                }}
+                style={styles.popupButton}
+            >
+                Save
+            </button>
+        </div>
+    </div>
+)}
+
                 </div>
             ) : (
                 <p style={styles.noResults}>No internships match your current filters or no internships recorded.</p>
@@ -383,6 +676,40 @@ const styles = {
         color: '#777',
         padding: '30px 0',
     },
+    popupOverlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+    },
+    popupContent: {
+        backgroundColor: '#fff',
+        padding: '20px',
+        borderRadius: '8px',
+        width: '90%',
+        maxWidth: '600px',
+        maxHeight: '80vh', // LIMIT HEIGHT
+        overflowY: 'auto',  // MAKE CONTENT SCROLLABLE
+        boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
+        position: 'relative',
+    },
+
+    popupButton: {
+        margin: '10px 5px 0 0',
+        padding: '8px 16px',
+        border: 'none',
+        borderRadius: '4px',
+        cursor: 'pointer',
+        backgroundColor: '#007bff',
+        color: '#fff',
+    },
+
 };
 
 export default MyInternshipsPage;

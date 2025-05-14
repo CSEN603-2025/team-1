@@ -16,6 +16,7 @@ import WorkshopPage from './workshop';
 import ViewWorkshopsPage from './viewworkshop';
 import MyInternshipsPage from './myinternships';
 import CompanyProfile from './companyprofile';
+import AllJobsPosted from './companyallpostedjobs';
 function App() {
   // Manage notification state
  const [notification, setNotification] = useState({ message: '', email: '' });
@@ -261,6 +262,9 @@ const isInitialLoad = useState(true);
         <Route path="/viewworkshop" element={<ViewWorkshopsPage />} />
         <Route path="/myinternships" element={<MyInternshipsPage />} />
         <Route path="/companyprofile" element={<CompanyProfile />} />
+        <Route path="/companyallpostedjobs" element={<AllJobsPosted />} />
+        
+        {/* Add more routes as needed */}
       </Routes>
 
       {/* Display Notification Message */}

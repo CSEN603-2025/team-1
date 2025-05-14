@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import {  getNotification, clearNotifications } from './notification';
+import { getNotification, clearNotifications } from './notification';
 
 function CompanyPage() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -26,6 +26,7 @@ function CompanyPage() {
   });
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [selectedJobApplicants, setSelectedJobApplicants] = useState(null);
+  const [currentJobIndex, setCurrentJobIndex] = useState(null); // Track which job we're viewing applicants for
   const [isApplicantsModalOpen, setIsApplicantsModalOpen] = useState(false);
   const [selectedApplicant, setSelectedApplicant] = useState(null);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -112,11 +113,6 @@ function CompanyPage() {
       description: '',
       industry: '',
     });
-    // const companies=JSON.parse(localStorage.getItem('companies')) || [];
-    // const company= companies.find(company => company.companyEmail === storedCompany.companyEmail);
-    // let jobs=company.jobs;
-    // jobs.push()
-
   };
 
   const handleJobInputChange = (e) => {
@@ -150,19 +146,18 @@ function CompanyPage() {
     });
 
     const companies = JSON.parse(localStorage.getItem('companies')) || [];
-  const companyIndex = companies.findIndex(company => company.companyEmail === storedCompany.companyEmail);
+    const companyIndex = companies.findIndex(company => company.companyEmail === storedCompany.companyEmail);
 
-  if (companyIndex !== -1) {
-    const company = companies[companyIndex];
-
-    const updatedCompany = {
-      ...company,
-      jobs: updatedJobs,  
-    };
-    companies[companyIndex] = updatedCompany;
-    localStorage.setItem('companies', JSON.stringify(companies));
-  }
-};
+    if (companyIndex !== -1) {
+      const company = companies[companyIndex];
+      const updatedCompany = {
+        ...company,
+        jobs: updatedJobs,  
+      };
+      companies[companyIndex] = updatedCompany;
+      localStorage.setItem('companies', JSON.stringify(companies));
+    }
+  };
 
   const handleEditJob = (index) => {
     setEditingIndex(index);
@@ -181,31 +176,34 @@ function CompanyPage() {
       job => !(job.companyEmail === storedCompany?.companyEmail && job.title === jobToDelete.title)
     );
     localStorage.setItem('allJobs', JSON.stringify(updatedAllJobs));
-     const companies = JSON.parse(localStorage.getItem('companies')) || [];
-     const companyIndex = companies.findIndex(company => company.companyEmail === storedCompany.companyEmail);
+    
+    const companies = JSON.parse(localStorage.getItem('companies')) || [];
+    const companyIndex = companies.findIndex(company => company.companyEmail === storedCompany.companyEmail);
     if (companyIndex !== -1) {
-    const company = companies[companyIndex];
-    const updatedCompanyJobs = company.jobs.filter(
-      job => !(job.title === jobToDelete.title)
-    );
-    const updatedCompany = {
-      ...company,
-      jobs: updatedCompanyJobs  // Update the company's jobs
-    };
-    companies[companyIndex] = updatedCompany; 
-    localStorage.setItem('companies', JSON.stringify(companies));  // Save to localStorage
-  }
+      const company = companies[companyIndex];
+      const updatedCompanyJobs = company.jobs.filter(
+        job => !(job.title === jobToDelete.title)
+      );
+      const updatedCompany = {
+        ...company,
+        jobs: updatedCompanyJobs
+      };
+      companies[companyIndex] = updatedCompany; 
+      localStorage.setItem('companies', JSON.stringify(companies));
+    }
   };
 
-  const handleViewApplicants = (job) => {
+  const handleViewApplicants = (job, index) => {
     setSelectedJobApplicants(job.applicants || []);
+    setCurrentJobIndex(index); // Store the job index
     setIsApplicantsModalOpen(true);
-    setApplicantFilter({ status: '', search: '' }); // Reset filters when opening
+    setApplicantFilter({ status: '', search: '' });
   };
 
   const handleCloseApplicantsModal = () => {
     setIsApplicantsModalOpen(false);
     setSelectedJobApplicants(null);
+    setCurrentJobIndex(null);
   };
 
   const handleViewApplicantProfile = (applicant) => {
@@ -218,9 +216,14 @@ function CompanyPage() {
     setSelectedApplicant(null);
   };
 
-  const handleUpdateApplicantStatus = (jobIndex, applicantEmail, newStatus) => {
+  const handleUpdateApplicantStatus = (applicantEmail, newStatus) => {
+    if (currentJobIndex === null || currentJobIndex >= postedJobs.length) {
+      console.error("Invalid job index:", currentJobIndex);
+      return;
+    }
+
     const updatedJobs = [...postedJobs];
-    const job = updatedJobs[jobIndex];
+    const job = updatedJobs[currentJobIndex];
     
     // Update status in company's job applicants
     if (job.applicants) {
@@ -230,13 +233,16 @@ function CompanyPage() {
         }
         return applicant;
       });
-      updatedJobs[jobIndex].applicants = updatedApplicants;
+      
+      updatedJobs[currentJobIndex].applicants = updatedApplicants;
     }
 
     // Update status in global applications (appliedInternships)
     const allApplied = JSON.parse(localStorage.getItem('appliedInternships') || '[]');
     const updatedApplied = allApplied.map(app => {
-      if (app.studentProfile?.email === applicantEmail && app.title === job.title && app.companyName === job.companyName) {
+      if (app.studentProfile?.email === applicantEmail && 
+          app.title === job.title && 
+          app.companyEmail === storedCompany?.companyEmail) {
         return { ...app, status: newStatus };
       }
       return app;
@@ -260,7 +266,6 @@ function CompanyPage() {
         const companyInternsKey = `companyInterns_${storedCompany.companyEmail}`;
         const currentInterns = JSON.parse(localStorage.getItem(companyInternsKey)) || [];
         
-        // Check if this intern is already in the list
         const isAlreadyAdded = currentInterns.some(intern => 
           intern.email === acceptedApplicant.email && 
           intern.jobTitle === job.title
@@ -275,7 +280,7 @@ function CompanyPage() {
             salary: job.salary || '',
             acceptedDate: new Date().toISOString(),
             companyName: storedCompany.companyName || storedCompany.companyEmail,
-            status: 'current' // Default status
+            status: 'current'
           };
           
           const updatedInterns = [...currentInterns, newIntern];
@@ -328,183 +333,268 @@ function CompanyPage() {
     });
   };
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const newNotifications = getNotification(storedCompany.companyEmail) || [];
+      setNotifications(newNotifications);
+    }, 3000); // check every 3 seconds
 
-   useEffect(() => {
-      const interval = setInterval(() => {
-          const newNotifications = getNotification(storedCompany.companyEmail) || [];
-          setNotifications(newNotifications);
-      }, 3000); // check every 3 seconds (you can adjust timing)
-  
-      return () => clearInterval(interval); // cleanup on unmount
+    return () => clearInterval(interval); // cleanup on unmount
   }, [storedCompany.companyEmail]);
   
-      const handleBellClick = () => {
-      const fetchedNotifications = getNotification(storedCompany.companyEmail) || [];
-      setNotifications(fetchedNotifications);
-      setIsPopupOpen(prev => !prev);
-  };
-     const handleClosePopup = () => {
-      clearNotifications(storedCompany.companyEmail); // clear from storage
-      setNotifications([]);              // clear from state
-      setIsPopupOpen(false);             // close popup
+  const handleBellClick = () => {
+    const fetchedNotifications = getNotification(storedCompany.companyEmail) || [];
+    setNotifications(fetchedNotifications);
+    setIsPopupOpen(prev => !prev);
   };
 
+  const handleClosePopup = () => {
+    clearNotifications(storedCompany.companyEmail); // clear from storage
+    setNotifications([]);              // clear from state
+    setIsPopupOpen(false);             // close popup
+  };
 
   return (
-    <div style={{ display: 'flex' }}>
-      {/* Sidebar */}
-      <div
+<div style={{ display: 'flex', backgroundColor: '#e6f2ff', minHeight: '100vh' }}>
+  {/* Sidebar - Dark Blue with modern styling */}
+  <div
+    style={{
+      width: menuOpen ? '180px' : '0',
+      height: '100vh',
+      backgroundColor: '#34495E', // Slightly darker blue for more sophistication
+      overflowX: 'hidden',
+      transition: 'all 0.3s ease-in-out',
+      padding: menuOpen ? '30px 20px' : '0',
+      boxShadow: menuOpen ? '4px 0 15px rgba(0, 0, 0, 0.1)' : 'none',
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      zIndex: 1000,
+      color: 'white',
+      borderRadius: '0 20px 20px 0', // Rounded right corners
+      borderRight: '1px solid rgba(255, 255, 255, 0.1)' // Subtle border
+    }}
+  >
+    {/* Close button (X) - positioned top right */}
+    {menuOpen && (
+      <button 
+        onClick={toggleMenu}
         style={{
-          width: menuOpen ? '250px' : '0',
-          height: '100vh',
-          backgroundColor: '#f8f9fa',
-          overflowX: 'hidden',
-          transition: '0.3s',
-          padding: menuOpen ? '20px' : '0',
-          boxShadow: menuOpen ? '2px 0 5px rgba(0,0,0,0.2)' : 'none',
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          zIndex: 1000,
+          position: 'absolute',
+          top: '20px',
+          right: '20px',
+          background: 'none',
+          border: 'none',
+          color: 'white',
+          fontSize: '24px',
+          cursor: 'pointer',
+          transition: 'transform 0.2s',
+          padding: '5px',
+          borderRadius: '50%',
+          width: '40px',
+          height: '40px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          ':hover': {
+            transform: 'rotate(90deg)',
+            backgroundColor: 'rgba(255, 255, 255, 0.1)'
+          }
         }}
       >
-        {menuOpen && (
-          <ul style={{ listStyleType: 'none', padding: 0, marginTop: '50px' }}>
-            <li style={{ margin: '15px 0' }}><Link to="/company/dashboard" state={{ storedCompany }}> Dashboard</Link></li>
-            <li style={{ margin: '15px 0' }}><Link to="/company/profile">Profile</Link></li>
-            <li style={{ margin: '15px 0' }}>
-              <button onClick={handleJobModalToggle} style={{ background: 'none', border: 'none', padding: 0, color: '#007bff', textDecoration: 'underline', cursor: 'pointer', font: 'inherit' }}>
-                Post a Job
-              </button>
-            </li>
-            <li><Link to="/allpostedjobs" state={{ storedCompany }}>All posted Jobs</Link></li>
-            <li style={{ margin: '15px 0' }}><Link to="/companyapplications">View Applications</Link></li>
-            <li style={{ margin: '15px 0' }}>
+        &times;
+      </button>
+    )}
+    
+    {menuOpen && (
+      <ul style={{ 
+        listStyleType: 'none', 
+        padding: 0, 
+        marginTop: '60px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '15px'
+      }}>
+        {[
+          { to: "/companyprofile", text: "Profile", onClick: null },
+          { text: "Post a Job", onClick: handleJobModalToggle },
+          { to: "/allpostedjobs", text: "All Posted Jobs", state: { storedCompany } },
+          { to: "/companyapplications", text: "View Applications" },
+          { text: "Your Interns", onClick: navigateToAcceptedInterns },
+          { text: "Logout", onClick: handleLogout }
+        ].map((item, index) => (
+          <li key={index} style={{ 
+            margin: '10px 0',
+            transition: 'all 0.2s ease',
+            ':hover': {
+              transform: 'translateX(5px)'
+            }
+          }}>
+            {item.to ? (
+              <Link 
+                to={item.to}
+                state={item.state || {}}
+                style={{ 
+                  color: 'white', 
+                  textDecoration: 'none',
+                  fontSize: '18px',
+                  fontWeight: '400',
+                  display: 'block',
+                  padding: '12px 15px',
+                  borderRadius: '8px',
+                  transition: 'all 0.2s',
+                  ':hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    fontSize: '19px'
+                  }
+                }}
+              >
+                {item.text}
+              </Link>
+            ) : (
               <button 
-                onClick={navigateToAcceptedInterns} 
+                onClick={item.onClick}
                 style={{ 
                   background: 'none', 
                   border: 'none', 
-                  padding: 0, 
-                  color: '#007bff', 
-                  textDecoration: 'underline', 
-                  cursor: 'pointer', 
-                  font: 'inherit' 
+                  color: 'white', 
+                  textDecoration: 'none',
+                  fontSize: '18px',
+                  fontWeight: '400',
+                  cursor: 'pointer',
+                  padding: '12px 15px',
+                  width: '100%',
+                  textAlign: 'left',
+                  borderRadius: '8px',
+                  transition: 'all 0.2s',
+                  ':hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    fontSize: '19px'
+                  }
                 }}
               >
-                Your Interns
+                {item.text}
               </button>
-            </li>
-            <li style={{ margin: '15px 0' }}><Link to="/company/settings">Settings</Link></li>
-            <li style={{ margin: '15px 0', cursor: 'pointer' }} onClick={handleLogout}>Logout</li>
-          </ul>
-        )}
-      </div>
-
-      {/* Main Content */}
-      <div style={{ marginLeft: menuOpen ? '250px' : '0', transition: 'margin-left 0.3s', padding: '20px', width: '100%' }}>
-        <button
-          onClick={toggleMenu}
-          style={{
-            fontSize: '28px',
-            fontWeight: 'bold',
-            background: 'transparent',
-            border: 'none',
-            cursor: 'pointer',
-            zIndex: 1101,
-            position: 'absolute',
-            top: '20px',
-            left: '20px',
-          }}
-        >
-          ☰
-        </button>
-
-        <h1>Welcome, {companyName}</h1>
-        <p>This is your company dashboard. Use the menu to navigate between sections.</p>
-      <div>
-  {/* Bell Icon */}
-  <div
-    onClick={handleBellClick}
-    style={{
-      cursor: 'pointer',
-      position: 'fixed', // This will keep the bell fixed in the top-right corner
-      top: '20px', // Adjust the distance from the top
-      right: '20px', // Adjust the distance from the right
-      fontSize: '40px', // Make the bell icon larger
-      color: '#1E90FF', // Blue shade for the bell icon
-      zIndex: 9999, // Ensure it stays on top of other elements
-    }}
-  >
-    <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="72" height="72"
-          fill="#385e72"
-          viewBox="0 0 24 24"
-        >
-          <path d="M12 2C10.34 2 9 3.34 9 5v1.07C6.72 7.25 5.14 9.36 5 12v5l-1 1v1h16v-1l-1-1v-5c-.14-2.64-1.72-4.75-4-5.93V5c0-1.66-1.34-3-3-3zm1 19h-2c0 1.1.9 2 2 2s2-.9 2-2z"/>
-        </svg>
-    {notifications.length > 0 && (
-      <span
-        style={{
-          position: 'absolute',
-          top: '-5px',
-          right: '-5px',
-          backgroundColor: 'red',
-          color: 'white',
-          borderRadius: '50%',
-          padding: '0.2em 0.5em',
-          fontSize: '14px', // Adjust notification number font size
-        }}
-      >
-        {notifications.length}
-      </span>
+            )}
+          </li>
+        ))}
+      </ul>
     )}
   </div>
 
-  {/* Popup Notification */}
-  {isPopupOpen && (
-    <div
+  {/* Main Content - Light Blue Background */}
+  <div style={{ 
+    marginLeft: menuOpen ? '250px' : '0', 
+    transition: 'margin-left 0.3s', 
+    padding: '20px', 
+    width: '100%',
+    backgroundColor: 'white' // Light blue background
+  }}>
+    {/* Menu Button - Dark Blue */}
+    <button
+      onClick={toggleMenu}
       style={{
+        fontSize: '28px',
+        fontWeight: 'bold',
+        background: 'transparent',
+        border: 'none',
+        cursor: 'pointer',
+        zIndex: 1101,
         position: 'absolute',
-        top: '50px',
-        right: '20px',
-        backgroundColor: 'white',
-        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-        padding: '20px',
-        borderRadius: '8px',
-        width: '250px',
-        zIndex: 9999,
+        top: '20px',
+        left: '20px',
+        color: '#34495E' // Dark blue color to match sidebar
       }}
     >
-      <button
-        onClick={handleClosePopup}
-        style={{
-          position: 'absolute',
-          top: '5px',
-          right: '5px',
-          background: 'transparent',
-          border: 'none',
-          fontSize: '16px',
-          cursor: 'pointer',
-        }}
-      >
-        X
-      </button>
-      <h4>Notifications</h4>
-      {notifications.length === 0 ? (
-        <p>No notifications</p>
-      ) : (
-        notifications.map((notification, index) => (
-          <div key={index} style={{ marginBottom: '10px' }}>
-            <p><strong>{notification.message}</strong></p>
-            <p>{new Date(notification.timestamp).toLocaleString()}</p>
+      ☰
+    </button>
+
+        <h1>Welcome, {companyName}</h1>
+        <p>This is your company dashboard. Use the menu to navigate between sections.</p>
+        
+        <div>
+          {/* Bell Icon */}
+          <div
+            onClick={handleBellClick}
+            style={{
+              cursor: 'pointer',
+              position: 'fixed',
+              top: '20px',
+              right: '20px',
+              fontSize: '40px',
+              color: '#1E90FF',
+              zIndex: 9999,
+            }}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="72" height="72"
+              fill="#385e72"
+              viewBox="0 0 24 24"
+            >
+              <path d="M12 2C10.34 2 9 3.34 9 5v1.07C6.72 7.25 5.14 9.36 5 12v5l-1 1v1h16v-1l-1-1v-5c-.14-2.64-1.72-4.75-4-5.93V5c0-1.66-1.34-3-3-3zm1 19h-2c0 1.1.9 2 2 2s2-.9 2-2z"/>
+            </svg>
+            {notifications.length > 0 && (
+              <span
+                style={{
+                  position: 'absolute',
+                  top: '-5px',
+                  right: '-5px',
+                  backgroundColor: 'red',
+                  color: 'white',
+                  borderRadius: '50%',
+                  padding: '0.2em 0.5em',
+                  fontSize: '14px',
+                }}
+              >
+                {notifications.length}
+              </span>
+            )}
           </div>
-        ))
-      )}
-    </div>
-  )}
-</div>
+
+          {/* Popup Notification */}
+          {isPopupOpen && (
+            <div
+              style={{
+                position: 'absolute',
+                top: '50px',
+                right: '20px',
+                backgroundColor: 'white',
+                boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+                padding: '20px',
+                borderRadius: '8px',
+                width: '250px',
+                zIndex: 9999,
+              }}
+            >
+              <button
+                onClick={handleClosePopup}
+                style={{
+                  position: 'absolute',
+                  top: '5px',
+                  right: '5px',
+                  background: 'transparent',
+                  border: 'none',
+                  fontSize: '16px',
+                  cursor: 'pointer',
+                }}
+              >
+                X
+              </button>
+              <h4>Notifications</h4>
+              {notifications.length === 0 ? (
+                <p>No notifications</p>
+              ) : (
+                notifications.map((notification, index) => (
+                  <div key={index} style={{ marginBottom: '10px' }}>
+                    <p><strong>{notification.message}</strong></p>
+                    <p>{new Date(notification.timestamp).toLocaleString()}</p>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+        </div>
 
         {/* Filter Section */}
         <div style={{ marginBottom: '20px' }}>
@@ -573,7 +663,7 @@ function CompanyPage() {
                 <td>
                   <button onClick={() => handleEditJob(index)}>Edit</button>
                   <button onClick={() => handleDeleteJob(index)}>Delete</button>
-                  <button onClick={() => handleViewApplicants(job)}>Applicants Details</button>
+                  <button onClick={() => handleViewApplicants(job, index)}>Applicants Details</button>
                 </td>
               </tr>
             ))}
@@ -632,7 +722,7 @@ function CompanyPage() {
                   <label>Industry</label>
                   <input type="text" name="industry" value={jobData.industry} onChange={handleJobInputChange} style={{ width: '100%', padding: '8px', borderRadius: '4px' }} />
                 </div>
-                <button type="submit" style={{ backgroundColor: '#007bff', color: 'white', padding: '10px', width: '100%' }}>
+                <button type="submit" style={{ backgroundColor: '#007bff', color: 'white', padding: '10px', width: '100%', }}>
                   {editingIndex !== null ? 'Update Job' : 'Post Job'}
                 </button>
               </form>
@@ -851,13 +941,8 @@ function CompanyPage() {
                 <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
                   <button 
                     onClick={() => {
-                      const jobIndex = postedJobs.findIndex(job => 
-                        job.applicants?.some(app => app.email === selectedApplicant.email)
-                      );
-                      if (jobIndex !== -1) {
-                        handleUpdateApplicantStatus(jobIndex, selectedApplicant.email, 'finalized');
-                        setSelectedApplicant({...selectedApplicant, status: 'finalized'});
-                      }
+                      handleUpdateApplicantStatus(selectedApplicant.email, 'finalized');
+                      setSelectedApplicant({...selectedApplicant, status: 'finalized'});
                     }}
                     style={{ padding: '8px 12px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px' }}
                   >
@@ -865,13 +950,8 @@ function CompanyPage() {
                   </button>
                   <button 
                     onClick={() => {
-                      const jobIndex = postedJobs.findIndex(job => 
-                        job.applicants?.some(app => app.email === selectedApplicant.email)
-                      );
-                      if (jobIndex !== -1) {
-                        handleUpdateApplicantStatus(jobIndex, selectedApplicant.email, 'accepted');
-                        setSelectedApplicant({...selectedApplicant, status: 'accepted'});
-                      }
+                      handleUpdateApplicantStatus(selectedApplicant.email, 'accepted');
+                      setSelectedApplicant({...selectedApplicant, status: 'accepted'});
                     }}
                     style={{ padding: '8px 12px', backgroundColor: '#28a745', color: 'white', border: 'none', borderRadius: '4px' }}
                   >
@@ -879,13 +959,8 @@ function CompanyPage() {
                   </button>
                   <button 
                     onClick={() => {
-                      const jobIndex = postedJobs.findIndex(job => 
-                        job.applicants?.some(app => app.email === selectedApplicant.email)
-                      );
-                      if (jobIndex !== -1) {
-                        handleUpdateApplicantStatus(jobIndex, selectedApplicant.email, 'rejected');
-                        setSelectedApplicant({...selectedApplicant, status: 'rejected'});
-                      }
+                      handleUpdateApplicantStatus(selectedApplicant.email, 'rejected');
+                      setSelectedApplicant({...selectedApplicant, status: 'rejected'});
                     }}
                     style={{ padding: '8px 12px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '4px' }}
                   >

@@ -65,7 +65,7 @@ function ALLJobs() {
       fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
       color: '#333',
     }}>
-      <h1 style={{ textAlign: 'center', marginBottom: '30px', color: '#007bff' }}>Available Internships</h1>
+      <h1 style={{ textAlign: 'center', marginBottom: '30px', color: '#34495E' }}>Available Internships</h1>
 
       <div style={{ marginBottom: '20px', display: 'flex', gap: '15px', flexWrap: 'wrap', alignItems: 'center' }}>
         {/* Search Input */}
@@ -123,7 +123,7 @@ function ALLJobs() {
           overflow: 'hidden',
           minWidth: '350px',
         }}>
-          <thead style={{ backgroundColor: '#007bff', color: 'white' }}>
+          <thead style={{ backgroundColor: '#34495E', color: 'white' }}>
             <tr>
               <th style={{ padding: '12px 15px', textAlign: 'left' }}>Company</th>
               <th style={{ padding: '12px 15px', textAlign: 'left' }}>Title</th>

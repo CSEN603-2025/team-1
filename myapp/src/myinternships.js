@@ -88,92 +88,112 @@ const majorsWithCourses = [
   }
 ];
 
-function MyInternshipsPage() {
-    const location = useLocation();
-    const navigate = useNavigate();
-    const student = location.state?.student; // { email: '...', name: '...' }
+const defaultEvaluationState = {
+    text: '',
+    recommend: false,
+    submitted: false,
+};
 
-    const [allInternships, setAllInternships] = useState([]); // To store all fetched internships
-    const [internships, setInternships] = useState([]); // To store the internships to display
-    const [searchTerm, setSearchTerm] = useState('');
-    const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'current', 'completed'
-    const [filterStartDate, setFilterStartDate] = useState('');
-    const [filterEndDate, setFilterEndDate] = useState('');
-    const [companyname,setcompanyName] = useState('');
-    const [companies, setCompanies] = useState([]); // To store the companies data
-    const [showEvaluationPopup, setShowEvaluationPopup] = useState(false);
-    const [showReportPopup, setShowReportPopup] = useState(false);
-    const [reportErrors, setReportErrors] = useState({});
-    const [reportSubmitted, setReportSubmitted] = useState(false);
-    const [reportData, setReportData] = useState({
+const defaultReportState = {
     title: "",
     introduction: "",
     body: "",
     major: "",
     courses: [],
-    pdfFile: null
-});
-        
-    const [evaluationData, setEvaluationData] = useState({
-        text: '',
-        recommend: false,
-    });
+    pdfFile: null,
+    pdfFileName: "",
+    submitted: false,       // Is there a saved draft?
+    finalSubmitted: false, // Has a version of this report ever been finalized by the student?
+    status: "not_submitted", // "not_submitted", "draft_saved", "pending", "accepted", "rejected", "flagged", "edited_after_final", "pending_appeal"
+    evaluatorComments: "",
+    appealMessage: "",
+    appealSubmitted: false,
+};
+
+
+function MyInternshipsPage() {
+    const location = useLocation();
+    const navigate = useNavigate();
+    const student = location.state?.student;
+
+    const [allInternships, setAllInternships] = useState([]);
+    const [internships, setInternships] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [statusFilter, setStatusFilter] = useState('all');
+    const [filterStartDate, setFilterStartDate] = useState('');
+    const [filterEndDate, setFilterEndDate] = useState('');
+    const [companies, setCompanies] = useState([]);
+
+    const [showEvaluationPopup, setShowEvaluationPopup] = useState(false);
+    const [currentInternshipIdForPopup, setCurrentInternshipIdForPopup] = useState(null);
+    
+    const [popupEvaluationData, setPopupEvaluationData] = useState({...defaultEvaluationState});
     const [evaluationError, setEvaluationError] = useState('');
-    const [evaluationSubmitted, setEvaluationSubmitted] = useState(false);
 
+    const [showReportPopup, setShowReportPopup] = useState(false);
+    const [popupReportData, setPopupReportData] = useState({...defaultReportState}); 
+    const [reportErrors, setReportErrors] = useState({});
+    
+    const [showFinalReportView, setShowFinalReportView] = useState(false);
+
+    const [showCommentsPopup, setShowCommentsPopup] = useState(false);
+    const [commentsToView, setCommentsToView] = useState("");
+    const [showAppealPopup, setShowAppealPopup] = useState(false);
+    const [appealMessageInput, setAppealMessageInput] = useState("");
+    const [appealError, setAppealError] = useState("");
         
-
     useEffect(() => {
         if (student?.email) {
-            const foundInternships = [];
+            let foundInternships = [];
             const foundCompanies = [];
-            const allcomp= JSON.parse(localStorage.getItem('companies'));
-            console.log(allcomp);
+            const allcomp = JSON.parse(localStorage.getItem('companies')) || [];
+            
             for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);
-
-                if (key.startsWith('companyInterns_')) {
+                if (key && key.startsWith('companyInterns_')) {
                     const companyEmail = key.split('companyInterns_')[1];
-                    const interns = JSON.parse(localStorage.getItem(key)) || [];
-                    const company=allcomp.filter(c=>c.companyEmail===companyEmail);
-                    const name= company[0].companyName;
-                    setcompanyName(name);
-                    console.log(name);
+                    const internsDataFromStorage = JSON.parse(localStorage.getItem(key)) || [];
+                    const company = allcomp.find(c => c.companyEmail === companyEmail);
+                    const companyName = company ? company.companyName : 'N/A';
                   
-                    interns.forEach(intern => {
+                    internsDataFromStorage.forEach(intern => {
                         if (intern.email === student.email) {
+                            const uniqueInternshipId = `${student.email}_${intern.jobTitle}_${companyEmail}_${intern.startDate}`.replace(/\s+/g, '_');
+                            
+                            const savedEvaluation = JSON.parse(localStorage.getItem(`evaluation_${uniqueInternshipId}`)) || { ...defaultEvaluationState };
+                            let savedReport = JSON.parse(localStorage.getItem(`report_${uniqueInternshipId}`));
+                            if (savedReport) {
+                                savedReport = { ...defaultReportState, ...savedReport, pdfFile: null };
+                            } else {
+                                savedReport = { ...defaultReportState };
+                            }
+
                             foundInternships.push({
                                 ...intern,
-                                companyEmail,// Add companyEmail to the internship object
-                                companyname,
-                            
+                                uniqueInternshipId,
+                                companyEmail,
+                                companyName,
+                                evaluation: savedEvaluation,
+                                report: savedReport,
                             });
-                            // Add to companies list if not already present
                             if (!foundCompanies.some(c => c.companyEmail === companyEmail)) {
-                                foundCompanies.push({ companyEmail });
+                                foundCompanies.push({ companyEmail, companyName });
                             }
                         }
                     });
                 }
             }
-            setAllInternships(foundInternships); // Store all fetched internships
-            setCompanies(foundCompanies); // Set the companies array
-        } else {
-            // console.warn("Student data not found in location state. Using fallback or redirecting.");
+            setAllInternships(foundInternships);
+            setCompanies(foundCompanies);
         }
-    }, [student, companyname]);
-
-    // Log the companies array
-    useEffect(() => {
-        // console.log("Companies associated with the student:", companies);
-    }, [companies]);
+    }, [student]);
 
     const processedInternships = useMemo(() => {
         return allInternships.map(internship => ({
             ...internship,
-            derivedStatus: internship.status ,
+            derivedStatus: internship.status , 
             startDateObj: new Date(internship.startDate),
-            endDateObj: internship.endDate ? new Date(internship.endDate) : null
+            endDateObj: internship.endDate ? new Date(internship.endDate) : null,
         }));
     }, [allInternships]);
 
@@ -182,12 +202,12 @@ function MyInternshipsPage() {
         const filtered = processedInternships.filter(internship =>
             internship.jobTitle.toLowerCase().includes(lowerSearchTerm) ||
             (internship.companyEmail && internship.companyEmail.toLowerCase().includes(lowerSearchTerm)) ||
-            (internship.companyname?.toLowerCase().includes(lowerSearchTerm))// Search by company email
+            (internship.companyName?.toLowerCase().includes(lowerSearchTerm))
         );
         setInternships(filtered);
     };
 
-    const filteredByStatus = useMemo(() => {
+     const filteredByStatus = useMemo(() => {
         return internships.filter(internship =>
             statusFilter === 'all' || internship.derivedStatus === statusFilter
         );
@@ -200,7 +220,7 @@ function MyInternshipsPage() {
                 const filterStart = new Date(filterStartDate);
                 const filterEnd = new Date(filterEndDate);
                 if (filterStart > filterEnd) {
-                    matchesDate = true; // Or provide feedback to user
+                    matchesDate = true; 
                 } else {
                     const internStart = internship.startDateObj;
                     const internEnd = internship.endDateObj || new Date('2999-12-31');
@@ -223,36 +243,261 @@ function MyInternshipsPage() {
         setStatusFilter('all');
         setFilterStartDate('');
         setFilterEndDate('');
-        setInternships(processedInternships); // Reset to all fetched internships
+        setInternships(processedInternships); 
     };
 
     useEffect(() => {
-        // Apply initial filters when processedInternships change (after fetching)
         setInternships(processedInternships);
     }, [processedInternships]);
 
-    // Apply status and date filters whenever their states change
     useEffect(() => {
-        let tempFiltered = processedInternships.filter(internship =>
+        let tempFiltered = processedInternships;
+        if (searchTerm) {
+            const lowerSearchTerm = searchTerm.toLowerCase();
+            tempFiltered = tempFiltered.filter(internship =>
+                internship.jobTitle.toLowerCase().includes(lowerSearchTerm) ||
+                (internship.companyEmail && internship.companyEmail.toLowerCase().includes(lowerSearchTerm)) ||
+                (internship.companyName?.toLowerCase().includes(lowerSearchTerm))
+            );
+        }
+        tempFiltered = tempFiltered.filter(internship =>
             statusFilter === 'all' || internship.derivedStatus === statusFilter
         );
-
         if (filterStartDate) {
             const filterStart = new Date(filterStartDate);
             tempFiltered = tempFiltered.filter(internship =>
                 (internship.endDateObj || new Date('2999-12-31')) >= filterStart
             );
         }
-
         if (filterEndDate) {
             const filterEnd = new Date(filterEndDate);
             tempFiltered = tempFiltered.filter(internship =>
                 internship.startDateObj <= filterEnd
             );
         }
-
         setInternships(tempFiltered);
-    }, [statusFilter, filterStartDate, filterEndDate, processedInternships]);
+    }, [statusFilter, filterStartDate, filterEndDate, processedInternships, searchTerm]);
+
+    const handleDownloadSampleReport = () => {
+        const link = document.createElement('a');
+        const publicUrl = process.env.PUBLIC_URL || '';
+        link.href = `${publicUrl}/Report.pdf`;
+        link.setAttribute('download', 'Report.pdf');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    const handleOpenEvaluationPopup = (internshipId) => {
+        const internshipToEdit = allInternships.find(intern => intern.uniqueInternshipId === internshipId);
+        if (internshipToEdit) {
+            setCurrentInternshipIdForPopup(internshipId);
+            setPopupEvaluationData({ ...internshipToEdit.evaluation });
+            setEvaluationError('');
+            setShowEvaluationPopup(true);
+        }
+    };
+
+    const handleOpenReportForm = (internshipId) => {
+        const internshipToEdit = allInternships.find(intern => intern.uniqueInternshipId === internshipId);
+        if (internshipToEdit) {
+            setCurrentInternshipIdForPopup(internshipId);
+            let reportDataForPopup = { ...internshipToEdit.report, pdfFile: null };
+
+            // If student clicks "Create New Version" (which calls this function), 
+            // or if opening a report that was never started.
+            if (internshipToEdit.report.finalSubmitted || 
+                (internshipToEdit.report.status === "not_submitted" && !internshipToEdit.report.submitted)
+            ) { 
+                reportDataForPopup = {
+                    // If it was final, keep content, otherwise start fresh
+                    title: internshipToEdit.report.finalSubmitted ? internshipToEdit.report.title : "",
+                    introduction: internshipToEdit.report.finalSubmitted ? internshipToEdit.report.introduction : "",
+                    body: internshipToEdit.report.finalSubmitted ? internshipToEdit.report.body : "",
+                    major: internshipToEdit.report.finalSubmitted ? internshipToEdit.report.major : "",
+                    courses: internshipToEdit.report.finalSubmitted ? [...internshipToEdit.report.courses] : [],
+                    pdfFileName: internshipToEdit.report.finalSubmitted ? internshipToEdit.report.pdfFileName : "",
+                    pdfFile: null, // Always null when opening form initially
+
+                    submitted: false, // This new edit is a draft
+                    finalSubmitted: internshipToEdit.report.finalSubmitted, // Preserve historical finality
+                    status: internshipToEdit.report.finalSubmitted ? "edited_after_final" : "not_submitted",
+                    evaluatorComments: "", 
+                    appealMessage: "",
+                    appealSubmitted: false,
+                };
+            }
+            // If it's an existing draft (submitted=true, finalSubmitted=false), it loads as is from reportDataForPopup init.
+            
+            setPopupReportData(reportDataForPopup);
+            setReportErrors({});
+            setShowReportPopup(true);
+        }
+    };
+    
+    const handleOpenFinalReportView = (internshipId) => {
+        const internshipToView = allInternships.find(intern => intern.uniqueInternshipId === internshipId);
+        if (internshipToView) {
+            setCurrentInternshipIdForPopup(internshipId);
+            setPopupReportData({ ...internshipToView.report }); 
+            setShowFinalReportView(true);
+        }
+    };
+
+    const handleSaveEvaluation = () => {
+        if (!popupEvaluationData.text.trim()) {
+            setEvaluationError("Evaluation cannot be empty.");
+            return;
+        }
+        const updatedEvaluation = { ...popupEvaluationData, submitted: true };
+        localStorage.setItem(`evaluation_${currentInternshipIdForPopup}`, JSON.stringify(updatedEvaluation));
+        setAllInternships(prevInternships => 
+            prevInternships.map(intern => 
+                intern.uniqueInternshipId === currentInternshipIdForPopup 
+                ? { ...intern, evaluation: updatedEvaluation }
+                : intern
+            )
+        );
+        setEvaluationError('');
+        setShowEvaluationPopup(false);
+    };
+
+    const handleSaveReport = () => {
+        const errors = {};
+        if (!popupReportData.title.trim()) errors.title = "Title is required.";
+        if (!popupReportData.introduction.trim()) errors.introduction = "Introduction is required.";
+        if (!popupReportData.body.trim()) errors.body = "Body is required.";
+        if (!popupReportData.major) errors.major = "Major must be selected.";
+        if (popupReportData.courses.length === 0) errors.courses = "Select at least one course.";
+        if (!popupReportData.pdfFile && !popupReportData.pdfFileName) errors.pdfFile = "Upload a PDF file.";
+        
+        setReportErrors(errors);
+
+        if (Object.keys(errors).length === 0) {
+            const originalInternshipReport = allInternships.find(intern => intern.uniqueInternshipId === currentInternshipIdForPopup).report;
+            
+            const reportToSaveInLocalStorage = {
+                ...popupReportData, 
+                submitted: true,    
+                finalSubmitted: originalInternshipReport.finalSubmitted, 
+                pdfFileName: popupReportData.pdfFile ? popupReportData.pdfFile.name : popupReportData.pdfFileName,
+                pdfFile: null,
+                status: popupReportData.status === "edited_after_final" ? "edited_after_final" : "draft_saved",
+                // Reset eval fields only if it's a new version of a previously final report
+                evaluatorComments: popupReportData.status === "edited_after_final" ? "" : originalInternshipReport.evaluatorComments,
+                appealMessage: popupReportData.status === "edited_after_final" ? "" : originalInternshipReport.appealMessage,
+                appealSubmitted: popupReportData.status === "edited_after_final" ? false : originalInternshipReport.appealSubmitted,
+            };
+
+            localStorage.setItem(`report_${currentInternshipIdForPopup}`, JSON.stringify(reportToSaveInLocalStorage));
+            
+            setAllInternships(prevInternships => 
+                prevInternships.map(intern => 
+                    intern.uniqueInternshipId === currentInternshipIdForPopup 
+                    ? { 
+                        ...intern, 
+                        report: { 
+                            ...reportToSaveInLocalStorage, 
+                            pdfFile: popupReportData.pdfFile || originalInternshipReport.pdfFile 
+                        } 
+                      }
+                    : intern
+                )
+            );
+            setShowReportPopup(false);
+        }
+    };
+
+    const handleFinalReportSubmit = () => {
+        const internshipToFinalize = allInternships.find(intern => intern.uniqueInternshipId === currentInternshipIdForPopup);
+
+        if (internshipToFinalize) {
+            const reportBeingFinalized = { 
+                ...internshipToFinalize.report, 
+                finalSubmitted: true,      
+                status: "pending",         
+                evaluatorComments: "",     
+                appealMessage: "",
+                appealSubmitted: false,
+                pdfFile: null              
+            };
+            localStorage.setItem(`report_${currentInternshipIdForPopup}`, JSON.stringify(reportBeingFinalized));
+            setAllInternships(prevInternships => 
+                prevInternships.map(intern => {
+                    if (intern.uniqueInternshipId === currentInternshipIdForPopup) {
+                        return { 
+                            ...intern, 
+                            report: { 
+                                ...reportBeingFinalized, 
+                                pdfFile: internshipToFinalize.report.pdfFile 
+                            } 
+                        };
+                    }
+                    return intern;
+                })
+            );
+        }
+        setShowFinalReportView(false);
+    };
+
+    const handleOpenCommentsPopup = (comments) => {
+        setCommentsToView(comments);
+        setShowCommentsPopup(true);
+    };
+
+    const handleOpenAppealPopup = (internshipId) => {
+        setCurrentInternshipIdForPopup(internshipId);
+        setAppealMessageInput("");
+        setAppealError("");
+        setShowAppealPopup(true);
+    };
+
+    const handleSaveAppeal = () => {
+        if (!appealMessageInput.trim()) {
+            setAppealError("Appeal message cannot be empty.");
+            return;
+        }
+        const internshipToUpdate = allInternships.find(intern => intern.uniqueInternshipId === currentInternshipIdForPopup);
+        if (internshipToUpdate) {
+            const appealedReport = { 
+                ...internshipToUpdate.report, 
+                appealMessage: appealMessageInput, 
+                appealSubmitted: true,
+                status: "pending_appeal",
+                pdfFile: null 
+            };
+            localStorage.setItem(`report_${currentInternshipIdForPopup}`, JSON.stringify(appealedReport));
+            setAllInternships(prevInternships => 
+                prevInternships.map(intern => 
+                    intern.uniqueInternshipId === currentInternshipIdForPopup 
+                    ? { ...intern, report: { ...appealedReport, pdfFile: internshipToUpdate.report.pdfFile } }
+                    : intern
+                )
+            );
+        }
+        setShowAppealPopup(false);
+        setAppealMessageInput("");
+    };
+
+    const simulateAdminUpdate = (internshipId, newStatus, comments = "") => {
+        const internshipToUpdate = allInternships.find(intern => intern.uniqueInternshipId === internshipId);
+        if (internshipToUpdate) {
+            const updatedReportByAdmin = {
+                ...internshipToUpdate.report,
+                status: newStatus,
+                evaluatorComments: comments,
+                appealSubmitted: newStatus === "accepted" ? true : (newStatus === "rejected" || newStatus === "flagged" ? false : internshipToUpdate.report.appealSubmitted),
+                appealMessage: (newStatus === "rejected" || newStatus === "flagged") ? internshipToUpdate.report.appealMessage : (newStatus === "accepted" ? "Appeal accepted." : ""),
+                pdfFile: null 
+            };
+            localStorage.setItem(`report_${internshipId}`, JSON.stringify(updatedReportByAdmin));
+            setAllInternships(prev => prev.map(i => 
+                i.uniqueInternshipId === internshipId 
+                ? {...i, report: {...updatedReportByAdmin, pdfFile: internshipToUpdate.report.pdfFile}} 
+                : i
+            ));
+        }
+    };
 
     if (!student?.email) {
         return (
@@ -262,26 +507,30 @@ function MyInternshipsPage() {
             </div>
         );
     }
+    
+    const reportForFinalView = allInternships.find(
+        (intern) => intern.uniqueInternshipId === currentInternshipIdForPopup
+    )?.report || defaultReportState;
 
     return (
         <div style={styles.pageContainer}>
             <button onClick={() => navigate(-1)} style={styles.backButton}>
-                &larr; Back to Dashboard
+                ← Back to Dashboard
             </button>
             <h1 style={styles.mainHeader}>My Internships</h1>
             <p style={styles.studentIdentifier}>
                 Viewing internships for: <strong>{student.name || student.email}</strong>
             </p>
 
-            {/* Display the companies array */}
             <div style={{ marginBottom: '20px', border: '1px solid #eee', padding: '15px', borderRadius: '4px', backgroundColor: '#f9f9f9' }}>
                 <h3>Companies with your internships:</h3>
                 {companies.length > 0 ? (
                     <ul>
                         {companies.map((company, index) => (
                             <li key={index}>
-                                <strong>Company Email:</strong> {company.companyEmail}
-                                <strong>Company Name:</strong> {companyname}
+                                <strong>Company Name:</strong> {company.companyName || 'N/A'}
+                                {' - '}
+                                <strong>Email:</strong> {company.companyEmail}
                             </li>
                         ))}
                     </ul>
@@ -291,9 +540,9 @@ function MyInternshipsPage() {
             </div>
 
             <div style={styles.filtersSection}>
-                <input
+                 <input
                     type="text"
-                    placeholder="Search by Job Title or Company Name..."
+                    placeholder="Search by Job Title or Company..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     style={styles.searchInput}
@@ -338,10 +587,10 @@ function MyInternshipsPage() {
             {filteredByDate.length > 0 ? (
                 <div style={styles.internshipList}>
                     {filteredByDate.map(internship => (
-                        <div key={internship.id} style={styles.internshipCard}>
+                        <div key={internship.uniqueInternshipId} style={styles.internshipCard}>
                             <h2 style={styles.internshipTitle}>{internship.jobTitle}</h2>
-                            <p><strong>Company Name:</strong>{internship.companyName}</p>
-                            <p style={styles.companyName}>Company Email:{internship.companyEmail}</p> {/* Display company email */}
+                            <p><strong>Company Name:</strong> {internship.companyName || 'N/A'}</p>
+                            <p style={styles.companyName}><strong>Company Email:</strong> {internship.companyEmail}</p>
                             <p style={styles.dates}>
                                 <strong>Start:</strong> {internship.startDateObj.toLocaleDateString()}
                                 {internship.endDateObj && (
@@ -349,187 +598,319 @@ function MyInternshipsPage() {
                                 )}
                             </p>
                             <p style={styles.status}>
-                                <strong>Status:</strong>
+                                <strong>Internship Status:</strong>
                                 <span style={internship.derivedStatus === 'current' ? styles.statusCurrent : styles.statusCompleted}>
                                     {internship.derivedStatus.charAt(0).toUpperCase() + internship.derivedStatus.slice(1)}
                                 </span>
                             </p>
                             <p style={styles.description}>{internship.description}</p>
+                            
                             {internship.derivedStatus === 'completed' && (
                             <div style={{ marginTop: '10px' }}>
                                 <button
-                                    onClick={() => setShowEvaluationPopup(true)}
+                                    onClick={() => handleOpenEvaluationPopup(internship.uniqueInternshipId)}
                                     style={styles.popupButton}
                                 >
-                                    {evaluationSubmitted ? "Edit Company Evaluation" : "Add Company Evaluation"}
+                                    {internship.evaluation.submitted ? "Edit Company Evaluation" : "Add Company Evaluation"}
                                 </button>
 
-                                <button
-                                    onClick={() => setShowReportPopup(true)}
-                                    style={styles.popupButton}
-                                >
-                                    {reportSubmitted ? "Edit Internship Report" : "Add Internship Report"}
+                                {/* Report Section */}
+                                <div style={{ marginTop: '10px', padding: '10px', borderTop: '1px solid #eee' }}>
+                                    <h4 style={{marginTop: 0, marginBottom: '10px'}}>Internship Report</h4>
                                     
-                                </button>
-                                
+                                    {/* Case 1: Report has been finalized and has a definitive evaluation status (not a draft) */}
+                                    {internship.report.finalSubmitted && 
+                                     !['not_submitted', 'draft_saved', 'edited_after_final'].includes(internship.report.status) ? (
+                                        <div>
+                                            <p>
+                                                <strong>Report Status: </strong> 
+                                                <span style={styles.reportStatusText(internship.report.status)}>
+                                                    {internship.report.status.replace(/_/g, " ").toUpperCase()}
+                                                </span>
+                                            </p>
+                                            {['rejected', 'flagged'].includes(internship.report.status) && internship.report.evaluatorComments && (
+                                                <button 
+                                                    onClick={() => handleOpenCommentsPopup(internship.report.evaluatorComments)}
+                                                    style={{...styles.popupButton, backgroundColor: '#ffc107', color: '#212529', marginRight: '10px'}}
+                                                >
+                                                    View Comments
+                                                </button>
+                                            )}
+                                            {['rejected', 'flagged'].includes(internship.report.status) && !internship.report.appealSubmitted && (
+                                                <button 
+                                                    onClick={() => handleOpenAppealPopup(internship.uniqueInternshipId)}
+                                                    style={{...styles.popupButton, backgroundColor: '#dc3545'}}
+                                                >
+                                                    Appeal Report
+                                                </button>
+                                            )}
+                                            {internship.report.appealSubmitted && (
+                                                <p style={{color: 'blue', display: 'inline-block', marginLeft: '10px'}}>
+                                                    Appeal Submitted.
+                                                    {internship.report.status !== 'pending_appeal' && 
+                                                     ` Current Report Status: ${internship.report.status.replace(/_/g, " ").toUpperCase()}`}
+                                                </p>
+                                            )}
+                                            {/* No button to "Create New Version" here. If admin wants student to resubmit, 
+                                                they would change status or communicate, student doesn't initiate new version from here.
+                                            */}
+                                        </div>
+                                    ) : (
+                                        // Case 2: Report is a draft, or an edit of a previous final, or not started
+                                        <>
+                                            <button
+                                                onClick={() => handleOpenReportForm(internship.uniqueInternshipId)}
+                                                style={styles.popupButton}
+                                            >
+                                                {internship.report.status === "not_submitted" && !internship.report.submitted ? "Add Internship Report" :
+                                                 internship.report.status === "edited_after_final" ? "Edit New Version Draft" :
+                                                 "Edit Report Draft"
+                                                }
+                                            </button>
+
+                                            {internship.report.submitted && ( 
+                                                <button
+                                                    onClick={() => handleOpenFinalReportView(internship.uniqueInternshipId)}
+                                                    style={{ ...styles.popupButton, backgroundColor: '#28a745' }}
+                                                >
+                                                    View and Submit Finalized Report
+                                                </button>
+                                            )}
+
+                                            {internship.report.status === "not_submitted" && !internship.report.submitted && (
+                                                <p style={{fontSize: '0.9em', color: '#777', marginTop: '5px'}}>No report draft started.</p>
+                                            )}
+                                             {internship.report.status === "edited_after_final" && internship.report.submitted && (
+                                                <p style={{fontSize: '0.9em', color: styles.reportStatusText("edited_after_final").backgroundColor, marginTop: '5px', padding: '3px', borderRadius: '3px', display:'inline-block', color:'white'}}>
+                                                    Editing a new version of a previously finalized report. Save and then "View and Submit" to finalize this new version.
+                                                </p>
+                                            )}
+                                        </>
+                                    )}
+                                </div>
                             </div>
                         )}
 
+                        {internship.derivedStatus === 'completed' && internship.report.finalSubmitted && (
+                            <div style={{ border: '1px dashed red', marginTop: '10px', padding: '5px', fontSize: '0.8em' }}>
+                                <small>Debug Admin Actions for "{internship.jobTitle}":</small><br/>
+                                <button onClick={() => simulateAdminUpdate(internship.uniqueInternshipId, 'accepted', 'Great job!')} style={styles.debugButton}>Accept</button>
+                                <button onClick={() => simulateAdminUpdate(internship.uniqueInternshipId, 'rejected', 'Needs more detail in section X.')} style={styles.debugButton}>Reject</button>
+                                <button onClick={() => simulateAdminUpdate(internship.uniqueInternshipId, 'flagged', 'Plagiarism concern in intro.')} style={styles.debugButton}>Flag</button>
+                                <button onClick={() => simulateAdminUpdate(internship.uniqueInternshipId, 'pending')} style={styles.debugButton}>Reset to Pending</button>
+                            </div>
+                        )}
                         </div>
-                        
                     ))}
+
                     {showEvaluationPopup && (
                         <div style={styles.popupOverlay}>
                             <div style={styles.popupContent}>
                                 <h3>Company Evaluation</h3>
-
                                 <textarea
                                     placeholder="Write your evaluation of the company..."
-                                    value={evaluationData.text}
-                                    onChange={(e) => setEvaluationData({ ...evaluationData, text: e.target.value })}
+                                    value={popupEvaluationData.text}
+                                    onChange={(e) => setPopupEvaluationData(prev => ({ ...prev, text: e.target.value }))}
                                     rows={4}
-                                    style={{ width: '100%', marginBottom: '10px' }}
+                                    style={{ width: '100%', marginBottom: '10px', boxSizing: 'border-box' }}
                                 />
-
                                 <label style={{ display: 'block', marginBottom: '10px' }}>
                                     <input
                                         type="checkbox"
-                                        checked={evaluationData.recommend}
-                                        onChange={(e) => setEvaluationData({ ...evaluationData, recommend: e.target.checked })}
+                                        checked={popupEvaluationData.recommend}
+                                        onChange={(e) => setPopupEvaluationData(prev => ({ ...prev, recommend: e.target.checked }))}
                                     />
                                     {' '}I recommend this company
                                 </label>
-
                                 {evaluationError && (
                                     <p style={{ color: 'red', marginBottom: '10px' }}>{evaluationError}</p>
                                 )}
-
-                                <button onClick={() => setShowEvaluationPopup(false)} style={styles.popupButton}>Close</button>
-                                <button
-                                    onClick={() => {
-                                        if (!evaluationData.text.trim()) {
-                                            setEvaluationError("Evaluation cannot be empty.");
-                                        } else {
-                                            console.log("Evaluation Submitted:", evaluationData);
-                                            setEvaluationError('');
-                                            setEvaluationSubmitted(true); // ✅ Mark as submitted
-                                            setShowEvaluationPopup(false); // ✅ Close the popup
-                                        }
-                                    }}
-                                    style={styles.popupButton}
-                                >
-                                    Save
-                                </button>
+                                <div style={{ textAlign: 'right' }}>
+                                    <button onClick={() => setShowEvaluationPopup(false)} style={{...styles.popupButton, backgroundColor: '#6c757d'}}>Close</button>
+                                    <button onClick={handleSaveEvaluation} style={styles.popupButton}>
+                                        Save
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     )}
 
-
-                  {showReportPopup && (
+                     {showReportPopup && (
                     <div style={styles.popupOverlay}>
                         <div style={styles.popupContent}>
-                            <h3>Internship Report</h3>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                                <h3>Internship Report Draft</h3>
+                                <button
+                                    onClick={handleDownloadSampleReport}
+                                    style={{ ...styles.popupButton, backgroundColor: '#17a2b8', margin: '0' }}
+                                >
+                                    Download Sample PDF
+                                </button>
+                            </div>
 
                             <input
                                 type="text"
                                 placeholder="Report Title"
-                                value={reportData.title}
-                                onChange={(e) => setReportData({ ...reportData, title: e.target.value })}
-                                style={{ width: '100%', marginBottom: '10px', borderColor: reportErrors.title ? 'red' : undefined }}
+                                value={popupReportData.title}
+                                onChange={(e) => setPopupReportData(prev => ({ ...prev, title: e.target.value }))}
+                                style={{ width: '100%', marginBottom: '10px', padding: '8px', boxSizing: 'border-box', borderColor: reportErrors.title ? 'red' : undefined }}
                             />
-                            {reportErrors.title && <p style={{ color: 'red' }}>{reportErrors.title}</p>}
+                            {reportErrors.title && <p style={styles.errorText}>{reportErrors.title}</p>}
 
                             <textarea
                                 placeholder="Introduction"
-                                value={reportData.introduction}
-                                onChange={(e) => setReportData({ ...reportData, introduction: e.target.value })}
+                                value={popupReportData.introduction}
+                                onChange={(e) => setPopupReportData(prev => ({ ...prev, introduction: e.target.value }))}
                                 rows={3}
-                                style={{ width: '100%', marginBottom: '10px', borderColor: reportErrors.introduction ? 'red' : undefined }}
+                                style={{ width: '100%', marginBottom: '10px', padding: '8px', boxSizing: 'border-box', borderColor: reportErrors.introduction ? 'red' : undefined }}
                             />
-                            {reportErrors.introduction && <p style={{ color: 'red' }}>{reportErrors.introduction}</p>}
+                            {reportErrors.introduction && <p style={styles.errorText}>{reportErrors.introduction}</p>}
 
                             <textarea
                                 placeholder="Body"
-                                value={reportData.body}
-                                onChange={(e) => setReportData({ ...reportData, body: e.target.value })}
+                                value={popupReportData.body}
+                                onChange={(e) => setPopupReportData(prev => ({ ...prev, body: e.target.value }))}
                                 rows={5}
-                                style={{ width: '100%', marginBottom: '10px', borderColor: reportErrors.body ? 'red' : undefined }}
+                                style={{ width: '100%', marginBottom: '10px', padding: '8px', boxSizing: 'border-box', borderColor: reportErrors.body ? 'red' : undefined }}
                             />
-                            {reportErrors.body && <p style={{ color: 'red' }}>{reportErrors.body}</p>}
+                            {reportErrors.body && <p style={styles.errorText}>{reportErrors.body}</p>}
 
                             <select
-                                value={reportData.major}
-                                onChange={(e) => setReportData({ ...reportData, major: e.target.value, courses: [] })}
-                                style={{ width: '100%', marginBottom: '10px', borderColor: reportErrors.major ? 'red' : undefined }}
+                                value={popupReportData.major}
+                                onChange={(e) => setPopupReportData(prev => ({ ...prev, major: e.target.value, courses: [] }))}
+                                style={{ width: '100%', marginBottom: '10px', padding: '8px', boxSizing: 'border-box', borderColor: reportErrors.major ? 'red' : undefined }}
                             >
                                 <option value="">Select Major</option>
                                 {majorsWithCourses.map((m, idx) => (
                                     <option key={idx} value={m.major}>{m.major}</option>
-                     ))}
-            </select>
-            {reportErrors.major && <p style={{ color: 'red' }}>{reportErrors.major}</p>}
+                                ))}
+                            </select>
+                            {reportErrors.major && <p style={styles.errorText}>{reportErrors.major}</p>}
 
-            {reportData.major && (
-                <div style={{ marginBottom: '10px' }}>
-                    <p style={{ fontWeight: 'bold' }}>Pick courses that helped:</p>
-                    {majorsWithCourses.find(m => m.major === reportData.major)?.courses.map((course, idx) => (
-                        <div key={idx}>
-                            <label>
-                                <input
-                                    type="checkbox"
-                                    value={course}
-                                    checked={reportData.courses.includes(course)}
-                                    onChange={(e) => {
-                                        const selected = reportData.courses.includes(course)
-                                            ? reportData.courses.filter(c => c !== course)
-                                            : [...reportData.courses, course];
-                                        setReportData({ ...reportData, courses: selected });
-                                    }}
-                                />
-                                {` ${course}`}
-                            </label>
+                            {popupReportData.major && (
+                                <div style={{ marginBottom: '10px', border: '1px solid #eee', padding: '10px', borderRadius: '4px' }}>
+                                    <p style={{ fontWeight: 'bold', marginTop: '0' }}>Pick courses that helped:</p>
+                                    {majorsWithCourses.find(m => m.major === popupReportData.major)?.courses.map((course, idx) => (
+                                        <div key={idx}> <label> <input type="checkbox" value={course} checked={popupReportData.courses.includes(course)} onChange={(e) => { const selected = popupReportData.courses.includes(course) ? popupReportData.courses.filter(c => c !== course) : [...popupReportData.courses, course]; setPopupReportData(prev => ({ ...prev, courses: selected })); }} /> {` ${course}`} </label> </div>
+                                    ))}
+                                    {reportErrors.courses && <p style={{ color: 'red', marginBottom: '0' }}>{reportErrors.courses}</p>}
+                                </div>
+                            )}
+                            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Upload PDF Report:</label>
+                            <input
+                                type="file"
+                                accept=".pdf"
+                                onChange={(e) => {
+                                    const file = e.target.files[0];
+                                    setPopupReportData(prev => ({ 
+                                        ...prev, 
+                                        pdfFile: file, 
+                                        pdfFileName: file ? file.name : "" 
+                                    }));
+                                }}
+                                style={{ width: '100%', marginBottom: '10px', padding: '8px', boxSizing: 'border-box', borderColor: reportErrors.pdfFile ? 'red' : undefined }}
+                            />
+                            {popupReportData.pdfFile ? 
+                                <p style={{fontSize: '0.9em', color: '#555'}}>Selected file: {popupReportData.pdfFile.name}</p> :
+                                (popupReportData.pdfFileName && <p style={{fontSize: '0.9em', color: '#555'}}>Current file: {popupReportData.pdfFileName} (re-select if you want to change)</p>)
+                            }
+                            {reportErrors.pdfFile && <p style={styles.errorText}>{reportErrors.pdfFile}</p>}
+
+                            <div style={{ textAlign: 'right', marginTop: '10px' }}>
+                                <button onClick={() => setShowReportPopup(false)} style={{...styles.popupButton, backgroundColor: '#6c757d'}}>Close</button>
+                                <button onClick={handleSaveReport} style={styles.popupButton}>
+                                    Save Report Draft
+                                </button>
+                            </div>
                         </div>
-                    ))}
-                    {reportErrors.courses && <p style={{ color: 'red' }}>{reportErrors.courses}</p>}
-                </div>
-            )}
+                    </div>
+                    )}
 
-            <input
-                type="file"
-                accept=".pdf"
-                onChange={(e) => setReportData({ ...reportData, pdfFile: e.target.files[0] })}
-                style={{ marginBottom: '10px', borderColor: reportErrors.pdfFile ? 'red' : undefined }}
-            />
-            {reportErrors.pdfFile && <p style={{ color: 'red' }}>{reportErrors.pdfFile}</p>}
+                    {showFinalReportView && (
+                        <div style={styles.popupOverlay}>
+                            <div style={styles.popupContent} role="dialog" aria-labelledby="finalReportTitle">
+                                <h3 id="finalReportTitle" style={{ borderBottom: '1px solid #ccc', paddingBottom: '10px', marginBottom: '15px' }}>
+                                    Final Internship Report Review
+                                </h3>
+                                <div style={styles.finalReportField}>
+                                    <strong>Title:</strong> {reportForFinalView.title || "N/A"}
+                                </div>
+                                <div style={styles.finalReportField}>
+                                    <strong>Introduction:</strong>
+                                    <p style={styles.finalReportParagraph}>{reportForFinalView.introduction || "N/A"}</p>
+                                </div>
+                                <div style={styles.finalReportField}>
+                                    <strong>Body:</strong>
+                                    <p style={styles.finalReportParagraph}>{reportForFinalView.body || "N/A"}</p>
+                                </div>
+                                <div style={styles.finalReportField}>
+                                    <strong>Major:</strong> {reportForFinalView.major || "N/A"}
+                                </div>
+                                {reportForFinalView.major && reportForFinalView.courses.length > 0 && (
+                                    <div style={styles.finalReportField}>
+                                        <strong>Relevant Courses:</strong>
+                                        <ul style={{ listStyleType: 'disc', paddingLeft: '20px', margin: '5px 0 0 0' }}>
+                                            {reportForFinalView.courses.map(course => <li key={course}>{course}</li>)}
+                                        </ul>
+                                    </div>
+                                )}
+                                <div style={styles.finalReportField}>
+                                    <strong>Uploaded PDF:</strong> {reportForFinalView.pdfFileName || "None"}
+                                </div>
+                               
+                                <div style={{ textAlign: 'right', marginTop: '20px', paddingTop: '15px', borderTop: '1px solid #eee' }}>
+                                    <button 
+                                        onClick={() => {
+                                            setShowFinalReportView(false);
+                                            handleOpenReportForm(currentInternshipIdForPopup); 
+                                        }} 
+                                        style={{...styles.popupButton, backgroundColor: '#6c757d'}}
+                                    >
+                                        Back to Edit Draft
+                                    </button>
+                                    <button
+                                        onClick={handleFinalReportSubmit}
+                                        style={{ ...styles.popupButton, backgroundColor: '#007bff' }}
+                                    >
+                                        Submit Final Report
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
-            <button onClick={() => setShowReportPopup(false)} style={styles.popupButton}>Close</button>
-            <button
-                onClick={() => {
-                   const errors = {};
-                        if (!reportData.title.trim()) errors.title = "Title is required.";
-                        if (!reportData.introduction.trim()) errors.introduction = "Introduction is required.";
-                        if (!reportData.body.trim()) errors.body = "Body is required.";
-                        if (!reportData.major) errors.major = "Major must be selected.";
-                        if (reportData.courses.length === 0) errors.courses = "Select at least one course.";
-                        if (!reportData.pdfFile) errors.pdfFile = "Upload a PDF file.";
+                    {showCommentsPopup && (
+                        <div style={styles.popupOverlay}>
+                            <div style={styles.popupContent}>
+                                <h3>Evaluator Comments</h3>
+                                <p style={styles.finalReportParagraph}>{commentsToView || "No comments provided."}</p>
+                                <div style={{ textAlign: 'right', marginTop: '15px' }}>
+                                    <button onClick={() => setShowCommentsPopup(false)} style={styles.popupButton}>Close</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
-                        setReportErrors(errors);
-
-                        if (Object.keys(errors).length === 0) {
-                            console.log("Report Submitted:", reportData);
-                            setReportSubmitted(true); // ✅ Mark as submitted
-                            setShowReportPopup(false); // ✅ Close the popup
-                        }
-                    
-
-                }}
-                style={styles.popupButton}
-            >
-                Save
-            </button>
-        </div>
-    </div>
-)}
+                    {showAppealPopup && (
+                        <div style={styles.popupOverlay}>
+                            <div style={styles.popupContent}>
+                                <h3>Appeal Report Decision</h3>
+                                <p>Please provide your reasons for appealing the decision on your report.</p>
+                                <textarea
+                                    placeholder="Enter your appeal message..."
+                                    value={appealMessageInput}
+                                    onChange={(e) => setAppealMessageInput(e.target.value)}
+                                    rows={5}
+                                    style={{ width: '100%', marginBottom: '10px', padding: '8px', boxSizing: 'border-box' }}
+                                />
+                                {appealError && <p style={{ color: 'red' }}>{appealError}</p>}
+                                <div style={{ textAlign: 'right', marginTop: '15px' }}>
+                                    <button onClick={() => setShowAppealPopup(false)} style={{...styles.popupButton, backgroundColor: '#6c757d'}}>Cancel</button>
+                                    <button onClick={handleSaveAppeal} style={styles.popupButton}>Submit Appeal</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                 </div>
             ) : (
@@ -581,7 +962,7 @@ const styles = {
         boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
     },
     searchInput: {
-        flex: '2 1 250px', // Adjusted width
+        flex: '2 1 250px',
         padding: '10px',
         border: '1px solid #ccc',
         borderRadius: '4px',
@@ -591,7 +972,7 @@ const styles = {
         display: 'flex',
         alignItems: 'center',
         gap: '8px',
-        flex: '1 1 180px', // Allow filter groups to take space
+        flex: '1 1 180px',
     },
     filterLabel: {
         marginRight: '5px',
@@ -606,7 +987,7 @@ const styles = {
         flexGrow: 1,
     },
     dateInput: {
-        padding: '9px', //Slightly less padding to match height
+        padding: '9px',
         border: '1px solid #ccc',
         borderRadius: '4px',
         flexGrow: 1,
@@ -621,8 +1002,8 @@ const styles = {
         color: 'white',
     },
     clearButton: {
-        backgroundColor: '#6c757d', // A neutral color for clear
-        marginLeft: 'auto', // Pushes it to the right if space allows
+        backgroundColor: '#6c757d',
+        marginLeft: 'auto', 
     },
     internshipList: {
         marginTop: '20px',
@@ -640,7 +1021,6 @@ const styles = {
         color: '#0056b3',
     },
     companyName: {
-        fontWeight: 'bold',
         marginBottom: '8px',
     },
     dates: {
@@ -648,7 +1028,7 @@ const styles = {
         color: '#555',
         marginBottom: '8px',
     },
-    status: {
+    status: { 
         fontSize: '0.9em',
         marginBottom: '12px',
     },
@@ -694,22 +1074,63 @@ const styles = {
         borderRadius: '8px',
         width: '90%',
         maxWidth: '600px',
-        maxHeight: '80vh', // LIMIT HEIGHT
-        overflowY: 'auto',  // MAKE CONTENT SCROLLABLE
+        maxHeight: '90vh', 
+        overflowY: 'auto',
         boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
         position: 'relative',
+        boxSizing: 'border-box',
     },
-
     popupButton: {
-        margin: '10px 5px 0 0',
-        padding: '8px 16px',
+        margin: '10px 0 0 10px', 
+        padding: '8px 12px',
         border: 'none',
         borderRadius: '4px',
         cursor: 'pointer',
         backgroundColor: '#007bff',
         color: '#fff',
+        fontSize: '0.85em',
     },
-
+    errorText: { 
+        color: 'red',
+        fontSize: '0.85em',
+        marginTop: '-5px',
+        marginBottom: '10px',
+    },
+    finalReportField: {
+        marginBottom: '12px',
+        fontSize: '1.05em',
+        lineHeight: '1.5',
+    },
+    finalReportParagraph: { 
+        whiteSpace: 'pre-wrap', 
+        backgroundColor: '#f9f9f9',
+        padding: '8px',
+        borderRadius: '4px',
+        border: '1px solid #eee',
+        marginTop: '4px',
+        maxHeight: '150px', 
+        overflowY: 'auto',  
+    },
+    reportStatusText: (status) => ({
+        fontWeight: 'bold',
+        padding: '3px 8px',
+        borderRadius: '4px',
+        color: 'white',
+        backgroundColor: status === 'accepted' ? '#28a745' :
+                         status === 'rejected' ? '#dc3545' :
+                         status === 'flagged' ? '#ffc107' :
+                         status === 'pending' || status === 'pending_appeal' ? '#17a2b8' :
+                         status === 'edited_after_final' ? '#fd7e14' : 
+                         '#6c757d', 
+        color: status === 'flagged' ? '#212529' : 'white',
+    }),
+    debugButton: {
+        fontSize: '0.75em',
+        padding: '3px 6px',
+        margin: '2px',
+        border: '1px solid #ccc',
+        cursor: 'pointer'
+    }
 };
 
 export default MyInternshipsPage;

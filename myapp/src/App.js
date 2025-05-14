@@ -16,6 +16,12 @@ import WorkshopPage from './workshop';
 import ViewWorkshopsPage from './viewworkshop';
 import MyInternshipsPage from './myinternships';
 import CompanyProfile from './companyprofile';
+import CompaniesForStudentsPage from './companiesforstudents';
+import StudentProfilePage from './studentprofile';
+import Allreports from './allreports';
+import FacultyReport from './facultyreports';
+import EvaluationPage from './evaluation';
+import StatisticsDashboard from './statistics';
 import AllJobsPosted from './companyallpostedjobs';
 function App() {
   // Manage notification state
@@ -262,6 +268,15 @@ const isInitialLoad = useState(true);
         <Route path="/viewworkshop" element={<ViewWorkshopsPage />} />
         <Route path="/myinternships" element={<MyInternshipsPage />} />
         <Route path="/companyprofile" element={<CompanyProfile />} />
+        <Route path="/companiesforstudents" element={<CompaniesForStudentsPage />} />
+        <Route path="/studentprofile" element={<StudentProfilePage />} />
+        <Route path="/allreports" element={<Allreports />} />
+        <Route path="/facultyreports" element={<FacultyReport />} />
+        <Route path="/evaluation" element={<EvaluationPage />} />
+        <Route path="/statistics" element={<StatisticsDashboard />} />
+        
+        
+
         <Route path="/companyallpostedjobs" element={<AllJobsPosted />} />
         
         {/* Add more routes as needed */}

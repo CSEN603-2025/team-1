@@ -10,7 +10,7 @@ const initialReports = [
         major: "Computer Science",
         courses: ["Machine Learning", "Data Structures", "AI Fundamentals"],
         status: "pending",
-        pdfFilename: "Report.pdf",
+        pdfFilename: "myapp/public/Report.pdf",
     },
     {
         id: 2,
@@ -20,7 +20,7 @@ const initialReports = [
         major: "Finance",
         courses: ["Corporate Finance", "Accounting Basics"],
         status: "pending",
-        pdfFilename: "Report.pdf",
+        pdfFilename: "myapp/public/Report.pdf",
     },
 ];
 
@@ -135,25 +135,27 @@ const AllReportsPage = () => {
                                     <p><strong>Introduction:</strong> {report.introduction}</p>
                                     <p><strong>Body:</strong> {report.body}</p>
                                     <p><strong>Helpful Courses:</strong> {report.courses.join(', ')}</p>
-                                    <a href={`/reports/${report.pdfFilename}`}
-                                        download
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        style={{
-                                            display: 'inline-block',
-                                            marginTop: '10px',
-                                            padding: '8px 12px',
-                                            backgroundColor: '#007acc',
-                                            color: 'white',
-                                            border: 'none',
-                                            borderRadius: '4px',
-                                            textDecoration: 'none',
-                                            fontWeight: 'bold',
-                                            cursor: 'pointer'
-                                        }}
+                                    
+                                    <a
+                                    href={`${process.env.PUBLIC_URL}/reports/${report.pdfFilename}`}
+                                    download={report.pdfFilename}
+                                    style={{
+                                        display: 'inline-block',
+                                        marginTop: '10px',
+                                        padding: '8px 12px',
+                                        backgroundColor: '#007acc',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '4px',
+                                        textDecoration: 'none',
+                                        fontWeight: 'bold',
+                                        cursor: 'pointer',
+                                    }}
                                     >
-                                        Download PDF
+                                    Download PDF
                                     </a>
+
+
                                 </div>
                             )}
                         </div>

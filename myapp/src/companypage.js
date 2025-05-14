@@ -44,6 +44,7 @@ function CompanyPage() {
   const location = useLocation();
   const storedCompany = location.state?.company;
 
+
   // All useEffect hooks and functions remain the same
   useEffect(() => {
     const storedCompany = location.state?.company;
@@ -522,7 +523,7 @@ function CompanyPage() {
       transition: 'all 0.2s',
     }
   };
-
+  
   return (
     <div style={{ display: 'flex', backgroundColor: theme.neutral.lightest, minHeight: '100vh', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
       {/* Sidebar - Updated with more transparent purple */}

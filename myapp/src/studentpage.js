@@ -68,8 +68,6 @@ function StudentPage() {
     const [showmyinternships, setshowmyinternships] = useState(false);
     const [showCourses, setShowCourses] = useState(false); // --- Added state for courses view ---
     const companies = JSON.parse(localStorage.getItem('companies')) || [];
-    const [filteredCompanies, setFilteredCompanies] = useState([]);
-    const [showFiltered, setShowFiltered] = useState(false);
     const [isPopupOpen, setIsPopupOpen] = useState(false);
     const [notifications, setNotifications] = useState([]);
 
@@ -96,68 +94,18 @@ function StudentPage() {
         setSelectedSemester(initialProfile.semester || '');
     }, [student?.email, profileKey]); // Depend on student.email for reactivity
 
-    const handleEditClick = () => {
-        setIsEditingProfile(true);
-        // Ensure draft reflects current profile when starting edit
-        setDraftProfile(profile);
-        setSelectedMajor(profile.major || '');
-        setSelectedSemester(profile.semester || '');
-    };
 
-    const handleCancelEdit = () => {
-        setIsEditingProfile(false);
-        setDraftProfile(profile); // Reset draft to saved profile
-        // Reset dropdowns to saved profile values
-        setSelectedMajor(profile.major || '');
-        setSelectedSemester(profile.semester || '');
-    };
 
-    const handleDraftChange = (e) => {
-        const { name, value } = e.target;
-        // Prevent direct editing of email field in UI (though it's readOnly)
-        if (name !== 'email') {
-            setDraftProfile(prev => ({ ...prev, [name]: value }));
-        }
-    };
-
-    const handleSaveProfile = () => {
-        // Ensure major and semester from dropdowns are included in the profile being saved
-        const updatedDraftProfile = {
-            ...draftProfile,
-            major: selectedMajor,
-            semester: selectedSemester,
-            email: student.email // Ensure the email is always the logged-in student's email
-        };
-
-        // Save profile specific to the student
-        localStorage.setItem(profileKey, JSON.stringify(updatedDraftProfile));
-
-        // Update the global 'studentusers' list (if used for admin/other purposes)
-        const profileWithStatus = { ...updatedDraftProfile, status }; // Include status if needed
-        let studentUsers = JSON.parse(localStorage.getItem('studentusers')) || [];
-        const existingUserIndex = studentUsers.findIndex(user => user.email === updatedDraftProfile.email);
-
-        if (existingUserIndex > -1) {
-            studentUsers[existingUserIndex] = profileWithStatus;
-        } else {
-            studentUsers.push(profileWithStatus);
-        }
-        localStorage.setItem('studentusers', JSON.stringify(studentUsers));
-        console.log('Updated student users in localStorage:', studentUsers);
-
-        // Update the component's state and exit editing mode
-        setProfile(updatedDraftProfile);
-        setIsEditingProfile(false);
-        alert('Profile updated!');
-    };
+    
 
     // --- Updated Handlers to hide other sections ---
     const handleProfileClick = () => {
-        setShowProfile(true);
+        setShowProfile(false);
         setShowCompanies(false);
         setshowmyinternships(false);
         setShowCourses(false); // Hide courses
         setIsEditingProfile(false); // Ensure not in edit mode when switching to view
+        navigate('/studentprofile', { state: { student } });
         setActiveSidebarItem('profile');
     };
 
@@ -203,12 +151,12 @@ function StudentPage() {
 
     const handleCompaniesClick = () => {
         setShowProfile(false);
-        setShowCompanies(true);
+        setShowCompanies(false);
         setshowmyinternships(false);
         setShowCourses(false); // Hide courses
         setActiveSidebarItem('companies');
-        setShowFiltered(false); // Reset filter view when clicking the main button
-        setFilteredCompanies([]);
+        navigate('/companiesforstudents', { state: { student } });
+
     };
 
      // --- Added Handler for Courses ---
@@ -221,36 +169,7 @@ function StudentPage() {
     };
     // --- End Added Handler ---
 
-    const handleFilterCompanies = () => {
-        const interestedJobs = (profile.jobInterests || '').split(',').map(item => item.trim().toLowerCase()).filter(Boolean);
-        const studentIndustry = (profile.industry || '').toLowerCase();
 
-        const filtered = companies.filter(company => {
-            // Ensure company.jobs is treated as an array of strings if it's a string
-            const companyJobs = typeof company.jobs === 'string'
-                ? company.jobs.split(',').map(job => job.trim().toLowerCase())
-                : Array.isArray(company.jobs) // Handle if jobs are already objects/strings in an array
-                    ? company.jobs.map(job => (typeof job === 'string' ? job.toLowerCase() : job?.title?.toLowerCase() || ''))
-                    : [];
-
-             const companyIndustry = (company.industry || '').toLowerCase();
-
-             // Check if student has interests specified
-             const hasJobMatch = interestedJobs.length > 0
-                 ? interestedJobs.some(interest => companyJobs.includes(interest))
-                 : true; // If no job interests specified by student, don't filter based on jobs
-
-             const isIndustryMatch = studentIndustry
-                 ? companyIndustry.includes(studentIndustry)
-                 : true; // If no industry specified by student, don't filter based on industry
-
-             // Only return true if both conditions are met (or considered true by default)
-             return hasJobMatch && isIndustryMatch;
-        });
-
-        setFilteredCompanies(filtered);
-        setShowFiltered(true);
-    };
 
     const handleMyInternshipsClick = () => {
 
@@ -490,150 +409,7 @@ function StudentPage() {
                     </div>
                 )}
 
-                {/* Profile Section */}
-                {showProfile && (
-                    <>
-                        <h1>Student Profile</h1>
-                        {!isEditingProfile ? (
-                            <div style={{ lineHeight: '1.8' }}>
-                                <p><strong>Name:</strong> {profile.name || 'Not set'}</p>
-                                <p><strong>Email:</strong> {profile.email}</p> {/* Display email from profile state */}
-                                <p><strong>Major:</strong> {profile.major || 'Not selected'}</p>
-                                <p><strong>Semester:</strong> {profile.semester || 'Not selected'}</p>
-                                <p><strong>Job Interests:</strong> {profile.jobInterests || 'Not specified'}</p>
-                                <p><strong>Industry Preference:</strong> {profile.industry || 'Not specified'}</p>
-                                <p><strong>Previous Internships:</strong> {profile.internships || 'None specified'}</p>
-                                <p><strong>Part-time Jobs:</strong> {profile.partTimeJobs || 'None specified'}</p>
-                                <p><strong>College Activities:</strong> {profile.collegeActivities || 'None specified'}</p>
-                                <button onClick={handleEditClick} style={{ padding: '10px 20px', backgroundColor: '#007bff', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', marginTop: '15px', fontSize: '16px' }}>
-                                    Edit Profile
-                                </button>
-                            </div>
-                        ) : (
-                             <div style={{ maxWidth: '700px', marginTop: '20px', border: '1px solid #ccc', padding: '20px', borderRadius: '8px', backgroundColor: '#f9f9f9' }}>
-                                <h2 style={{marginTop: 0}}>Edit Profile</h2>
-                                <div style={{ marginBottom: '15px' }}>
-                                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Name:</label>
-                                    <input
-                                        type="text" // Ensure type is text
-                                        name="name"
-                                        value={draftProfile.name}
-                                        onChange={handleDraftChange}
-                                        style={{ width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '4px', boxSizing: 'border-box' }}
-                                    />
-                                 </div>
-                                 <div style={{ marginBottom: '15px' }}>
-                                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Email:</label>
-                                    <input
-                                        type="email" // Set type to email
-                                        name="email"
-                                        value={student.email} // Display the non-editable email
-                                        style={{ width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '4px', backgroundColor: '#e9ecef', boxSizing: 'border-box', cursor: 'not-allowed' }}
-                                        readOnly // Make it explicitly read-only
-                                    />
-                                    <p style={{ fontSize: '0.9em', color: '#666', marginTop: '5px' }}>Email cannot be changed.</p>
-                                </div>
-
-                                <div style={{ marginBottom: '15px' }}>
-                                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Major:</label>
-                                    <select
-                                        name="major"
-                                        value={selectedMajor} // Controlled by selectedMajor state
-                                        onChange={(e) => setSelectedMajor(e.target.value)}
-                                        style={{ width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '4px', boxSizing: 'border-box' }}
-                                    >
-                                        <option value="">Select a major</option>
-                                        <option value="MET">MET</option>
-                                        <option value="IET">IET</option>
-                                        <option value="Mechatronics">Mechatronics</option>
-                                        <option value="Business Informatics">Business Informatics</option>
-                                        <option value="Pharmacy">Pharmacy</option>
-                                    </select>
-                                </div>
-
-                                <div style={{ marginBottom: '15px' }}>
-                                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Semester:</label>
-                                    <select
-                                        name="semester"
-                                        value={selectedSemester} // Controlled by selectedSemester state
-                                        onChange={(e) => setSelectedSemester(e.target.value)}
-                                        style={{ width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '4px', boxSizing: 'border-box' }}
-                                    >
-                                        <option value="">Select semester</option>
-                                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
-                                            <option key={num} value={num}>Semester {num}</option>
-                                        ))}
-                                    </select>
-                                 </div>
-
-                                <div style={{ marginBottom: '15px' }}>
-                                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Job Interests (comma-separated):</label>
-                                    <textarea
-                                        name="jobInterests"
-                                        value={draftProfile.jobInterests}
-                                        onChange={handleDraftChange}
-                                        style={{ width: '100%', minHeight: '80px', padding: '10px', border: '1px solid #ccc', borderRadius: '4px', boxSizing: 'border-box' }}
-                                        placeholder="e.g., Software Development, Data Analysis, Project Management"
-                                    />
-                                </div>
-
-                                <div style={{ marginBottom: '15px' }}>
-                                     <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Preferred Industry:</label>
-                                     <input
-                                        type="text"
-                                        name="industry"
-                                        value={draftProfile.industry}
-                                        onChange={handleDraftChange}
-                                        style={{ width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '4px', boxSizing: 'border-box' }}
-                                        placeholder="e.g., Technology, Finance, Healthcare"
-                                    />
-                                </div>
-
-                                <div style={{ marginBottom: '15px' }}>
-                                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Previous Internships (Details):</label>
-                                    <textarea
-                                        name="internships"
-                                        value={draftProfile.internships}
-                                        onChange={handleDraftChange}
-                                        style={{ width: '100%', minHeight: '100px', padding: '10px', border: '1px solid #ccc', borderRadius: '4px', boxSizing: 'border-box' }}
-                                        placeholder="e.g., Web Dev Intern at TechCorp (Summer 2024) - Built UI components using React."
-                                    />
-                                </div>
-
-                                <div style={{ marginBottom: '15px' }}>
-                                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Part-time Jobs (Details):</label>
-                                     <textarea
-                                        name="partTimeJobs"
-                                        value={draftProfile.partTimeJobs}
-                                        onChange={handleDraftChange}
-                                        style={{ width: '100%', minHeight: '100px', padding: '10px', border: '1px solid #ccc', borderRadius: '4px', boxSizing: 'border-box' }}
-                                        placeholder="e.g., Barista at CoffeeShop (2023-Present) - Customer service, cash handling."
-                                    />
-                                </div>
-
-                                <div style={{ marginBottom: '25px' }}>
-                                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>College Activities/Clubs:</label>
-                                    <textarea
-                                        name="collegeActivities"
-                                        value={draftProfile.collegeActivities}
-                                        onChange={handleDraftChange}
-                                        style={{ width: '100%', minHeight: '80px', padding: '10px', border: '1px solid #ccc', borderRadius: '4px', boxSizing: 'border-box' }}
-                                        placeholder="e.g., President of Coding Club, Volunteer Tutor"
-                                    />
-                                </div>
-
-                                <div>
-                                    <button onClick={handleSaveProfile} style={{ padding: '12px 25px', backgroundColor: '#28a745', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', marginRight: '10px', fontSize: '16px' }}>
-                                        Save Changes
-                                    </button>
-                                    <button onClick={handleCancelEdit} style={{ padding: '12px 25px', backgroundColor: '#6c757d', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '16px' }}>
-                                        Cancel
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-                    </>
-                )}
+               
 
                 {/* --- START: Courses Section --- */}
                 {showCourses && (
@@ -667,59 +443,7 @@ function StudentPage() {
 
 
                 {/* Companies Section */}
-                {showCompanies && (
-                     <div>
-                         <h1>Companies & Opportunities</h1>
-                         <button onClick={handleFilterCompanies} style={{ padding: '10px 20px', backgroundColor: '#17a2b8', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', marginBottom: '20px', fontSize: '16px' }}>
-                             {showFiltered ? 'Show All Companies' : 'Filter Based on My Profile'}
-                         </button>
-                        {/* Simple toggle for showing all vs filtered */}
-                         <button onClick={() => setShowFiltered(prev => !prev)} style={{ padding: '10px 20px', backgroundColor: '#6c757d', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', marginBottom: '20px', marginLeft: '10px', fontSize: '16px', display: filteredCompanies.length > 0 ? 'inline-block' : 'none' /* Only show if filter has run */ }}>
-                             {showFiltered ? 'Show All' : 'Show Filtered'}
-                         </button>
-
-                        {/* Decide which list to show */}
-                         <ul style={{ listStyle: 'none', padding: 0 }}>
-                            {(showFiltered ? filteredCompanies : companies).length > 0 ? (
-                                (showFiltered ? filteredCompanies : companies).map((company, index) => (
-                                    <li key={index} style={{ border: '1px solid #e0e0e0', marginBottom: '15px', padding: '15px 20px', borderRadius: '6px', backgroundColor: '#fff' }}>
-                                        <h3 style={{ marginTop: 0, marginBottom: '10px' }}>{company.companyName}</h3>
-                                        <p><strong>Email:</strong> {company.companyEmail}</p>
-                                        <p><strong>Industry:</strong> {company.industry}</p>
-                                        <p><strong>Size:</strong> {company.companySize}</p>
-                                        <h4 style={{ marginTop: '15px', marginBottom: '8px' }}>Jobs/Internships Offered:</h4>
-                                         {/* Robust handling of company.jobs */}
-                                        {(Array.isArray(company.jobs) && company.jobs.length > 0) || (typeof company.jobs === 'string' && company.jobs.trim() !== '') ? (
-                                            <ul style={{ listStyle: 'disc', paddingLeft: '20px' }}>
-                                                 {/* If jobs is a string, split and map. If array, map directly. */}
-                                                 {(typeof company.jobs === 'string' ? company.jobs.split(',').map(j => j.trim()) : company.jobs)
-                                                     .filter(job => job) // Filter out empty strings/items
-                                                     .map((job, jobIndex) => (
-                                                         // If job is an object (likely from newer data), display details
-                                                         typeof job === 'object' && job !== null ? (
-                                                             <li key={jobIndex}>
-                                                                 <strong>{job.title || 'N/A'}</strong> - {job.duration || 'N/A'} ({job.skills || 'N/A'})
-                                                                 {/* Add more details if needed */}
-                                                            </li>
-                                                         ) : (
-                                                             // If job is just a string (older data), display the string
-                                                             <li key={jobIndex}>{job}</li>
-                                                         )
-                                                     ))
-                                                 }
-                                            </ul>
-                                        ) : (
-                                            <p>No specific jobs listed for this view.</p> // Changed message
-                                        )}
-                                        {/* You might want a button here to view full job details or apply */}
-                                    </li>
-                                ))
-                             ) : (
-                                 <li>{showFiltered ? 'No companies match your current filter criteria.' : 'No companies available.'}</li>
-                             )}
-                         </ul>
-                    </div>
-                )}
+               
             </div>
         </div>
     );

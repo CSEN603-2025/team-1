@@ -16,6 +16,10 @@ import WorkshopPage from './workshop';
 import ViewWorkshopsPage from './viewworkshop';
 import MyInternshipsPage from './myinternships';
 import CompanyProfile from './companyprofile';
+import Allreports from './allreports';
+import FacultyReport from './facultyreports';
+import EvaluationPage from './evaluation';
+import StatisticsDashboard from './statistics';
 function App() {
   // Manage notification state
  const [notification, setNotification] = useState({ message: '', email: '' });
@@ -261,6 +265,13 @@ const isInitialLoad = useState(true);
         <Route path="/viewworkshop" element={<ViewWorkshopsPage />} />
         <Route path="/myinternships" element={<MyInternshipsPage />} />
         <Route path="/companyprofile" element={<CompanyProfile />} />
+        <Route path="/allreports" element={<Allreports />} />
+        <Route path="/facultyreports" element={<FacultyReport />} />
+        <Route path="/evaluation" element={<EvaluationPage />} />
+        <Route path="/statistics" element={<StatisticsDashboard />} />
+        
+        
+
       </Routes>
 
       {/* Display Notification Message */}

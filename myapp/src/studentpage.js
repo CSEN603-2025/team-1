@@ -404,6 +404,17 @@ function StudentPage() {
     showNotification("Navigating to companies page...", "info")
   }
 
+  const handleworkshopclick=() => {
+
+     setShowProfile(false)
+    setShowCompanies(false)
+    setshowmyinternships(false)
+    setShowCourses(false)
+    setActiveSection("companies")
+    navigate("/studentworkshops", { state: { student } })
+    showNotification("Navigating to companies page...", "info")
+
+  }
   const handleSettingsClick = () => {
     setShowProfile(false)
     setShowCompanies(false)
@@ -459,6 +470,7 @@ function StudentPage() {
       { id: "internships", label: "My Internships", icon: "🏆", action: handleMyInternshipsClick },
       { id: "companies", label: "Companies", icon: "🏢", action: handleCompaniesClick },
       { id: "settings", label: "Settings", icon: "⚙️", action: handleSettingsClick },
+      {id: "workshops",label: "test", action:handleworkshopclick},
     ]
 
     return (

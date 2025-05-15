@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 
-function AllJobs() {
+function AllJobsPosted() {
   const [jobs, setJobs] = useState([])
   const [searchTerm, setSearchTerm] = useState("")
   const [industryFilter, setIndustryFilter] = useState("")
@@ -13,6 +13,34 @@ function AllJobs() {
   const [viewMode, setViewMode] = useState("grid") // "grid" or "table"
   const [selectedJob, setSelectedJob] = useState(null)
   const [showModal, setShowModal] = useState(false)
+
+  // Purple color palette
+  const colors = {
+    purple: {
+      50: "#f5f3ff",
+      100: "#ede9fe",
+      200: "#ddd6fe",
+      300: "#c4b5fd",
+      400: "#a78bfa",
+      500: "#8b5cf6",
+      600: "#7c3aed",
+      700: "#6d28d9",
+      800: "#5b21b6",
+      900: "#4c1d95",
+    },
+    slate: {
+      50: "#f8faff",
+      100: "#f1f5f9",
+      200: "#e2e8f0",
+      300: "#cbd5e1",
+      400: "#94a3b8",
+      500: "#64748b",
+      600: "#475569",
+      700: "#334155",
+      800: "#1e293b",
+      900: "#0f172a",
+    },
+  }
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -89,10 +117,14 @@ function AllJobs() {
     }
   }
 
+  const handleGoBack = () => {
+    window.history.back()
+  }
+
   return (
     <div
       style={{
-        backgroundColor: "#f5f7ff",
+        backgroundColor: colors.slate[50],
         minHeight: "100vh",
         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
         color: "#1a2b4b",
@@ -118,24 +150,57 @@ function AllJobs() {
           }}
         >
           <div>
-            <h1
-              style={{
-                fontSize: "28px",
-                fontWeight: "700",
-                color: "#1a2b4b",
-                margin: 0,
-                letterSpacing: "-0.02em",
-              }}
-            >
-              Available Internships
-            </h1>
+            <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "8px" }}>
+              <button
+                onClick={handleGoBack}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "36px",
+                  height: "36px",
+                  backgroundColor: "white",
+                  color: colors.purple[600],
+                  border: `1px solid ${colors.purple[200]}`,
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                  boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+                }}
+              >
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M19 12H5M12 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <h1
+                style={{
+                  fontSize: "28px",
+                  fontWeight: "700",
+                  color: "#c9B7EBD",
+                  margin: 0,
+                  letterSpacing: "-0.02em",
+                }}
+              >
+                Available Internships
+              </h1>
+            </div>
             <p
               style={{
                 fontSize: "16px",
-                color: "#5a6482",
+                color: colors.slate[600],
                 margin: "8px 0 0 0",
               }}
             >
+              Find and apply for internship opportunities
             </p>
           </div>
           <div
@@ -152,10 +217,10 @@ function AllJobs() {
                 justifyContent: "center",
                 width: "40px",
                 height: "40px",
-                backgroundColor: viewMode === "grid" ? "#4f46e5" : "white",
-                color: viewMode === "grid" ? "white" : "#5a6482",
+                backgroundColor: viewMode === "grid" ? colors.purple[600] : "white",
+                color: viewMode === "grid" ? "white" : colors.slate[500],
                 border: "1px solid",
-                borderColor: viewMode === "grid" ? "#4f46e5" : "#e2e8f0",
+                borderColor: viewMode === "grid" ? colors.purple[600] : colors.slate[200],
                 borderRadius: "8px",
                 cursor: "pointer",
                 transition: "all 0.2s ease",
@@ -185,10 +250,10 @@ function AllJobs() {
                 justifyContent: "center",
                 width: "40px",
                 height: "40px",
-                backgroundColor: viewMode === "table" ? "#4f46e5" : "white",
-                color: viewMode === "table" ? "white" : "#5a6482",
+                backgroundColor: viewMode === "table" ? colors.purple[600] : "white",
+                color: viewMode === "table" ? "white" : colors.slate[500],
                 border: "1px solid",
-                borderColor: viewMode === "table" ? "#4f46e5" : "#e2e8f0",
+                borderColor: viewMode === "table" ? colors.purple[600] : colors.slate[200],
                 borderRadius: "8px",
                 cursor: "pointer",
                 transition: "all 0.2s ease",
@@ -222,7 +287,7 @@ function AllJobs() {
             borderRadius: "16px",
             boxShadow: "0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.1)",
             overflow: "hidden",
-            border: "1px solid rgba(226, 232, 240, 0.8)",
+            border: `1px solid ${colors.slate[200]}`,
             marginBottom: "24px",
             padding: "24px",
           }}
@@ -245,7 +310,7 @@ function AllJobs() {
               height="16"
               viewBox="0 0 24 24"
               fill="none"
-              stroke="#94a3b8"
+              stroke={colors.slate[400]}
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -262,9 +327,9 @@ function AllJobs() {
                 width: "100%",
                 padding: "12px 16px 12px 44px",
                 borderRadius: "8px",
-                border: "1px solid #e2e8f0",
+                border: `1px solid ${colors.slate[200]}`,
                 fontSize: "14px",
-                backgroundColor: "#f8fafc",
+                backgroundColor: colors.slate[50],
                 outline: "none",
                 transition: "all 0.2s ease",
               }}
@@ -290,7 +355,7 @@ function AllJobs() {
                   marginBottom: "8px",
                   fontSize: "14px",
                   fontWeight: "500",
-                  color: "#64748b",
+                  color: colors.slate[600],
                 }}
               >
                 Industry
@@ -302,9 +367,9 @@ function AllJobs() {
                   width: "100%",
                   padding: "12px 16px",
                   borderRadius: "8px",
-                  border: "1px solid #e2e8f0",
+                  border: `1px solid ${colors.slate[200]}`,
                   fontSize: "14px",
-                  backgroundColor: "#f8fafc",
+                  backgroundColor: colors.slate[50],
                   outline: "none",
                   transition: "all 0.2s ease",
                   appearance: "none",
@@ -335,7 +400,7 @@ function AllJobs() {
                   marginBottom: "8px",
                   fontSize: "14px",
                   fontWeight: "500",
-                  color: "#64748b",
+                  color: colors.slate[600],
                 }}
               >
                 Duration
@@ -347,9 +412,9 @@ function AllJobs() {
                   width: "100%",
                   padding: "12px 16px",
                   borderRadius: "8px",
-                  border: "1px solid #e2e8f0",
+                  border: `1px solid ${colors.slate[200]}`,
                   fontSize: "14px",
-                  backgroundColor: "#f8fafc",
+                  backgroundColor: colors.slate[50],
                   outline: "none",
                   transition: "all 0.2s ease",
                   appearance: "none",
@@ -378,7 +443,7 @@ function AllJobs() {
                   marginBottom: "8px",
                   fontSize: "14px",
                   fontWeight: "500",
-                  color: "#64748b",
+                  color: colors.slate[600],
                 }}
               >
                 Compensation
@@ -390,9 +455,9 @@ function AllJobs() {
                   width: "100%",
                   padding: "12px 16px",
                   borderRadius: "8px",
-                  border: "1px solid #e2e8f0",
+                  border: `1px solid ${colors.slate[200]}`,
                   fontSize: "14px",
-                  backgroundColor: "#f8fafc",
+                  backgroundColor: colors.slate[50],
                   outline: "none",
                   transition: "all 0.2s ease",
                   appearance: "none",
@@ -419,7 +484,7 @@ function AllJobs() {
               borderRadius: "16px",
               boxShadow: "0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.1)",
               overflow: "hidden",
-              border: "1px solid rgba(226, 232, 240, 0.8)",
+              border: `1px solid ${colors.slate[200]}`,
               padding: "64px 24px",
               display: "flex",
               flexDirection: "column",
@@ -432,8 +497,8 @@ function AllJobs() {
                 width: "40px",
                 height: "40px",
                 borderRadius: "50%",
-                border: "3px solid #f1f5f9",
-                borderTopColor: "#4f46e5",
+                border: `3px solid ${colors.slate[200]}`,
+                borderTopColor: colors.purple[600],
                 animation: "spin 1s linear infinite",
                 marginBottom: "16px",
               }}
@@ -442,7 +507,7 @@ function AllJobs() {
               style={{
                 margin: 0,
                 fontSize: "14px",
-                color: "#5a6482",
+                color: colors.slate[600],
               }}
             >
               Loading internships...
@@ -468,7 +533,7 @@ function AllJobs() {
                         borderRadius: "16px",
                         boxShadow: "0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.1)",
                         overflow: "hidden",
-                        border: "1px solid rgba(226, 232, 240, 0.8)",
+                        border: `1px solid ${colors.slate[200]}`,
                         transition: "transform 0.2s ease, box-shadow 0.2s ease",
                         ":hover": {
                           transform: "translateY(-4px)",
@@ -479,7 +544,7 @@ function AllJobs() {
                       <div
                         style={{
                           padding: "24px",
-                          borderBottom: "1px solid #f1f5f9",
+                          borderBottom: `1px solid ${colors.slate[100]}`,
                         }}
                       >
                         <div
@@ -490,36 +555,13 @@ function AllJobs() {
                             marginBottom: "16px",
                           }}
                         >
-                          <div
-                            style={{
-                              width: "48px",
-                              height: "48px",
-                              borderRadius: "8px",
-                              overflow: "hidden",
-                              backgroundColor: "#f8fafc",
-                              border: "1px solid #e2e8f0",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                            }}
-                          >
-                            <img
-                              src={job.companyLogo || "/placeholder.svg?height=48&width=48"}
-                              alt={`${job.companyName} logo`}
-                              style={{
-                                width: "100%",
-                                height: "100%",
-                                objectFit: "cover",
-                              }}
-                            />
-                          </div>
                           <div>
                             <h3
                               style={{
                                 margin: "0 0 4px 0",
                                 fontSize: "18px",
                                 fontWeight: "600",
-                                color: "#1a2b4b",
+                                color: colors.slate[900],
                               }}
                             >
                               {job.title}
@@ -528,7 +570,7 @@ function AllJobs() {
                               style={{
                                 margin: 0,
                                 fontSize: "14px",
-                                color: "#5a6482",
+                                color: colors.slate[600],
                               }}
                             >
                               {job.companyName}
@@ -539,7 +581,7 @@ function AllJobs() {
                           style={{
                             margin: "0 0 16px 0",
                             fontSize: "14px",
-                            color: "#5a6482",
+                            color: colors.slate[600],
                             lineHeight: "1.5",
                             display: "-webkit-box",
                             WebkitLineClamp: 3,
@@ -564,8 +606,8 @@ function AllJobs() {
                                 key={index}
                                 style={{
                                   padding: "4px 10px",
-                                  backgroundColor: "rgba(79, 70, 229, 0.1)",
-                                  color: "#4f46e5",
+                                  backgroundColor: colors.purple[100],
+                                  color: colors.purple[700],
                                   borderRadius: "16px",
                                   fontSize: "12px",
                                   fontWeight: "500",
@@ -588,7 +630,7 @@ function AllJobs() {
                               alignItems: "center",
                               gap: "6px",
                               fontSize: "14px",
-                              color: "#64748b",
+                              color: colors.slate[600],
                             }}
                           >
                             <svg
@@ -612,7 +654,7 @@ function AllJobs() {
                               alignItems: "center",
                               gap: "6px",
                               fontSize: "14px",
-                              color: "#64748b",
+                              color: colors.slate[600],
                             }}
                           >
                             <svg
@@ -636,7 +678,7 @@ function AllJobs() {
                               alignItems: "center",
                               gap: "6px",
                               fontSize: "14px",
-                              color: "#64748b",
+                              color: colors.slate[600],
                             }}
                           >
                             <svg
@@ -666,7 +708,7 @@ function AllJobs() {
                           style={{
                             width: "100%",
                             padding: "10px 16px",
-                            backgroundColor: "#4f46e5",
+                            backgroundColor: "#9B7EBD",
                             color: "white",
                             border: "none",
                             borderRadius: "8px",
@@ -674,7 +716,7 @@ function AllJobs() {
                             fontWeight: "500",
                             cursor: "pointer",
                             transition: "all 0.2s ease",
-                            boxShadow: "0 2px 4px rgba(79, 70, 229, 0.2)",
+                            boxShadow: `0 2px 4px ${"#9B7EBD"}`,
                           }}
                         >
                           View Details
@@ -689,7 +731,7 @@ function AllJobs() {
                       borderRadius: "16px",
                       boxShadow: "0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.1)",
                       overflow: "hidden",
-                      border: "1px solid rgba(226, 232, 240, 0.8)",
+                      border: `1px solid ${colors.slate[200]}`,
                       padding: "64px 24px",
                       display: "flex",
                       flexDirection: "column",
@@ -704,7 +746,7 @@ function AllJobs() {
                         width: "64px",
                         height: "64px",
                         borderRadius: "50%",
-                        backgroundColor: "#f1f5f9",
+                        backgroundColor: colors.slate[100],
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -716,7 +758,7 @@ function AllJobs() {
                         height="24"
                         viewBox="0 0 24 24"
                         fill="none"
-                        stroke="#94a3b8"
+                        stroke={colors.slate[500]}
                         strokeWidth="2"
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -731,7 +773,7 @@ function AllJobs() {
                         margin: "0 0 8px 0",
                         fontSize: "18px",
                         fontWeight: "600",
-                        color: "#1a2b4b",
+                        color: colors.slate[900],
                       }}
                     >
                       No internships found
@@ -740,7 +782,7 @@ function AllJobs() {
                       style={{
                         margin: 0,
                         fontSize: "14px",
-                        color: "#5a6482",
+                        color: colors.slate[600],
                         maxWidth: "400px",
                       }}
                     >
@@ -759,7 +801,7 @@ function AllJobs() {
                   borderRadius: "16px",
                   boxShadow: "0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.1)",
                   overflow: "hidden",
-                  border: "1px solid rgba(226, 232, 240, 0.8)",
+                  border: `1px solid ${colors.slate[200]}`,
                 }}
               >
                 {filteredJobs.length > 0 ? (
@@ -773,7 +815,7 @@ function AllJobs() {
                       <thead>
                         <tr
                           style={{
-                            backgroundColor: "#f8fafc",
+                            backgroundColor: colors.slate[50],
                           }}
                         >
                           <th
@@ -782,10 +824,10 @@ function AllJobs() {
                               textAlign: "left",
                               fontSize: "12px",
                               fontWeight: "600",
-                              color: "#64748b",
+                              color: colors.slate[700],
                               textTransform: "uppercase",
                               letterSpacing: "0.05em",
-                              borderBottom: "1px solid #f1f5f9",
+                              borderBottom: `1px solid ${colors.slate[200]}`,
                             }}
                           >
                             Company
@@ -796,10 +838,10 @@ function AllJobs() {
                               textAlign: "left",
                               fontSize: "12px",
                               fontWeight: "600",
-                              color: "#64748b",
+                              color: colors.slate[700],
                               textTransform: "uppercase",
                               letterSpacing: "0.05em",
-                              borderBottom: "1px solid #f1f5f9",
+                              borderBottom: `1px solid ${colors.slate[200]}`,
                             }}
                           >
                             Title
@@ -810,10 +852,10 @@ function AllJobs() {
                               textAlign: "left",
                               fontSize: "12px",
                               fontWeight: "600",
-                              color: "#64748b",
+                              color: colors.slate[700],
                               textTransform: "uppercase",
                               letterSpacing: "0.05em",
-                              borderBottom: "1px solid #f1f5f9",
+                              borderBottom: `1px solid ${colors.slate[200]}`,
                             }}
                           >
                             Duration
@@ -824,10 +866,10 @@ function AllJobs() {
                               textAlign: "left",
                               fontSize: "12px",
                               fontWeight: "600",
-                              color: "#64748b",
+                              color: colors.slate[700],
                               textTransform: "uppercase",
                               letterSpacing: "0.05em",
-                              borderBottom: "1px solid #f1f5f9",
+                              borderBottom: `1px solid ${colors.slate[200]}`,
                             }}
                           >
                             Compensation
@@ -838,10 +880,10 @@ function AllJobs() {
                               textAlign: "right",
                               fontSize: "12px",
                               fontWeight: "600",
-                              color: "#64748b",
+                              color: colors.slate[700],
                               textTransform: "uppercase",
                               letterSpacing: "0.05em",
-                              borderBottom: "1px solid #f1f5f9",
+                              borderBottom: `1px solid ${colors.slate[200]}`,
                             }}
                           >
                             Actions
@@ -853,7 +895,7 @@ function AllJobs() {
                           <tr
                             key={job.id}
                             style={{
-                              borderBottom: index < filteredJobs.length - 1 ? "1px solid #f1f5f9" : "none",
+                              borderBottom: index < filteredJobs.length - 1 ? `1px solid ${colors.slate[100]}` : "none",
                             }}
                           >
                             <td
@@ -868,34 +910,11 @@ function AllJobs() {
                                   gap: "12px",
                                 }}
                               >
-                                <div
-                                  style={{
-                                    width: "36px",
-                                    height: "36px",
-                                    borderRadius: "6px",
-                                    overflow: "hidden",
-                                    backgroundColor: "#f8fafc",
-                                    border: "1px solid #e2e8f0",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                  }}
-                                >
-                                  <img
-                                    src={job.companyLogo || "/placeholder.svg?height=36&width=36"}
-                                    alt={`${job.companyName} logo`}
-                                    style={{
-                                      width: "100%",
-                                      height: "100%",
-                                      objectFit: "cover",
-                                    }}
-                                  />
-                                </div>
                                 <span
                                   style={{
                                     fontSize: "14px",
                                     fontWeight: "500",
-                                    color: "#1a2b4b",
+                                    color: colors.slate[800],
                                   }}
                                 >
                                   {job.companyName}
@@ -907,7 +926,7 @@ function AllJobs() {
                                 padding: "16px 24px",
                                 fontSize: "14px",
                                 fontWeight: "500",
-                                color: "#1a2b4b",
+                                color: colors.slate[800],
                               }}
                             >
                               {job.title}
@@ -916,7 +935,7 @@ function AllJobs() {
                               style={{
                                 padding: "16px 24px",
                                 fontSize: "14px",
-                                color: "#5a6482",
+                                color: colors.slate[600],
                               }}
                             >
                               {job.duration}
@@ -932,8 +951,8 @@ function AllJobs() {
                                   alignItems: "center",
                                   padding: "4px 8px",
                                   borderRadius: "16px",
-                                  backgroundColor: job.isPaid ? "rgba(126, 34, 206, 0.1)" : "rgba(100, 116, 139, 0.1)",
-                                  color: job.isPaid ? "#7e22ce" : "#64748b",
+                                  backgroundColor: job.isPaid ? colors.purple[100] : colors.slate[100],
+                                  color: job.isPaid ? colors.purple[700] : colors.slate[600],
                                   fontSize: "13px",
                                   fontWeight: "500",
                                 }}
@@ -943,7 +962,7 @@ function AllJobs() {
                                     width: "6px",
                                     height: "6px",
                                     borderRadius: "50%",
-                                    backgroundColor: job.isPaid ? "#7e22ce" : "#64748b",
+                                    backgroundColor: job.isPaid ? colors.purple[700] : colors.slate[600],
                                     marginRight: "6px",
                                   }}
                                 ></span>
@@ -966,7 +985,7 @@ function AllJobs() {
                                   onClick={() => handleViewDetails(job.id)}
                                   style={{
                                     padding: "8px 12px",
-                                    backgroundColor: "#4f46e5",
+                                    backgroundColor: colors.purple[600],
                                     color: "white",
                                     border: "none",
                                     borderRadius: "6px",
@@ -977,7 +996,7 @@ function AllJobs() {
                                     alignItems: "center",
                                     gap: "6px",
                                     transition: "all 0.2s ease",
-                                    boxShadow: "0 2px 4px rgba(79, 70, 229, 0.2)",
+                                    boxShadow: `0 2px 4px ${colors.slate[200]}`,
                                   }}
                                 >
                                   <svg
@@ -1018,7 +1037,7 @@ function AllJobs() {
                         width: "64px",
                         height: "64px",
                         borderRadius: "50%",
-                        backgroundColor: "#f1f5f9",
+                        backgroundColor: colors.slate[100],
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -1030,7 +1049,7 @@ function AllJobs() {
                         height="24"
                         viewBox="0 0 24 24"
                         fill="none"
-                        stroke="#94a3b8"
+                        stroke={colors.slate[500]}
                         strokeWidth="2"
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -1045,7 +1064,7 @@ function AllJobs() {
                         margin: "0 0 8px 0",
                         fontSize: "18px",
                         fontWeight: "600",
-                        color: "#1a2b4b",
+                        color: colors.slate[900],
                       }}
                     >
                       No internships found
@@ -1054,7 +1073,7 @@ function AllJobs() {
                       style={{
                         margin: 0,
                         fontSize: "14px",
-                        color: "#5a6482",
+                        color: colors.slate[600],
                         maxWidth: "400px",
                       }}
                     >
@@ -1104,7 +1123,7 @@ function AllJobs() {
                 justifyContent: "space-between",
                 alignItems: "center",
                 padding: "20px 24px",
-                borderBottom: "1px solid #f1f5f9",
+                borderBottom: `1px solid ${colors.slate[200]}`,
               }}
             >
               <h2
@@ -1112,7 +1131,7 @@ function AllJobs() {
                   margin: 0,
                   fontSize: "20px",
                   fontWeight: "600",
-                  color: "#1a2b4b",
+                  color: colors.slate[900],
                 }}
               >
                 Internship Details
@@ -1123,7 +1142,7 @@ function AllJobs() {
                   background: "none",
                   border: "none",
                   cursor: "pointer",
-                  color: "#64748b",
+                  color: colors.slate[600],
                   padding: "4px",
                   borderRadius: "4px",
                   display: "flex",
@@ -1160,36 +1179,13 @@ function AllJobs() {
                   marginBottom: "24px",
                 }}
               >
-                <div
-                  style={{
-                    width: "64px",
-                    height: "64px",
-                    borderRadius: "8px",
-                    overflow: "hidden",
-                    backgroundColor: "#f8fafc",
-                    border: "1px solid #e2e8f0",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <img
-                    src={selectedJob.companyLogo || "/placeholder.svg?height=64&width=64"}
-                    alt={`${selectedJob.companyName} logo`}
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                    }}
-                  />
-                </div>
                 <div>
                   <h3
                     style={{
                       margin: "0 0 4px 0",
                       fontSize: "22px",
                       fontWeight: "600",
-                      color: "#1a2b4b",
+                      color: colors.slate[900],
                     }}
                   >
                     {selectedJob.companyName}
@@ -1198,7 +1194,7 @@ function AllJobs() {
                     style={{
                       margin: 0,
                       fontSize: "16px",
-                      color: "#5a6482",
+                      color: colors.slate[600],
                     }}
                   >
                     {selectedJob.location || "Location not specified"}
@@ -1222,7 +1218,7 @@ function AllJobs() {
                       marginBottom: "8px",
                       fontSize: "14px",
                       fontWeight: "600",
-                      color: "#64748b",
+                      color: colors.slate[600],
                     }}
                   >
                     Job Title
@@ -1230,11 +1226,11 @@ function AllJobs() {
                   <div
                     style={{
                       fontSize: "16px",
-                      color: "#1a2b4b",
+                      color: colors.slate[800],
                       padding: "12px 16px",
-                      backgroundColor: "#f8fafc",
+                      backgroundColor: colors.slate[50],
                       borderRadius: "8px",
-                      border: "1px solid #e2e8f0",
+                      border: `1px solid ${colors.slate[200]}`,
                     }}
                   >
                     {selectedJob.title}
@@ -1252,7 +1248,7 @@ function AllJobs() {
                       marginBottom: "8px",
                       fontSize: "14px",
                       fontWeight: "600",
-                      color: "#64748b",
+                      color: colors.slate[600],
                     }}
                   >
                     Duration
@@ -1260,11 +1256,11 @@ function AllJobs() {
                   <div
                     style={{
                       fontSize: "16px",
-                      color: "#1a2b4b",
+                      color: colors.slate[800],
                       padding: "12px 16px",
-                      backgroundColor: "#f8fafc",
+                      backgroundColor: colors.slate[50],
                       borderRadius: "8px",
-                      border: "1px solid #e2e8f0",
+                      border: `1px solid ${colors.slate[200]}`,
                     }}
                   >
                     {selectedJob.duration || "Not specified"}
@@ -1284,13 +1280,14 @@ function AllJobs() {
                     readOnly
                     style={{
                       marginRight: "8px",
+                      accentColor: colors.purple[600],
                     }}
                   />
                   <label
                     style={{
                       fontSize: "14px",
                       fontWeight: "600",
-                      color: "#64748b",
+                      color: colors.slate[600],
                     }}
                   >
                     Paid Position
@@ -1300,7 +1297,7 @@ function AllJobs() {
                       style={{
                         marginLeft: "8px",
                         fontSize: "14px",
-                        color: "#7e22ce",
+                        color: colors.purple[700],
                         fontWeight: "500",
                       }}
                     >
@@ -1320,7 +1317,7 @@ function AllJobs() {
                       marginBottom: "8px",
                       fontSize: "14px",
                       fontWeight: "600",
-                      color: "#64748b",
+                      color: colors.slate[600],
                     }}
                   >
                     Required Skills
@@ -1328,11 +1325,11 @@ function AllJobs() {
                   <div
                     style={{
                       fontSize: "16px",
-                      color: "#1a2b4b",
+                      color: colors.slate[800],
                       padding: "12px 16px",
-                      backgroundColor: "#f8fafc",
+                      backgroundColor: colors.slate[50],
                       borderRadius: "8px",
-                      border: "1px solid #e2e8f0",
+                      border: `1px solid ${colors.slate[200]}`,
                     }}
                   >
                     {selectedJob.skills ? (
@@ -1348,8 +1345,8 @@ function AllJobs() {
                             key={index}
                             style={{
                               padding: "4px 10px",
-                              backgroundColor: "rgba(79, 70, 229, 0.1)",
-                              color: "#4f46e5",
+                              backgroundColor: colors.purple[100],
+                              color: colors.purple[700],
                               borderRadius: "16px",
                               fontSize: "12px",
                               fontWeight: "500",
@@ -1376,7 +1373,7 @@ function AllJobs() {
                       marginBottom: "8px",
                       fontSize: "14px",
                       fontWeight: "600",
-                      color: "#64748b",
+                      color: colors.slate[600],
                     }}
                   >
                     Job Description
@@ -1384,11 +1381,11 @@ function AllJobs() {
                   <div
                     style={{
                       fontSize: "16px",
-                      color: "#1a2b4b",
+                      color: colors.slate[800],
                       padding: "12px 16px",
-                      backgroundColor: "#f8fafc",
+                      backgroundColor: colors.slate[50],
                       borderRadius: "8px",
-                      border: "1px solid #e2e8f0",
+                      border: `1px solid ${colors.slate[200]}`,
                       lineHeight: "1.6",
                       minHeight: "100px",
                     }}
@@ -1404,7 +1401,7 @@ function AllJobs() {
                       marginBottom: "8px",
                       fontSize: "14px",
                       fontWeight: "600",
-                      color: "#64748b",
+                      color: colors.slate[600],
                     }}
                   >
                     Industry
@@ -1412,11 +1409,11 @@ function AllJobs() {
                   <div
                     style={{
                       fontSize: "16px",
-                      color: "#1a2b4b",
+                      color: colors.slate[800],
                       padding: "12px 16px",
-                      backgroundColor: "#f8fafc",
+                      backgroundColor: colors.slate[50],
                       borderRadius: "8px",
-                      border: "1px solid #e2e8f0",
+                      border: `1px solid ${colors.slate[200]}`,
                     }}
                   >
                     {selectedJob.industry || "Not specified"}
@@ -1447,4 +1444,4 @@ function AllJobs() {
   )
 }
 
-export default AllJobs
+export default AllJobsPosted

@@ -555,29 +555,6 @@ function AllJobsPosted() {
                             marginBottom: "16px",
                           }}
                         >
-                          <div
-                            style={{
-                              width: "48px",
-                              height: "48px",
-                              borderRadius: "8px",
-                              overflow: "hidden",
-                              backgroundColor: colors.slate[50],
-                              border: `1px solid ${colors.slate[200]}`,
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                            }}
-                          >
-                            <img
-                              src={job.companyLogo || "/placeholder.svg?height=48&width=48"}
-                              alt={`${job.companyName} logo`}
-                              style={{
-                                width: "100%",
-                                height: "100%",
-                                objectFit: "cover",
-                              }}
-                            />
-                          </div>
                           <div>
                             <h3
                               style={{

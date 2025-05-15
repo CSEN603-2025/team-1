@@ -3,6 +3,65 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { getNotification, clearNotifications } from './notification';
 
 function CompanyPage() {
+    const generateDummyData = () => {
+  const dummyJobs = [
+    {
+      title: 'Frontend Developer Intern',
+      duration: '3 months',
+      isPaid: true,
+      salary: '$2000/month',
+      skills: 'React, JavaScript, HTML, CSS',
+      description: 'Work on building responsive user interfaces using React and modern frontend technologies.',
+      industry: 'Technology',
+      applicants: [
+        {
+          name: 'John Smith',
+          email: 'john.smith@example.com',
+          skills: 'React, JavaScript, CSS, UI/UX',
+          experience: '1 year of React experience, built 3 personal projects',
+          status: 'pending'
+        },
+        {
+          name: 'Emily Johnson',
+          email: 'emily.j@example.com',
+          skills: 'HTML, CSS, JavaScript, Angular',
+          experience: '6 months internship at TechCorp',
+          status: 'finalized'
+        }
+      ]
+    },
+    {
+      title: 'Marketing Intern',
+      duration: '2 months',
+      isPaid: false,
+      salary: '',
+      skills: 'Social Media, Content Creation, Analytics',
+      description: 'Assist with social media campaigns and content creation for our marketing team.',
+      industry: 'Marketing',
+      applicants: [
+        {
+          name: 'Michael Brown',
+          email: 'michael.b@example.com',
+          skills: 'Social Media, Copywriting, Analytics',
+          experience: 'Marketing student with 2 years of volunteer experience',
+          status: 'accepted'
+        }
+      ]
+    },
+    {
+      title: 'Data Science Intern',
+      duration: '3 months',
+      isPaid: true,
+      salary: '$2500/month',
+      skills: 'Python, Machine Learning, SQL',
+      description: 'Work with our data team to analyze datasets and build predictive models.',
+      industry: 'Technology',
+      applicants: []
+    }
+  ];
+
+  return dummyJobs;
+};
   // State variables remain the same
   const [menuOpen, setMenuOpen] = useState(false);
   const [companyName, setCompanyName] = useState('');
@@ -40,33 +99,37 @@ function CompanyPage() {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [activeTab, setActiveTab] = useState('jobs');
+  const [useDummyData, setUseDummyData] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const storedCompany = location.state?.company;
 
 
   // All useEffect hooks and functions remain the same
-  useEffect(() => {
-    const storedCompany = location.state?.company;
-    if (storedCompany) {
-      setCompanyName(storedCompany.companyName || storedCompany.companyEmail);
-      
-      // Load posted jobs
-      const storedJobs = localStorage.getItem(`companyJobs_${storedCompany.companyEmail}`);
-      if (storedJobs) {
-        setPostedJobs(JSON.parse(storedJobs));
-      } else {
-        setPostedJobs([]);
-      }
-      
-      // Load accepted interns
-      const companyInternsKey = `companyInterns_${storedCompany.companyEmail}`;
-      const storedInterns = localStorage.getItem(companyInternsKey);
-      if (storedInterns) {
-        setAcceptedInterns(JSON.parse(storedInterns));
-      }
+useEffect(() => {
+  const storedCompany = location.state?.company;
+  if (storedCompany) {
+    setCompanyName(storedCompany.companyName || storedCompany.companyEmail);
+    
+    // Load posted jobs
+    const storedJobs = localStorage.getItem(`companyJobs_${storedCompany.companyEmail}`);
+    
+    // Combine stored jobs with dummy data if toggle is on
+    const jobsToSet = [
+      ...(storedJobs ? JSON.parse(storedJobs) : []),
+      ...(useDummyData ? generateDummyData() : [])
+    ];
+    
+    setPostedJobs(jobsToSet);
+    
+    // Load accepted interns
+    const companyInternsKey = `companyInterns_${storedCompany.companyEmail}`;
+    const storedInterns = localStorage.getItem(companyInternsKey);
+    if (storedInterns) {
+      setAcceptedInterns(JSON.parse(storedInterns));
     }
-  }, [location, navigate]);
+  }
+}, [location, navigate, useDummyData]); // Add useDummyData to dependencies
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -691,7 +754,7 @@ function CompanyPage() {
               fontWeight: '600',
               color: theme.neutral.darkest
             }}>
-              Company Portal
+              Dashboard
             </h1>
           </div>
 
@@ -896,7 +959,7 @@ function CompanyPage() {
               marginTop: 0,
               marginBottom: '8px'
             }}>
-              Welcome to Company Portal
+              Welcome {companyName}
             </h1>
             <p style={{ 
               fontSize: '15px', 
@@ -963,7 +1026,7 @@ function CompanyPage() {
                   fontWeight: '600',
                   color: theme.neutral.darkest
                 }}>
-                  My Posted Jobs
+                  {companyName}'s Posted Jobs
                 </h2>
                 <button 
                   onClick={handleJobModalToggle}
@@ -989,6 +1052,26 @@ function CompanyPage() {
                   Post New Job
                 </button>
               </div>
+    <label style={{ 
+      display: 'flex', 
+      alignItems: 'center', 
+      gap: '8px',
+      fontSize: '14px',
+      color: theme.neutral.dark,
+      cursor: 'pointer'
+    }}>
+      <input
+        type="checkbox"
+        checked={useDummyData}
+        onChange={(e) => setUseDummyData(e.target.checked)}
+        style={{ 
+          width: '16px',
+          height: '16px',
+          accentColor: theme.primary
+        }}
+      /> 
+      Show Sample Jobs
+    </label>
 
               {/* Filter Section for Jobs */}
               <div style={{ 
@@ -1224,17 +1307,6 @@ function CompanyPage() {
                           }}>
                             Applicants
                           </th>
-                          <th style={{ 
-                            padding: '14px 20px', 
-                            textAlign: 'right',
-                            fontSize: '13px',
-                            fontWeight: '600',
-                            color: theme.neutral.medium,
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.05em'
-                          }}>
-                            Actions
-                          </th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1329,45 +1401,7 @@ function CompanyPage() {
                                 gap: '8px',
                                 justifyContent: 'flex-end',
                               }}>
-                                <button 
-                                  onClick={() => handleEditJob(index)}
-                                  style={buttonStyle.secondary}
-                                >
-                                  <svg 
-                                    width="14" 
-                                    height="14" 
-                                    viewBox="0 0 24 24" 
-                                    fill="none" 
-                                    stroke="currentColor" 
-                                    strokeWidth="2" 
-                                    strokeLinecap="round" 
-                                    strokeLinejoin="round"
-                                  >
-                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                  </svg>
-                                  Edit
-                                </button>
-                                <button 
-                                  onClick={() => handleDeleteJob(index)}
-                                  style={buttonStyle.danger}
-                                >
-                                  <svg 
-                                    width="14" 
-                                    height="14" 
-                                    viewBox="0 0 24 24" 
-                                    fill="none" 
-                                    stroke="currentColor" 
-                                    strokeWidth="2" 
-                                    strokeLinecap="round" 
-                                    strokeLinejoin="round"
-                                  >
-                                    <polyline points="3 6 5 6 21 6"></polyline>
-                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                  </svg>
-                                  Delete
-                                </button>
-                                {job.applicants?.length > 0 && (
+                                                                {job.applicants?.length > 0 && (
                                   <button 
                                     onClick={() => handleViewApplicants(job, index)}
                                     style={buttonStyle.secondary}
@@ -1390,6 +1424,25 @@ function CompanyPage() {
                                     Applicants
                                   </button>
                                 )}
+                                <button 
+                                  onClick={() => handleDeleteJob(index)}
+                                  style={buttonStyle.danger}
+                                >
+                                  <svg 
+                                    width="14" 
+                                    height="14" 
+                                    viewBox="0 0 24 24" 
+                                    fill="none" 
+                                    stroke="currentColor" 
+                                    strokeWidth="2" 
+                                    strokeLinecap="round" 
+                                    strokeLinejoin="round"
+                                  >
+                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                  </svg>
+                                  Delete
+                                </button>
                               </div>
                             </td>
                           </tr>
@@ -1706,17 +1759,6 @@ function CompanyPage() {
                             letterSpacing: '0.05em'
                           }}>
                             Status
-                          </th>
-                          <th style={{ 
-                            padding: '14px 20px', 
-                            textAlign: 'right',
-                            fontSize: '13px',
-                            fontWeight: '600',
-                            color: theme.neutral.medium,
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.05em'
-                          }}>
-                            Actions
                           </th>
                         </tr>
                       </thead>
@@ -2424,17 +2466,6 @@ function CompanyPage() {
                           letterSpacing: '0.05em'
                         }}>
                           Status
-                        </th>
-                        <th style={{ 
-                          padding: '14px 20px', 
-                          textAlign: 'right',
-                          fontSize: '13px',
-                          fontWeight: '600',
-                          color: theme.neutral.medium,
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.05em'
-                        }}>
-                          Actions
                         </th>
                       </tr>
                     </thead>

@@ -141,7 +141,7 @@ function CompanyInterns() {
   const completedInterns = interns.filter((intern) => intern.status === "completed").length
   const currentInterns = interns.filter((intern) => intern.status === "current").length
   const completionRate = totalInterns > 0 ? Math.round((completedInterns / totalInterns) * 100) : 0
-  
+
   return (
     <div
       style={{
@@ -221,17 +221,49 @@ function CompanyInterns() {
           }}
         >
           <div>
-            <h1
-              style={{
-                fontSize: "28px",
-                fontWeight: "700",
-                color: "#1a2b4b",
-                margin: 0,
-                letterSpacing: "-0.02em",
-              }}
-            >
-              Intern Management
-            </h1>
+            <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "8px" }}>
+              <button
+                onClick={() => navigate(-1)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "36px",
+                  height: "36px",
+                  backgroundColor: "white",
+                  color: "#6366f1",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                  boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+                }}
+              >
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M19 12H5M12 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <h1
+                style={{
+                  fontSize: "28px",
+                  fontWeight: "700",
+                  color: "#c9B7EBD",
+                  margin: 0,
+                  letterSpacing: "-0.02em",
+                }}
+              >
+                Intern Management
+              </h1>
+            </div>
             <p
               style={{
                 fontSize: "16px",
@@ -242,38 +274,6 @@ function CompanyInterns() {
               Manage and evaluate your company's interns
             </p>
           </div>
-          <button
-            onClick={() => navigate(-1)}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              padding: "10px 16px",
-              backgroundColor: "white",
-              border: "1px solid #e2e8f0",
-              borderRadius: "8px",
-              fontSize: "14px",
-              fontWeight: "500",
-              color: "#5a6482",
-              cursor: "pointer",
-              boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
-              transition: "all 0.2s ease",
-            }}
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M19 12H5M12 19l-7-7 7-7" />
-            </svg>
-            Back to Dashboard
-          </button>
         </header>
 
         {/* Main Content */}

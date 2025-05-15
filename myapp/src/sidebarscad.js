@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, Building, Users, FileText, CheckSquare, BarChart2, Briefcase, BookOpen, Calendar, LogOut, X, ChevronRight } from 'lucide-react';
+import { Home, Building, Users, FileText, CheckSquare, BarChart2, Briefcase, BookOpen, Calendar, LogOut, X, ChevronRight, CalendarClock  } from 'lucide-react';
 
 const Sidebar = ({ menuOpen, toggleMenu }) => {
   const navigate = useNavigate();
@@ -21,7 +21,8 @@ const Sidebar = ({ menuOpen, toggleMenu }) => {
     { label: 'Generate Statistics Report', path: '/statistics', icon: <BarChart2 size={18} />, state:{ type: 'scad'} },
     { label: 'Available Internships', path: '/allpostedjobs', icon: <Briefcase size={18} /> },
     { label: 'All Workshops', path: '/workshop', icon: <BookOpen size={18} /> },
-    { label: 'Upcoming Workshops', path: '/viewworkshop', icon: <Calendar size={18} /> }
+    { label: 'Upcoming Workshops', path: '/viewworkshop', icon: <Calendar size={18} /> },
+    { label: 'Appointments', path: '/appointments', icon: <CalendarClock size={18} />, state: {type:'scad'} },
   ];
 
   // Handle navigation with visual feedback

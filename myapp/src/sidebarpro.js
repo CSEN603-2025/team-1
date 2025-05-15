@@ -157,7 +157,7 @@ const SidebarStudent = ({ menuOpen, toggleMenu }) => {
               {location.state?.user?.name ? location.state.user.name.charAt(0).toUpperCase() : "S"}
             </div>
             <div>
-              <div style={{ fontSize: "14px", fontWeight: "bold", color: "#4a4a6a" }}>Student User{student.role === "pro" && (
+              <div style={{ fontSize: "14px", fontWeight: "bold", color: "#4a4a6a" }}>Student User{(
                   <span
                     style={{
                       display: "inline-flex",

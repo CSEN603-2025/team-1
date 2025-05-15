@@ -46,7 +46,7 @@ const SidebarStudent = ({ menuOpen, toggleMenu }) => {
 
   const handleAppointmentsClick = () => {
     setActiveSection("appointments")
-    navigate("/appointments", { state: { ...location.state } })
+    navigate("/appointments", { state: { ...location.state, type: "student" } });
   }
 
   const handleAssessmentsClick = () => {

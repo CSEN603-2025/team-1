@@ -555,29 +555,6 @@ function AllJobsPosted() {
                             marginBottom: "16px",
                           }}
                         >
-                          <div
-                            style={{
-                              width: "48px",
-                              height: "48px",
-                              borderRadius: "8px",
-                              overflow: "hidden",
-                              backgroundColor: colors.slate[50],
-                              border: `1px solid ${colors.slate[200]}`,
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                            }}
-                          >
-                            <img
-                              src={job.companyLogo || "/placeholder.svg?height=48&width=48"}
-                              alt={`${job.companyName} logo`}
-                              style={{
-                                width: "100%",
-                                height: "100%",
-                                objectFit: "cover",
-                              }}
-                            />
-                          </div>
                           <div>
                             <h3
                               style={{
@@ -933,29 +910,6 @@ function AllJobsPosted() {
                                   gap: "12px",
                                 }}
                               >
-                                <div
-                                  style={{
-                                    width: "36px",
-                                    height: "36px",
-                                    borderRadius: "6px",
-                                    overflow: "hidden",
-                                    backgroundColor: colors.slate[50],
-                                    border: `1px solid ${colors.slate[200]}`,
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                  }}
-                                >
-                                  <img
-                                    src={job.companyLogo || "/placeholder.svg?height=36&width=36"}
-                                    alt={`${job.companyName} logo`}
-                                    style={{
-                                      width: "100%",
-                                      height: "100%",
-                                      objectFit: "cover",
-                                    }}
-                                  />
-                                </div>
                                 <span
                                   style={{
                                     fontSize: "14px",
@@ -1225,29 +1179,6 @@ function AllJobsPosted() {
                   marginBottom: "24px",
                 }}
               >
-                <div
-                  style={{
-                    width: "64px",
-                    height: "64px",
-                    borderRadius: "8px",
-                    overflow: "hidden",
-                    backgroundColor: colors.slate[50],
-                    border: `1px solid ${colors.slate[200]}`,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <img
-                    src={selectedJob.companyLogo || "/placeholder.svg?height=64&width=64"}
-                    alt={`${selectedJob.companyName} logo`}
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                    }}
-                  />
-                </div>
                 <div>
                   <h3
                     style={{
@@ -1259,15 +1190,7 @@ function AllJobsPosted() {
                   >
                     {selectedJob.companyName}
                   </h3>
-                  <p
-                    style={{
-                      margin: 0,
-                      fontSize: "16px",
-                      color: colors.slate[600],
-                    }}
-                  >
-                    {selectedJob.location || "Location not specified"}
-                  </p>
+
                 </div>
               </div>
 

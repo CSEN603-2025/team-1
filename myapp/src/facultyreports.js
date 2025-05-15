@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
 import SidebarFac from "./sidebarfaculty"
@@ -132,7 +130,7 @@ const FacultyReport = () => {
 
     setCommentError("")
     setShowCommentModal(true)
-    setEditingComment(false)
+    setEditingComment(false) // This is for status change + comment
   }
 
   const handleEditComment = (id) => {
@@ -141,11 +139,11 @@ const FacultyReport = () => {
     // Find the current comment for this report
     const report = reports.find((r) => r.id === id)
     setComment(report?.comment || "")
-    setPendingStatus(report?.status || "pending")
+    setPendingStatus(report?.status || "pending") // Preserve current status
 
     setCommentError("")
     setShowCommentModal(true)
-    setEditingComment(true)
+    setEditingComment(true) // This is for editing/adding comment only
   }
 
   const saveCommentAndStatus = () => {
@@ -473,7 +471,7 @@ const FacultyReport = () => {
                   }}
                 >
                   {isSCAD
-                    ? "Monitor and review all student internship reports. You can filter and view details of each report."
+                    ? "Monitor and review all student internship reports. You can filter, view details, and add or edit comments."
                     : "Review and manage student internship reports. You can filter, view details, and provide feedback."}
                 </p>
               </div>
@@ -767,29 +765,28 @@ const FacultyReport = () => {
                                   color: "#4a4a6a",
                                 }}
                               >
-                                Faculty Comment
+                                Comment {/* MODIFIED: Label changed from "Faculty Comment" */}
                               </h4>
 
-                              {/* Edit comment button - only visible to faculty */}
-                              {!isSCAD && (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    handleEditComment(report.id)
-                                  }}
-                                  style={{
-                                    padding: "4px 8px",
-                                    backgroundColor: "#f0f0f0",
-                                    color: "#6a6a8a",
-                                    border: "none",
-                                    borderRadius: "4px",
-                                    fontSize: "12px",
-                                    cursor: "pointer",
-                                  }}
-                                >
-                                  Edit Comment
-                                </button>
-                              )}
+                              {/* MODIFIED: Edit comment button - visible if a comment exists (faculty and SCAD) */}
+                              {/* Removed !isSCAD condition */}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleEditComment(report.id)
+                                }}
+                                style={{
+                                  padding: "4px 8px",
+                                  backgroundColor: "#f0f0f0",
+                                  color: "#6a6a8a",
+                                  border: "none",
+                                  borderRadius: "4px",
+                                  fontSize: "12px",
+                                  cursor: "pointer",
+                                }}
+                              >
+                                Edit Comment
+                              </button>
                             </div>
                             <p
                               style={{
@@ -922,8 +919,9 @@ const FacultyReport = () => {
                             </>
                           )}
 
-                          {/* Add comment button if no comment exists yet - only for faculty */}
-                          {!isSCAD && !report.comment && (
+                          {/* MODIFIED: Add comment button if no comment exists yet (faculty and SCAD) */}
+                          {/* Removed !isSCAD condition */}
+                          {!report.comment && (
                             <button
                               onClick={() => handleEditComment(report.id)}
                               style={{
@@ -1091,12 +1089,12 @@ const FacultyReport = () => {
                 style={{
                   padding: "8px 16px",
                   backgroundColor: editingComment
-                    ? "#c5e8f7"
+                    ? "#c5e8f7" // Blue-ish for generic comment update
                     : pendingStatus === "accepted"
-                      ? "rgba(200, 255, 200, 0.5)"
+                      ? "rgba(200, 255, 200, 0.5)" // Green for accept
                       : pendingStatus === "rejected"
-                        ? "rgba(255, 200, 200, 0.5)"
-                        : "rgba(255, 230, 180, 0.5)",
+                        ? "rgba(255, 200, 200, 0.5)" // Red for reject
+                        : "rgba(255, 230, 180, 0.5)", // Orange for flag
                   color: editingComment
                     ? "#4a6a8a"
                     : pendingStatus === "accepted"

@@ -22,6 +22,7 @@ import Allreports from './allreports';
 import FacultyReport from './facultyreports';
 import EvaluationPage from './evaluation';
 import StatisticsDashboard from './statistics';
+import AllJobsPosted from './companyallpostedjobs';
 function App() {
   // Manage notification state
  const [notification, setNotification] = useState({ message: '', email: '' });
@@ -276,6 +277,9 @@ const isInitialLoad = useState(true);
         
         
 
+        <Route path="/companyallpostedjobs" element={<AllJobsPosted />} />
+        
+        {/* Add more routes as needed */}
       </Routes>
 
       {/* Display Notification Message */}

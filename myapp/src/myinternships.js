@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-// (majorsWithCourses array remains the same)
 const majorsWithCourses = [
   {
     major: "Computer Science",
@@ -89,7 +88,6 @@ const majorsWithCourses = [
   }
 ];
 
-// Default states for initialization
 const defaultEvaluationState = {
     text: '',
     recommend: false,
@@ -102,10 +100,14 @@ const defaultReportState = {
     body: "",
     major: "",
     courses: [],
-    pdfFile: null,       // This is for the File object during editing, not stored in localStorage
-    pdfFileName: "",     // This IS stored in localStorage
-    submitted: false,    // Initial form save
-    finalSubmitted: false, // Final submission
+    pdfFile: null,
+    pdfFileName: "",
+    submitted: false,       // Is there a saved draft?
+    finalSubmitted: false, // Has a version of this report ever been finalized by the student?
+    status: "not_submitted", // "not_submitted", "draft_saved", "pending", "accepted", "rejected", "flagged", "edited_after_final", "pending_appeal"
+    evaluatorComments: "",
+    appealMessage: "",
+    appealSubmitted: false,
 };
 
 
@@ -115,14 +117,13 @@ function MyInternshipsPage() {
     const student = location.state?.student;
 
     const [allInternships, setAllInternships] = useState([]);
-    const [internships, setInternships] = useState([]); // For display after filtering
+    const [internships, setInternships] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [filterStartDate, setFilterStartDate] = useState('');
     const [filterEndDate, setFilterEndDate] = useState('');
     const [companies, setCompanies] = useState([]);
 
-    // --- State for Popups ---
     const [showEvaluationPopup, setShowEvaluationPopup] = useState(false);
     const [currentInternshipIdForPopup, setCurrentInternshipIdForPopup] = useState(null);
     
@@ -130,13 +131,17 @@ function MyInternshipsPage() {
     const [evaluationError, setEvaluationError] = useState('');
 
     const [showReportPopup, setShowReportPopup] = useState(false);
-    const [popupReportData, setPopupReportData] = useState({...defaultReportState});
+    const [popupReportData, setPopupReportData] = useState({...defaultReportState}); 
     const [reportErrors, setReportErrors] = useState({});
     
     const [showFinalReportView, setShowFinalReportView] = useState(false);
-        
 
-    // Effect to fetch internships AND LOAD PERSISTED DATA from localStorage
+    const [showCommentsPopup, setShowCommentsPopup] = useState(false);
+    const [commentsToView, setCommentsToView] = useState("");
+    const [showAppealPopup, setShowAppealPopup] = useState(false);
+    const [appealMessageInput, setAppealMessageInput] = useState("");
+    const [appealError, setAppealError] = useState("");
+        
     useEffect(() => {
         if (student?.email) {
             let foundInternships = [];
@@ -155,13 +160,13 @@ function MyInternshipsPage() {
                         if (intern.email === student.email) {
                             const uniqueInternshipId = `${student.email}_${intern.jobTitle}_${companyEmail}_${intern.startDate}`.replace(/\s+/g, '_');
                             
-                            // === LOAD PERSISTED DATA ===
                             const savedEvaluation = JSON.parse(localStorage.getItem(`evaluation_${uniqueInternshipId}`)) || { ...defaultEvaluationState };
-                            let savedReport = JSON.parse(localStorage.getItem(`report_${uniqueInternshipId}`)) || { ...defaultReportState };
-                            // pdfFile object itself isn't stored, only its name.
-                            // When loading, pdfFile (the File object) will be null. pdfFileName is loaded.
-                            savedReport = { ...savedReport, pdfFile: null };
-
+                            let savedReport = JSON.parse(localStorage.getItem(`report_${uniqueInternshipId}`));
+                            if (savedReport) {
+                                savedReport = { ...defaultReportState, ...savedReport, pdfFile: null };
+                            } else {
+                                savedReport = { ...defaultReportState };
+                            }
 
                             foundInternships.push({
                                 ...intern,
@@ -186,13 +191,12 @@ function MyInternshipsPage() {
     const processedInternships = useMemo(() => {
         return allInternships.map(internship => ({
             ...internship,
-            derivedStatus: internship.status ,
+            derivedStatus: internship.status , 
             startDateObj: new Date(internship.startDate),
             endDateObj: internship.endDate ? new Date(internship.endDate) : null,
         }));
     }, [allInternships]);
 
-    // --- Filtering and Search ---
     const handleSearch = () => {
         const lowerSearchTerm = searchTerm.toLowerCase();
         const filtered = processedInternships.filter(internship =>
@@ -208,7 +212,6 @@ function MyInternshipsPage() {
             statusFilter === 'all' || internship.derivedStatus === statusFilter
         );
     }, [internships, statusFilter]);
-
 
     const filteredByDate = useMemo(() => {
         return filteredByStatus.filter(internship => {
@@ -275,7 +278,6 @@ function MyInternshipsPage() {
         setInternships(tempFiltered);
     }, [statusFilter, filterStartDate, filterEndDate, processedInternships, searchTerm]);
 
-
     const handleDownloadSampleReport = () => {
         const link = document.createElement('a');
         const publicUrl = process.env.PUBLIC_URL || '';
@@ -286,7 +288,6 @@ function MyInternshipsPage() {
         document.body.removeChild(link);
     };
 
-    // --- Popup Opening Handlers ---
     const handleOpenEvaluationPopup = (internshipId) => {
         const internshipToEdit = allInternships.find(intern => intern.uniqueInternshipId === internshipId);
         if (internshipToEdit) {
@@ -301,8 +302,34 @@ function MyInternshipsPage() {
         const internshipToEdit = allInternships.find(intern => intern.uniqueInternshipId === internshipId);
         if (internshipToEdit) {
             setCurrentInternshipIdForPopup(internshipId);
-            // When opening, pdfFile object is null. pdfFileName is from internship's report state (loaded from localStorage).
-            setPopupReportData({ ...internshipToEdit.report, pdfFile: null }); 
+            let reportDataForPopup = { ...internshipToEdit.report, pdfFile: null };
+
+            // If student clicks "Create New Version" (which calls this function), 
+            // or if opening a report that was never started.
+            if (internshipToEdit.report.finalSubmitted || 
+                (internshipToEdit.report.status === "not_submitted" && !internshipToEdit.report.submitted)
+            ) { 
+                reportDataForPopup = {
+                    // If it was final, keep content, otherwise start fresh
+                    title: internshipToEdit.report.finalSubmitted ? internshipToEdit.report.title : "",
+                    introduction: internshipToEdit.report.finalSubmitted ? internshipToEdit.report.introduction : "",
+                    body: internshipToEdit.report.finalSubmitted ? internshipToEdit.report.body : "",
+                    major: internshipToEdit.report.finalSubmitted ? internshipToEdit.report.major : "",
+                    courses: internshipToEdit.report.finalSubmitted ? [...internshipToEdit.report.courses] : [],
+                    pdfFileName: internshipToEdit.report.finalSubmitted ? internshipToEdit.report.pdfFileName : "",
+                    pdfFile: null, // Always null when opening form initially
+
+                    submitted: false, // This new edit is a draft
+                    finalSubmitted: internshipToEdit.report.finalSubmitted, // Preserve historical finality
+                    status: internshipToEdit.report.finalSubmitted ? "edited_after_final" : "not_submitted",
+                    evaluatorComments: "", 
+                    appealMessage: "",
+                    appealSubmitted: false,
+                };
+            }
+            // If it's an existing draft (submitted=true, finalSubmitted=false), it loads as is from reportDataForPopup init.
+            
+            setPopupReportData(reportDataForPopup);
             setReportErrors({});
             setShowReportPopup(true);
         }
@@ -312,24 +339,18 @@ function MyInternshipsPage() {
         const internshipToView = allInternships.find(intern => intern.uniqueInternshipId === internshipId);
         if (internshipToView) {
             setCurrentInternshipIdForPopup(internshipId);
-            // For viewing, we use the data from the internship object, which includes pdfFileName
             setPopupReportData({ ...internshipToView.report }); 
             setShowFinalReportView(true);
         }
     };
 
-
-    // --- Saving Handlers (Update allInternships state AND SAVE TO localStorage) ---
     const handleSaveEvaluation = () => {
         if (!popupEvaluationData.text.trim()) {
             setEvaluationError("Evaluation cannot be empty.");
             return;
         }
         const updatedEvaluation = { ...popupEvaluationData, submitted: true };
-
-        // === SAVE TO localStorage ===
         localStorage.setItem(`evaluation_${currentInternshipIdForPopup}`, JSON.stringify(updatedEvaluation));
-
         setAllInternships(prevInternships => 
             prevInternships.map(intern => 
                 intern.uniqueInternshipId === currentInternshipIdForPopup 
@@ -353,31 +374,33 @@ function MyInternshipsPage() {
         setReportErrors(errors);
 
         if (Object.keys(errors).length === 0) {
-            // Prepare the report data to be saved. Exclude the actual File object for localStorage.
-            const reportToSaveInState = {
-                ...popupReportData,
-                submitted: true,
-                finalSubmitted: false,
-                pdfFileName: popupReportData.pdfFile ? popupReportData.pdfFile.name : popupReportData.pdfFileName,
-                // pdfFile (File object) is kept in popupReportData for current interaction,
-                // but we don't want to put the File object itself into allInternships state permanently
-                // as it's large and not serializable for localStorage.
-            };
-
+            const originalInternshipReport = allInternships.find(intern => intern.uniqueInternshipId === currentInternshipIdForPopup).report;
+            
             const reportToSaveInLocalStorage = {
-                ...reportToSaveInState,
-                pdfFile: null, // Explicitly nullify File object for localStorage
+                ...popupReportData, 
+                submitted: true,    
+                finalSubmitted: originalInternshipReport.finalSubmitted, 
+                pdfFileName: popupReportData.pdfFile ? popupReportData.pdfFile.name : popupReportData.pdfFileName,
+                pdfFile: null,
+                status: popupReportData.status === "edited_after_final" ? "edited_after_final" : "draft_saved",
+                // Reset eval fields only if it's a new version of a previously final report
+                evaluatorComments: popupReportData.status === "edited_after_final" ? "" : originalInternshipReport.evaluatorComments,
+                appealMessage: popupReportData.status === "edited_after_final" ? "" : originalInternshipReport.appealMessage,
+                appealSubmitted: popupReportData.status === "edited_after_final" ? false : originalInternshipReport.appealSubmitted,
             };
 
-
-            // === SAVE TO localStorage ===
             localStorage.setItem(`report_${currentInternshipIdForPopup}`, JSON.stringify(reportToSaveInLocalStorage));
             
-            // Update allInternships state (this version holds the file name, not the file object)
             setAllInternships(prevInternships => 
                 prevInternships.map(intern => 
                     intern.uniqueInternshipId === currentInternshipIdForPopup 
-                    ? { ...intern, report: { ...reportToSaveInLocalStorage } } // Use the version for localStorage
+                    ? { 
+                        ...intern, 
+                        report: { 
+                            ...reportToSaveInLocalStorage, 
+                            pdfFile: popupReportData.pdfFile || originalInternshipReport.pdfFile 
+                        } 
+                      }
                     : intern
                 )
             );
@@ -386,19 +409,28 @@ function MyInternshipsPage() {
     };
 
     const handleFinalReportSubmit = () => {
-        const internshipToUpdate = allInternships.find(intern => intern.uniqueInternshipId === currentInternshipIdForPopup);
-        if (internshipToUpdate) {
-            const updatedReport = { ...internshipToUpdate.report, finalSubmitted: true, pdfFile: null }; // pdfFile null for storage
+        const internshipToFinalize = allInternships.find(intern => intern.uniqueInternshipId === currentInternshipIdForPopup);
 
-            // === SAVE TO localStorage ===
-            localStorage.setItem(`report_${currentInternshipIdForPopup}`, JSON.stringify(updatedReport));
-
+        if (internshipToFinalize) {
+            const reportBeingFinalized = { 
+                ...internshipToFinalize.report, 
+                finalSubmitted: true,      
+                status: "pending",         
+                evaluatorComments: "",     
+                appealMessage: "",
+                appealSubmitted: false,
+                pdfFile: null              
+            };
+            localStorage.setItem(`report_${currentInternshipIdForPopup}`, JSON.stringify(reportBeingFinalized));
             setAllInternships(prevInternships => 
                 prevInternships.map(intern => {
                     if (intern.uniqueInternshipId === currentInternshipIdForPopup) {
                         return { 
                             ...intern, 
-                            report: updatedReport
+                            report: { 
+                                ...reportBeingFinalized, 
+                                pdfFile: internshipToFinalize.report.pdfFile 
+                            } 
                         };
                     }
                     return intern;
@@ -408,6 +440,64 @@ function MyInternshipsPage() {
         setShowFinalReportView(false);
     };
 
+    const handleOpenCommentsPopup = (comments) => {
+        setCommentsToView(comments);
+        setShowCommentsPopup(true);
+    };
+
+    const handleOpenAppealPopup = (internshipId) => {
+        setCurrentInternshipIdForPopup(internshipId);
+        setAppealMessageInput("");
+        setAppealError("");
+        setShowAppealPopup(true);
+    };
+
+    const handleSaveAppeal = () => {
+        if (!appealMessageInput.trim()) {
+            setAppealError("Appeal message cannot be empty.");
+            return;
+        }
+        const internshipToUpdate = allInternships.find(intern => intern.uniqueInternshipId === currentInternshipIdForPopup);
+        if (internshipToUpdate) {
+            const appealedReport = { 
+                ...internshipToUpdate.report, 
+                appealMessage: appealMessageInput, 
+                appealSubmitted: true,
+                status: "pending_appeal",
+                pdfFile: null 
+            };
+            localStorage.setItem(`report_${currentInternshipIdForPopup}`, JSON.stringify(appealedReport));
+            setAllInternships(prevInternships => 
+                prevInternships.map(intern => 
+                    intern.uniqueInternshipId === currentInternshipIdForPopup 
+                    ? { ...intern, report: { ...appealedReport, pdfFile: internshipToUpdate.report.pdfFile } }
+                    : intern
+                )
+            );
+        }
+        setShowAppealPopup(false);
+        setAppealMessageInput("");
+    };
+
+    const simulateAdminUpdate = (internshipId, newStatus, comments = "") => {
+        const internshipToUpdate = allInternships.find(intern => intern.uniqueInternshipId === internshipId);
+        if (internshipToUpdate) {
+            const updatedReportByAdmin = {
+                ...internshipToUpdate.report,
+                status: newStatus,
+                evaluatorComments: comments,
+                appealSubmitted: newStatus === "accepted" ? true : (newStatus === "rejected" || newStatus === "flagged" ? false : internshipToUpdate.report.appealSubmitted),
+                appealMessage: (newStatus === "rejected" || newStatus === "flagged") ? internshipToUpdate.report.appealMessage : (newStatus === "accepted" ? "Appeal accepted." : ""),
+                pdfFile: null 
+            };
+            localStorage.setItem(`report_${internshipId}`, JSON.stringify(updatedReportByAdmin));
+            setAllInternships(prev => prev.map(i => 
+                i.uniqueInternshipId === internshipId 
+                ? {...i, report: {...updatedReportByAdmin, pdfFile: internshipToUpdate.report.pdfFile}} 
+                : i
+            ));
+        }
+    };
 
     if (!student?.email) {
         return (
@@ -417,11 +507,10 @@ function MyInternshipsPage() {
             </div>
         );
     }
-
-    const currentPopupInternship = allInternships.find(
+    
+    const reportForFinalView = allInternships.find(
         (intern) => intern.uniqueInternshipId === currentInternshipIdForPopup
-    );
-
+    )?.report || defaultReportState;
 
     return (
         <div style={styles.pageContainer}>
@@ -509,7 +598,7 @@ function MyInternshipsPage() {
                                 )}
                             </p>
                             <p style={styles.status}>
-                                <strong>Status:</strong>
+                                <strong>Internship Status:</strong>
                                 <span style={internship.derivedStatus === 'current' ? styles.statusCurrent : styles.statusCompleted}>
                                     {internship.derivedStatus.charAt(0).toUpperCase() + internship.derivedStatus.slice(1)}
                                 </span>
@@ -525,29 +614,90 @@ function MyInternshipsPage() {
                                     {internship.evaluation.submitted ? "Edit Company Evaluation" : "Add Company Evaluation"}
                                 </button>
 
-                                {internship.report.finalSubmitted ? (
-                                    <p style={{ color: 'green', fontWeight: 'bold', display: 'inline-block', marginLeft: '10px' }}>
-                                        Internship Report Submitted!
-                                    </p>
-                                ) : (
-                                    <>
-                                        <button
-                                            onClick={() => handleOpenReportForm(internship.uniqueInternshipId)}
-                                            style={styles.popupButton}
-                                        >
-                                            {internship.report.submitted ? "Edit Internship Report" : "Add Internship Report"}
-                                        </button>
-
-                                        {internship.report.submitted && (
+                                {/* Report Section */}
+                                <div style={{ marginTop: '10px', padding: '10px', borderTop: '1px solid #eee' }}>
+                                    <h4 style={{marginTop: 0, marginBottom: '10px'}}>Internship Report</h4>
+                                    
+                                    {/* Case 1: Report has been finalized and has a definitive evaluation status (not a draft) */}
+                                    {internship.report.finalSubmitted && 
+                                     !['not_submitted', 'draft_saved', 'edited_after_final'].includes(internship.report.status) ? (
+                                        <div>
+                                            <p>
+                                                <strong>Report Status: </strong> 
+                                                <span style={styles.reportStatusText(internship.report.status)}>
+                                                    {internship.report.status.replace(/_/g, " ").toUpperCase()}
+                                                </span>
+                                            </p>
+                                            {['rejected', 'flagged'].includes(internship.report.status) && internship.report.evaluatorComments && (
+                                                <button 
+                                                    onClick={() => handleOpenCommentsPopup(internship.report.evaluatorComments)}
+                                                    style={{...styles.popupButton, backgroundColor: '#ffc107', color: '#212529', marginRight: '10px'}}
+                                                >
+                                                    View Comments
+                                                </button>
+                                            )}
+                                            {['rejected', 'flagged'].includes(internship.report.status) && !internship.report.appealSubmitted && (
+                                                <button 
+                                                    onClick={() => handleOpenAppealPopup(internship.uniqueInternshipId)}
+                                                    style={{...styles.popupButton, backgroundColor: '#dc3545'}}
+                                                >
+                                                    Appeal Report
+                                                </button>
+                                            )}
+                                            {internship.report.appealSubmitted && (
+                                                <p style={{color: 'blue', display: 'inline-block', marginLeft: '10px'}}>
+                                                    Appeal Submitted.
+                                                    {internship.report.status !== 'pending_appeal' && 
+                                                     ` Current Report Status: ${internship.report.status.replace(/_/g, " ").toUpperCase()}`}
+                                                </p>
+                                            )}
+                                            {/* No button to "Create New Version" here. If admin wants student to resubmit, 
+                                                they would change status or communicate, student doesn't initiate new version from here.
+                                            */}
+                                        </div>
+                                    ) : (
+                                        // Case 2: Report is a draft, or an edit of a previous final, or not started
+                                        <>
                                             <button
-                                                onClick={() => handleOpenFinalReportView(internship.uniqueInternshipId)}
-                                                style={{ ...styles.popupButton, backgroundColor: '#28a745' }}
+                                                onClick={() => handleOpenReportForm(internship.uniqueInternshipId)}
+                                                style={styles.popupButton}
                                             >
-                                                View and Submit Finalized Report
+                                                {internship.report.status === "not_submitted" && !internship.report.submitted ? "Add Internship Report" :
+                                                 internship.report.status === "edited_after_final" ? "Edit New Version Draft" :
+                                                 "Edit Report Draft"
+                                                }
                                             </button>
-                                        )}
-                                    </>
-                                )}
+
+                                            {internship.report.submitted && ( 
+                                                <button
+                                                    onClick={() => handleOpenFinalReportView(internship.uniqueInternshipId)}
+                                                    style={{ ...styles.popupButton, backgroundColor: '#28a745' }}
+                                                >
+                                                    View and Submit Finalized Report
+                                                </button>
+                                            )}
+
+                                            {internship.report.status === "not_submitted" && !internship.report.submitted && (
+                                                <p style={{fontSize: '0.9em', color: '#777', marginTop: '5px'}}>No report draft started.</p>
+                                            )}
+                                             {internship.report.status === "edited_after_final" && internship.report.submitted && (
+                                                <p style={{fontSize: '0.9em', color: styles.reportStatusText("edited_after_final").backgroundColor, marginTop: '5px', padding: '3px', borderRadius: '3px', display:'inline-block', color:'white'}}>
+                                                    Editing a new version of a previously finalized report. Save and then "View and Submit" to finalize this new version.
+                                                </p>
+                                            )}
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {internship.derivedStatus === 'completed' && internship.report.finalSubmitted && (
+                            <div style={{ border: '1px dashed red', marginTop: '10px', padding: '5px', fontSize: '0.8em' }}>
+                                <small>Debug Admin Actions for "{internship.jobTitle}":</small><br/>
+                                <button onClick={() => simulateAdminUpdate(internship.uniqueInternshipId, 'accepted', 'Great job!')} style={styles.debugButton}>Accept</button>
+                                <button onClick={() => simulateAdminUpdate(internship.uniqueInternshipId, 'rejected', 'Needs more detail in section X.')} style={styles.debugButton}>Reject</button>
+                                <button onClick={() => simulateAdminUpdate(internship.uniqueInternshipId, 'flagged', 'Plagiarism concern in intro.')} style={styles.debugButton}>Flag</button>
+                                <button onClick={() => simulateAdminUpdate(internship.uniqueInternshipId, 'pending')} style={styles.debugButton}>Reset to Pending</button>
                             </div>
                         )}
                         </div>
@@ -585,11 +735,11 @@ function MyInternshipsPage() {
                         </div>
                     )}
 
-                  {showReportPopup && (
+                     {showReportPopup && (
                     <div style={styles.popupOverlay}>
                         <div style={styles.popupContent}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                                <h3>Internship Report</h3>
+                                <h3>Internship Report Draft</h3>
                                 <button
                                     onClick={handleDownloadSampleReport}
                                     style={{ ...styles.popupButton, backgroundColor: '#17a2b8', margin: '0' }}
@@ -654,13 +804,12 @@ function MyInternshipsPage() {
                                     const file = e.target.files[0];
                                     setPopupReportData(prev => ({ 
                                         ...prev, 
-                                        pdfFile: file, // Keep the File object in popup state for current editing
-                                        pdfFileName: file ? file.name : "" // Update filename
+                                        pdfFile: file, 
+                                        pdfFileName: file ? file.name : "" 
                                     }));
                                 }}
                                 style={{ width: '100%', marginBottom: '10px', padding: '8px', boxSizing: 'border-box', borderColor: reportErrors.pdfFile ? 'red' : undefined }}
                             />
-                            {/* Display selected file name from popup state */}
                             {popupReportData.pdfFile ? 
                                 <p style={{fontSize: '0.9em', color: '#555'}}>Selected file: {popupReportData.pdfFile.name}</p> :
                                 (popupReportData.pdfFileName && <p style={{fontSize: '0.9em', color: '#555'}}>Current file: {popupReportData.pdfFileName} (re-select if you want to change)</p>)
@@ -670,56 +819,54 @@ function MyInternshipsPage() {
                             <div style={{ textAlign: 'right', marginTop: '10px' }}>
                                 <button onClick={() => setShowReportPopup(false)} style={{...styles.popupButton, backgroundColor: '#6c757d'}}>Close</button>
                                 <button onClick={handleSaveReport} style={styles.popupButton}>
-                                    Save Report
+                                    Save Report Draft
                                 </button>
                             </div>
                         </div>
                     </div>
                     )}
 
-                    {showFinalReportView && currentPopupInternship && (
+                    {showFinalReportView && (
                         <div style={styles.popupOverlay}>
                             <div style={styles.popupContent} role="dialog" aria-labelledby="finalReportTitle">
                                 <h3 id="finalReportTitle" style={{ borderBottom: '1px solid #ccc', paddingBottom: '10px', marginBottom: '15px' }}>
                                     Final Internship Report Review
                                 </h3>
-                                {/* Display data from currentPopupInternship.report (which was loaded from localStorage) */}
                                 <div style={styles.finalReportField}>
-                                    <strong>Title:</strong> {currentPopupInternship.report.title || "N/A"}
+                                    <strong>Title:</strong> {reportForFinalView.title || "N/A"}
                                 </div>
                                 <div style={styles.finalReportField}>
                                     <strong>Introduction:</strong>
-                                    <p style={styles.finalReportParagraph}>{currentPopupInternship.report.introduction || "N/A"}</p>
+                                    <p style={styles.finalReportParagraph}>{reportForFinalView.introduction || "N/A"}</p>
                                 </div>
                                 <div style={styles.finalReportField}>
                                     <strong>Body:</strong>
-                                    <p style={styles.finalReportParagraph}>{currentPopupInternship.report.body || "N/A"}</p>
+                                    <p style={styles.finalReportParagraph}>{reportForFinalView.body || "N/A"}</p>
                                 </div>
                                 <div style={styles.finalReportField}>
-                                    <strong>Major:</strong> {currentPopupInternship.report.major || "N/A"}
+                                    <strong>Major:</strong> {reportForFinalView.major || "N/A"}
                                 </div>
-                                {currentPopupInternship.report.major && currentPopupInternship.report.courses.length > 0 && (
+                                {reportForFinalView.major && reportForFinalView.courses.length > 0 && (
                                     <div style={styles.finalReportField}>
                                         <strong>Relevant Courses:</strong>
                                         <ul style={{ listStyleType: 'disc', paddingLeft: '20px', margin: '5px 0 0 0' }}>
-                                            {currentPopupInternship.report.courses.map(course => <li key={course}>{course}</li>)}
+                                            {reportForFinalView.courses.map(course => <li key={course}>{course}</li>)}
                                         </ul>
                                     </div>
                                 )}
                                 <div style={styles.finalReportField}>
-                                    <strong>Uploaded PDF:</strong> {currentPopupInternship.report.pdfFileName || "None"}
+                                    <strong>Uploaded PDF:</strong> {reportForFinalView.pdfFileName || "None"}
                                 </div>
                                
-
                                 <div style={{ textAlign: 'right', marginTop: '20px', paddingTop: '15px', borderTop: '1px solid #eee' }}>
                                     <button 
                                         onClick={() => {
                                             setShowFinalReportView(false);
-                                            handleOpenReportForm(currentInternshipIdForPopup);
+                                            handleOpenReportForm(currentInternshipIdForPopup); 
                                         }} 
                                         style={{...styles.popupButton, backgroundColor: '#6c757d'}}
                                     >
-                                        Back to Edit
+                                        Back to Edit Draft
                                     </button>
                                     <button
                                         onClick={handleFinalReportSubmit}
@@ -727,6 +874,39 @@ function MyInternshipsPage() {
                                     >
                                         Submit Final Report
                                     </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {showCommentsPopup && (
+                        <div style={styles.popupOverlay}>
+                            <div style={styles.popupContent}>
+                                <h3>Evaluator Comments</h3>
+                                <p style={styles.finalReportParagraph}>{commentsToView || "No comments provided."}</p>
+                                <div style={{ textAlign: 'right', marginTop: '15px' }}>
+                                    <button onClick={() => setShowCommentsPopup(false)} style={styles.popupButton}>Close</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {showAppealPopup && (
+                        <div style={styles.popupOverlay}>
+                            <div style={styles.popupContent}>
+                                <h3>Appeal Report Decision</h3>
+                                <p>Please provide your reasons for appealing the decision on your report.</p>
+                                <textarea
+                                    placeholder="Enter your appeal message..."
+                                    value={appealMessageInput}
+                                    onChange={(e) => setAppealMessageInput(e.target.value)}
+                                    rows={5}
+                                    style={{ width: '100%', marginBottom: '10px', padding: '8px', boxSizing: 'border-box' }}
+                                />
+                                {appealError && <p style={{ color: 'red' }}>{appealError}</p>}
+                                <div style={{ textAlign: 'right', marginTop: '15px' }}>
+                                    <button onClick={() => setShowAppealPopup(false)} style={{...styles.popupButton, backgroundColor: '#6c757d'}}>Cancel</button>
+                                    <button onClick={handleSaveAppeal} style={styles.popupButton}>Submit Appeal</button>
                                 </div>
                             </div>
                         </div>
@@ -848,7 +1028,7 @@ const styles = {
         color: '#555',
         marginBottom: '8px',
     },
-    status: {
+    status: { 
         fontSize: '0.9em',
         marginBottom: '12px',
     },
@@ -902,13 +1082,13 @@ const styles = {
     },
     popupButton: {
         margin: '10px 0 0 10px', 
-        padding: '8px 16px',
+        padding: '8px 12px',
         border: 'none',
         borderRadius: '4px',
         cursor: 'pointer',
         backgroundColor: '#007bff',
         color: '#fff',
-        fontSize: '0.9em',
+        fontSize: '0.85em',
     },
     errorText: { 
         color: 'red',
@@ -930,6 +1110,26 @@ const styles = {
         marginTop: '4px',
         maxHeight: '150px', 
         overflowY: 'auto',  
+    },
+    reportStatusText: (status) => ({
+        fontWeight: 'bold',
+        padding: '3px 8px',
+        borderRadius: '4px',
+        color: 'white',
+        backgroundColor: status === 'accepted' ? '#28a745' :
+                         status === 'rejected' ? '#dc3545' :
+                         status === 'flagged' ? '#ffc107' :
+                         status === 'pending' || status === 'pending_appeal' ? '#17a2b8' :
+                         status === 'edited_after_final' ? '#fd7e14' : 
+                         '#6c757d', 
+        color: status === 'flagged' ? '#212529' : 'white',
+    }),
+    debugButton: {
+        fontSize: '0.75em',
+        padding: '3px 6px',
+        margin: '2px',
+        border: '1px solid #ccc',
+        cursor: 'pointer'
     }
 };
 

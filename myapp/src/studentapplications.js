@@ -1,35 +1,43 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom'; // Added useNavigate
 
 function MyApplications() {
   const [myApplications, setMyApplications] = useState([]);
-  const location=useLocation();
-  // const savedProfile = JSON.parse(localStorage.getItem('studentProfile'));
-  const savedProfile=location.state?.studentj || location.state?.student;
+  const location = useLocation();
+  const navigate = useNavigate(); // Added useNavigate
+  const savedProfile = location.state?.studentj || location.state?.student;
 
   const loadApplications = useCallback(() => {
-    const storedApplied = JSON.parse(localStorage.getItem('appliedInternships') );
+    // Ensure storedApplied is an array, defaulting to [] if not found or invalid
+    const storedAppliedString = localStorage.getItem('appliedInternships');
+    const storedApplied = storedAppliedString ? JSON.parse(storedAppliedString) : []; // Default to []
+
     if (savedProfile?.email) {
+      // Now storedApplied is guaranteed to be an array, so .filter will work
       const studentApps = storedApplied.filter(app => 
         app.studentProfile?.email === savedProfile.email
       );
       setMyApplications(studentApps);
+    } else {
+      setMyApplications([]); // Clear applications if no profile
     }
   }, [savedProfile]);
 
   useEffect(() => {
-    // Load immediately
     loadApplications();
 
-    // Set up event listeners
     const handleStatusUpdate = (e) => {
-      if (e.detail?.applicantEmail === savedProfile?.email) {
+      // Ensure savedProfile is available before accessing email
+      if (savedProfile && e.detail?.applicantEmail === savedProfile.email) {
         loadApplications();
       }
     };
 
-    const handleStorageChange = () => {
-      loadApplications();
+    const handleStorageChange = (event) => {
+      // Specifically check if the 'appliedInternships' key changed
+      if (event.key === 'appliedInternships' || event.key === null) { // null for clearStorage
+         loadApplications();
+      }
     };
 
     window.addEventListener('applicationStatusUpdated', handleStatusUpdate);
@@ -40,6 +48,12 @@ function MyApplications() {
       window.removeEventListener('storage', handleStorageChange);
     };
   }, [loadApplications, savedProfile]);
+
+  // --- Add a Back Button Handler ---
+  const handleBack = () => {
+    // Navigate back to the student page, ensuring student data is passed back
+    navigate('/studentpage', { state: { student: savedProfile } }); 
+  };
 
   return (
     <div style={{
@@ -58,7 +72,7 @@ function MyApplications() {
           boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
           borderRadius: '8px',
           overflow: 'hidden',
-          minWidth: '350px',
+          minWidth: '600px', // Adjusted minWidth for better layout
         }}>
           <thead style={{ backgroundColor: '#28a745', color: 'white' }}>
             <tr>
@@ -72,7 +86,8 @@ function MyApplications() {
           </thead>
           <tbody>
             {myApplications.map((appliedJob, index) => (
-              <tr key={index} style={{ borderBottom: '1px solid #ddd' }}>
+              // Use a more stable key if available, like an application ID
+              <tr key={appliedJob.id || `${appliedJob.title}-${index}`} style={{ borderBottom: '1px solid #ddd' }}>
                 <td style={{ padding: '12px 15px' }}>{appliedJob.companyName}</td>
                 <td style={{ padding: '12px 15px' }}>{appliedJob.title}</td>
                 <td style={{ padding: '12px 15px' }}>{appliedJob.duration}</td>
@@ -80,26 +95,47 @@ function MyApplications() {
                 <td style={{ padding: '12px 15px' }}>
                   <span style={{
                     fontWeight: 'bold',
-                    color: appliedJob.status === 'accepted' ? 'green' :
+                    padding: '4px 8px', // Added padding for better visual
+                    borderRadius: '4px', // Added border radius
+                    color: 'white', // Text color to white for better contrast on bg
+                    backgroundColor: appliedJob.status === 'accepted' ? 'green' :
                       appliedJob.status === 'rejected' ? 'red' :
-                        appliedJob.status === 'finalized' ? 'blue' :
-                          'orange'
+                        appliedJob.status === 'finalized' ? 'blue' : // Assuming finalized means something like "shortlisted"
+                          'orange' // For pending or other statuses
                   }}>
-                    {appliedJob.status || 'pending'}
+                    {(appliedJob.status || 'pending').toUpperCase()} {/* Make status uppercase */}
                   </span>
                 </td>
                 <td style={{ padding: '12px 15px' }}>
                   {appliedJob.documents && appliedJob.documents.length > 0
                     ? appliedJob.documents.join(', ')
-                    : 'No documents uploaded'}
+                    : 'N/A'}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       ) : (
-        <p>No internships applied to yet.</p>
+        <p style={{ textAlign: 'center', fontStyle: 'italic', color: '#777' }}>
+          You have not applied to any internships yet.
+        </p>
       )}
+      {/* --- Add a Back Button --- */}
+      <button 
+        onClick={handleBack} 
+        style={{ 
+          marginTop: '30px', 
+          padding: '10px 20px', 
+          backgroundColor: '#6c757d', 
+          color: 'white', 
+          border: 'none', 
+          borderRadius: '5px', 
+          cursor: 'pointer',
+          fontSize: '1em'
+        }}
+      >
+        ← Back to Student Page
+      </button>
     </div>
   );
 }

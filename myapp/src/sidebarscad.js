@@ -16,10 +16,9 @@ const Sidebar = ({ menuOpen, toggleMenu }) => {
     { label: 'Homepage', path: '/scadpage', icon: <Home size={18} /> },
     { label: 'Company Registrations', path: '/view-registration', icon: <Building size={18} /> },
     { label: 'View All Students', path: '/allstudents', icon: <Users size={18} /> },
-    { label: 'All Reports', path: '/allreports', icon: <FileText size={18} />, state: {type:'scad'} },
+    { label: 'All Reports', path: '/facultyreports', icon: <FileText size={18} />, state: {type:'scad'} },
     { label: 'All Evaluations', path: '/evaluation', icon: <CheckSquare size={18} />, state:{ type: 'scad'} },
     { label: 'Generate Statistics Report', path: '/statistics', icon: <BarChart2 size={18} />, state:{ type: 'scad'} },
-    { label: 'Approve Internships', path: '/approve-internships', icon: <Briefcase size={18} /> },
     { label: 'Available Internships', path: '/allpostedjobs', icon: <Briefcase size={18} /> },
     { label: 'All Workshops', path: '/workshop', icon: <BookOpen size={18} /> },
     { label: 'Upcoming Workshops', path: '/viewworkshop', icon: <Calendar size={18} /> }

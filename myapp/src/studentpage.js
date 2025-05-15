@@ -213,6 +213,27 @@ function StudentPage() {
   // Track viewed notifications in local storage
   const viewedNotificationsKey = student?.email ? `viewedNotifications_${student.email}` : "viewedNotifications_default"
 
+  //online assessments scores
+  const [showScoresPopup, setShowScoresPopup] = useState(false);
+  const [assessmentScores, setAssessmentScores] = useState([]);
+
+  useEffect(() => {
+    // Load completed assessments from localStorage
+    const savedScores = localStorage.getItem('completedAssessments');
+    if (savedScores) {
+      setAssessmentScores(JSON.parse(savedScores));
+    }
+  }, []);
+
+  const showAssessmentScores = () => {
+    if (assessmentScores.length === 0) {
+      showNotification("You haven't completed any assessments yet!", "info");
+    } else {
+      setShowScoresPopup(true);
+    }
+  };
+
+
   // Dashboard cards data
   const dashboardCards = [
     {
@@ -236,7 +257,15 @@ function StudentPage() {
       color: "#f7d5c5",
       action: () => showNotification("Statistics feature coming soon!", "info"),
     },
+      {
+    title: "Assessment Scores",
+    count: assessmentScores.length,
+    icon: "🧪",
+    color: "#c5f7d5",
+    action: () => showAssessmentScores(),
+  },
   ]
+
 
   // Load viewed notifications from local storage
   useEffect(() => {
@@ -1310,6 +1339,115 @@ function StudentPage() {
                       </div>
                     ))}
                   </div>
+                  {showScoresPopup && (
+  <div
+    style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 2000,
+    }}
+    onClick={() => setShowScoresPopup(false)}
+  >
+    <div
+      style={{
+        backgroundColor: 'white',
+        borderRadius: '8px',
+        padding: '20px',
+        boxShadow: '0 4px 15px rgba(0, 0, 0, 0.15)',
+        width: '90%',
+        maxWidth: '400px',
+        maxHeight: '80vh',
+        overflowY: 'auto',
+      }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '15px',
+          paddingBottom: '10px',
+          borderBottom: '1px solid #e6e6fa',
+        }}
+      >
+        <h3
+          style={{
+            margin: 0,
+            color: '#4a4a6a',
+            fontSize: '16px',
+            fontWeight: '600',
+          }}
+        >
+          Assessment Scores
+        </h3>
+        <button
+          onClick={() => setShowScoresPopup(false)}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            fontSize: '20px',
+            cursor: 'pointer',
+            color: '#6a6a8a',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '24px',
+            height: '24px',
+            borderRadius: '50%',
+          }}
+        >
+          &times;
+        </button>
+      </div>
+      <div>
+        {assessmentScores.map((assessment, index) => (
+          <div
+            key={index}
+            style={{
+              padding: '10px',
+              marginBottom: '8px',
+              backgroundColor: '#f8f5ff',
+              borderRadius: '6px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <div
+              style={{
+                fontWeight: '500',
+                color: '#4a4a6a',
+                fontSize: '14px',
+              }}
+            >
+              {assessment.title}
+            </div>
+            <div
+              style={{
+                fontWeight: 'bold',
+                color: '#6b46c1',
+                fontSize: '16px',
+                backgroundColor: '#e9d8fd',
+                padding: '4px 10px',
+                borderRadius: '12px',
+              }}
+            >
+              {assessment.score.toFixed(0)}%
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+)}
 
                   {/* Recent Activities */}
                   <div

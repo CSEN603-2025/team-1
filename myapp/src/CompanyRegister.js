@@ -1378,7 +1378,7 @@ function CompanyRegister() {
         }}>
           Already have an account?{' '}
           <a
-            href="/company-login"
+            href="/"
             style={{
               color: colors.primary.main,
               textDecoration: 'none',

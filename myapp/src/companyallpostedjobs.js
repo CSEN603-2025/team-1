@@ -39,7 +39,7 @@ function AllJobsPosted() {
       700: "#334155",
       800: "#1e293b",
       900: "#0f172a",
-    }
+    },
   }
 
   useEffect(() => {
@@ -124,7 +124,7 @@ function AllJobsPosted() {
   return (
     <div
       style={{
-        backgroundColor: colors.purple[50],
+        backgroundColor: colors.slate[50],
         minHeight: "100vh",
         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
         color: "#1a2b4b",
@@ -185,7 +185,7 @@ function AllJobsPosted() {
                 style={{
                   fontSize: "28px",
                   fontWeight: "700",
-                  color: colors.purple[900],
+                  color: "#c9B7EBD",
                   margin: 0,
                   letterSpacing: "-0.02em",
                 }}
@@ -287,7 +287,7 @@ function AllJobsPosted() {
             borderRadius: "16px",
             boxShadow: "0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.1)",
             overflow: "hidden",
-            border: `1px solid ${colors.purple[100]}`,
+            border: `1px solid ${colors.slate[200]}`,
             marginBottom: "24px",
             padding: "24px",
           }}
@@ -484,7 +484,7 @@ function AllJobsPosted() {
               borderRadius: "16px",
               boxShadow: "0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.1)",
               overflow: "hidden",
-              border: `1px solid ${colors.purple[100]}`,
+              border: `1px solid ${colors.slate[200]}`,
               padding: "64px 24px",
               display: "flex",
               flexDirection: "column",
@@ -497,7 +497,7 @@ function AllJobsPosted() {
                 width: "40px",
                 height: "40px",
                 borderRadius: "50%",
-                border: `3px solid ${colors.purple[100]}`,
+                border: `3px solid ${colors.slate[200]}`,
                 borderTopColor: colors.purple[600],
                 animation: "spin 1s linear infinite",
                 marginBottom: "16px",
@@ -533,7 +533,7 @@ function AllJobsPosted() {
                         borderRadius: "16px",
                         boxShadow: "0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.1)",
                         overflow: "hidden",
-                        border: `1px solid ${colors.purple[100]}`,
+                        border: `1px solid ${colors.slate[200]}`,
                         transition: "transform 0.2s ease, box-shadow 0.2s ease",
                         ":hover": {
                           transform: "translateY(-4px)",
@@ -544,7 +544,7 @@ function AllJobsPosted() {
                       <div
                         style={{
                           padding: "24px",
-                          borderBottom: `1px solid ${colors.purple[50]}`,
+                          borderBottom: `1px solid ${colors.slate[100]}`,
                         }}
                       >
                         <div
@@ -584,7 +584,7 @@ function AllJobsPosted() {
                                 margin: "0 0 4px 0",
                                 fontSize: "18px",
                                 fontWeight: "600",
-                                color: colors.purple[900],
+                                color: colors.slate[900],
                               }}
                             >
                               {job.title}
@@ -731,7 +731,7 @@ function AllJobsPosted() {
                           style={{
                             width: "100%",
                             padding: "10px 16px",
-                            backgroundColor: colors.purple[600],
+                            backgroundColor: "#9B7EBD",
                             color: "white",
                             border: "none",
                             borderRadius: "8px",
@@ -739,7 +739,7 @@ function AllJobsPosted() {
                             fontWeight: "500",
                             cursor: "pointer",
                             transition: "all 0.2s ease",
-                            boxShadow: `0 2px 4px ${colors.purple[200]}`,
+                            boxShadow: `0 2px 4px ${"#9B7EBD"}`,
                           }}
                         >
                           View Details
@@ -754,7 +754,7 @@ function AllJobsPosted() {
                       borderRadius: "16px",
                       boxShadow: "0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.1)",
                       overflow: "hidden",
-                      border: `1px solid ${colors.purple[100]}`,
+                      border: `1px solid ${colors.slate[200]}`,
                       padding: "64px 24px",
                       display: "flex",
                       flexDirection: "column",
@@ -769,7 +769,7 @@ function AllJobsPosted() {
                         width: "64px",
                         height: "64px",
                         borderRadius: "50%",
-                        backgroundColor: colors.purple[100],
+                        backgroundColor: colors.slate[100],
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -781,7 +781,7 @@ function AllJobsPosted() {
                         height="24"
                         viewBox="0 0 24 24"
                         fill="none"
-                        stroke={colors.purple[500]}
+                        stroke={colors.slate[500]}
                         strokeWidth="2"
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -796,7 +796,7 @@ function AllJobsPosted() {
                         margin: "0 0 8px 0",
                         fontSize: "18px",
                         fontWeight: "600",
-                        color: colors.purple[900],
+                        color: colors.slate[900],
                       }}
                     >
                       No internships found
@@ -824,7 +824,7 @@ function AllJobsPosted() {
                   borderRadius: "16px",
                   boxShadow: "0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.1)",
                   overflow: "hidden",
-                  border: `1px solid ${colors.purple[100]}`,
+                  border: `1px solid ${colors.slate[200]}`,
                 }}
               >
                 {filteredJobs.length > 0 ? (
@@ -838,7 +838,7 @@ function AllJobsPosted() {
                       <thead>
                         <tr
                           style={{
-                            backgroundColor: colors.purple[50],
+                            backgroundColor: colors.slate[50],
                           }}
                         >
                           <th
@@ -847,10 +847,10 @@ function AllJobsPosted() {
                               textAlign: "left",
                               fontSize: "12px",
                               fontWeight: "600",
-                              color: colors.purple[700],
+                              color: colors.slate[700],
                               textTransform: "uppercase",
                               letterSpacing: "0.05em",
-                              borderBottom: `1px solid ${colors.purple[100]}`,
+                              borderBottom: `1px solid ${colors.slate[200]}`,
                             }}
                           >
                             Company
@@ -861,10 +861,10 @@ function AllJobsPosted() {
                               textAlign: "left",
                               fontSize: "12px",
                               fontWeight: "600",
-                              color: colors.purple[700],
+                              color: colors.slate[700],
                               textTransform: "uppercase",
                               letterSpacing: "0.05em",
-                              borderBottom: `1px solid ${colors.purple[100]}`,
+                              borderBottom: `1px solid ${colors.slate[200]}`,
                             }}
                           >
                             Title
@@ -875,10 +875,10 @@ function AllJobsPosted() {
                               textAlign: "left",
                               fontSize: "12px",
                               fontWeight: "600",
-                              color: colors.purple[700],
+                              color: colors.slate[700],
                               textTransform: "uppercase",
                               letterSpacing: "0.05em",
-                              borderBottom: `1px solid ${colors.purple[100]}`,
+                              borderBottom: `1px solid ${colors.slate[200]}`,
                             }}
                           >
                             Duration
@@ -889,10 +889,10 @@ function AllJobsPosted() {
                               textAlign: "left",
                               fontSize: "12px",
                               fontWeight: "600",
-                              color: colors.purple[700],
+                              color: colors.slate[700],
                               textTransform: "uppercase",
                               letterSpacing: "0.05em",
-                              borderBottom: `1px solid ${colors.purple[100]}`,
+                              borderBottom: `1px solid ${colors.slate[200]}`,
                             }}
                           >
                             Compensation
@@ -903,10 +903,10 @@ function AllJobsPosted() {
                               textAlign: "right",
                               fontSize: "12px",
                               fontWeight: "600",
-                              color: colors.purple[700],
+                              color: colors.slate[700],
                               textTransform: "uppercase",
                               letterSpacing: "0.05em",
-                              borderBottom: `1px solid ${colors.purple[100]}`,
+                              borderBottom: `1px solid ${colors.slate[200]}`,
                             }}
                           >
                             Actions
@@ -918,7 +918,7 @@ function AllJobsPosted() {
                           <tr
                             key={job.id}
                             style={{
-                              borderBottom: index < filteredJobs.length - 1 ? `1px solid ${colors.purple[50]}` : "none",
+                              borderBottom: index < filteredJobs.length - 1 ? `1px solid ${colors.slate[100]}` : "none",
                             }}
                           >
                             <td
@@ -1042,7 +1042,7 @@ function AllJobsPosted() {
                                     alignItems: "center",
                                     gap: "6px",
                                     transition: "all 0.2s ease",
-                                    boxShadow: `0 2px 4px ${colors.purple[200]}`,
+                                    boxShadow: `0 2px 4px ${colors.slate[200]}`,
                                   }}
                                 >
                                   <svg
@@ -1083,7 +1083,7 @@ function AllJobsPosted() {
                         width: "64px",
                         height: "64px",
                         borderRadius: "50%",
-                        backgroundColor: colors.purple[100],
+                        backgroundColor: colors.slate[100],
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -1095,7 +1095,7 @@ function AllJobsPosted() {
                         height="24"
                         viewBox="0 0 24 24"
                         fill="none"
-                        stroke={colors.purple[500]}
+                        stroke={colors.slate[500]}
                         strokeWidth="2"
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -1110,7 +1110,7 @@ function AllJobsPosted() {
                         margin: "0 0 8px 0",
                         fontSize: "18px",
                         fontWeight: "600",
-                        color: colors.purple[900],
+                        color: colors.slate[900],
                       }}
                     >
                       No internships found
@@ -1169,7 +1169,7 @@ function AllJobsPosted() {
                 justifyContent: "space-between",
                 alignItems: "center",
                 padding: "20px 24px",
-                borderBottom: `1px solid ${colors.purple[100]}`,
+                borderBottom: `1px solid ${colors.slate[200]}`,
               }}
             >
               <h2
@@ -1177,7 +1177,7 @@ function AllJobsPosted() {
                   margin: 0,
                   fontSize: "20px",
                   fontWeight: "600",
-                  color: colors.purple[900],
+                  color: colors.slate[900],
                 }}
               >
                 Internship Details
@@ -1254,7 +1254,7 @@ function AllJobsPosted() {
                       margin: "0 0 4px 0",
                       fontSize: "22px",
                       fontWeight: "600",
-                      color: colors.purple[900],
+                      color: colors.slate[900],
                     }}
                   >
                     {selectedJob.companyName}

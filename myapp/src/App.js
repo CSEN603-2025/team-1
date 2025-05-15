@@ -38,7 +38,7 @@ function App() {
       password: 'student123',
     },
     {
-      role: 'student',
+      role: 'pro',
       email: 'student2@example.com',
       password: 'student123',
     },
@@ -89,7 +89,7 @@ if (users.length === 0) {
     } else {
       sessionStorage.setItem('user', JSON.stringify(user));
 
-      if (user.role === 'student') {
+      if (user.role === 'student' || user.role === 'pro') {
         navigate('/studentpage', { state: { user } });      
       } else if (user.role === 'scad') {
         navigate('/scadpage', { state: { user } });

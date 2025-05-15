@@ -203,7 +203,9 @@ function StudentPage() {
   const [draftProfile, setDraftProfile] = useState({ ...profile })
 
   // Robust check for student data in location state
-  const student = location.state?.user || location.state?.studentj || location.state?.student || { email: "default@example.com" }
+  const student = location.state?.user ||
+    location.state?.studentj ||
+    location.state?.student || { email: "default@example.com" }
 
   // Use student email for profile key, ensure student exists
   const profileKey = student?.email ? `studentProfile_${student.email}` : "studentProfile_default"
@@ -404,17 +406,6 @@ function StudentPage() {
     showNotification("Navigating to companies page...", "info")
   }
 
-  const handleworkshopclick=() => {
-
-     setShowProfile(false)
-    setShowCompanies(false)
-    setshowmyinternships(false)
-    setShowCourses(false)
-    setActiveSection("companies")
-    navigate("/studentworkshops", { state: { student } })
-    showNotification("Navigating to companies page...", "info")
-
-  }
   const handleSettingsClick = () => {
     setShowProfile(false)
     setShowCompanies(false)
@@ -459,19 +450,42 @@ function StudentPage() {
     setIsPopupOpen(false) // close popup
   }
 
-  // Sidebar component to match the faculty page structure
+  const handleAppointmentsClick = () => {
+    setActiveSection("appointments")
+    navigate("/appointments", { state: { student } })
+  }
+
+  const handleAssessmentsClick = () => {
+    setActiveSection("assessments")
+    navigate("/online-assessments", { state: { student } })
+  }
+
+  const handleWorkshopsClick = () => {
+    setActiveSection("workshops")
+    navigate("/studentworkshops", { state: { student } })
+  }
+
+  const commonItems = [
+    { id: "dashboard", label: "Homepage", icon: "🏠", action: handleHomeClick },
+    { id: "profile", label: "Profile", icon: "👤", action: handleProfileClick },
+    { id: "courses", label: "All Courses", icon: "📚", action: handleCoursesClick },
+    { id: "jobs", label: "Browse Jobs", icon: "💼", action: handleBrowseJobsClick },
+    { id: "applications", label: "All Applications", icon: "📝", action: handleMyApplicationsClick },
+    { id: "internships", label: "My Internships", icon: "🏆", action: handleMyInternshipsClick },
+    { id: "companies", label: "Companies", icon: "🏢", action: handleCompaniesClick },
+  ]
+  const proSpecificItems = [
+    { id: "appointments", label: "Appointments", icon: "📅", action: handleAppointmentsClick },
+    { id: "assessments", label: "Online Assessments", icon: "📋", action: handleAssessmentsClick },
+    { id: "workshops", label: "Workshops", icon: "🔧", action: handleWorkshopsClick }, // Pro gets the detailed workshop link
+  ]
+
   const Sidebar = ({ menuOpen, toggleMenu }) => {
-    const sidebarItems = [
-      { id: "dashboard", label: "Homepage", icon: "🏠", action: handleHomeClick },
-      { id: "profile", label: "Profile", icon: "👤", action: handleProfileClick },
-      { id: "courses", label: "All Courses", icon: "📚", action: handleCoursesClick },
-      { id: "jobs", label: "Browse Jobs", icon: "💼", action: handleBrowseJobsClick },
-      { id: "applications", label: "All Applications", icon: "📝", action: handleMyApplicationsClick },
-      { id: "internships", label: "My Internships", icon: "🏆", action: handleMyInternshipsClick },
-      { id: "companies", label: "Companies", icon: "🏢", action: handleCompaniesClick },
-      { id: "settings", label: "Settings", icon: "⚙️", action: handleSettingsClick },
-      {id: "workshops",label: "test", action:handleworkshopclick},
-    ]
+    const sidebarItems = [...commonItems] // Start with common items
+
+    if (student && student.role === "pro") {
+      sidebarItems.push(...proSpecificItems)
+    }
 
     return (
       <div
@@ -541,7 +555,25 @@ function StudentPage() {
                 {profile.name ? profile.name.charAt(0).toUpperCase() : "S"}
               </div>
               <div>
-                <div style={{ fontSize: "14px", fontWeight: "bold", color: "#4a4a6a" }}>Student User</div>
+                <div style={{ fontSize: "14px", fontWeight: "bold", color: "#4a4a6a" }}>Student User{student.role === "pro" && (
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      marginLeft: "8px",
+                      backgroundColor: "#ffd700", // Gold color
+                      color: "#4a4a6a",
+                      fontSize: "10px",
+                      fontWeight: "bold",
+                      padding: "2px 6px",
+                      borderRadius: "10px",
+                      boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                    }}
+                  >
+                    PRO
+                  </span>
+                )}</div>
                 <div style={{ fontSize: "12px", color: "#6a6a8a" }}>{profile.name || student.email}</div>
               </div>
             </div>
@@ -1071,7 +1103,36 @@ function StudentPage() {
               {profile.name ? profile.name.charAt(0).toUpperCase() : "S"}
             </div>
             <div style={{ marginRight: "20px" }}>
-              <div style={{ fontSize: "14px", fontWeight: "bold", color: "#4a4a6a" }}>Student User</div>
+              <div
+                style={{
+                  fontSize: "14px",
+                  fontWeight: "bold",
+                  color: "#4a4a6a",
+                  display: "flex",
+                  alignItems: "center",
+                }}
+              >
+                Student User
+                {student.role === "pro" && (
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      marginLeft: "8px",
+                      backgroundColor: "#ffd700", // Gold color
+                      color: "#4a4a6a",
+                      fontSize: "10px",
+                      fontWeight: "bold",
+                      padding: "2px 6px",
+                      borderRadius: "10px",
+                      boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                    }}
+                  >
+                    PRO
+                  </span>
+                )}
+              </div>
               <div style={{ fontSize: "12px", color: "#6a6a8a" }}>{profile.name || student.email}</div>
             </div>
 

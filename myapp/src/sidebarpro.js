@@ -157,7 +157,25 @@ const SidebarStudent = ({ menuOpen, toggleMenu }) => {
               {location.state?.user?.name ? location.state.user.name.charAt(0).toUpperCase() : "S"}
             </div>
             <div>
-              <div style={{ fontSize: "14px", fontWeight: "bold", color: "#4a4a6a" }}>Student User</div>
+              <div style={{ fontSize: "14px", fontWeight: "bold", color: "#4a4a6a" }}>Student User{student.role === "pro" && (
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      marginLeft: "8px",
+                      backgroundColor: "#ffd700", // Gold color
+                      color: "#4a4a6a",
+                      fontSize: "10px",
+                      fontWeight: "bold",
+                      padding: "2px 6px",
+                      borderRadius: "10px",
+                      boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                    }}
+                  >
+                    PRO
+                  </span>
+                )}</div>
               <div style={{ fontSize: "12px", color: "#6a6a8a" }}>
                 {location.state?.user?.name || location.state?.user?.email || "Student"}
               </div>

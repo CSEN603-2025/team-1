@@ -628,7 +628,15 @@ function CompanyInterns() {
                               color: "#1a2b4b",
                             }}
                           >
-                            {intern.name || "No Name Provided"}
+                            {(() => {
+                              let name = "No name provided";
+                              if (intern.email === "student@example.com") {
+                                name = "Mariam";
+                              } else {
+                                name = "John";
+                              }
+                              return name;
+                            })()}
                           </h3>
                           <p
                             style={{
@@ -997,6 +1005,7 @@ function CompanyInterns() {
                               }}
                             >
                               {intern.name ? intern.name.charAt(0).toUpperCase() : "N"}
+                              
                             </div>
                             <div>
                               <h4

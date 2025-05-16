@@ -56,7 +56,7 @@ const SidebarStudent = ({ menuOpen, toggleMenu }) => {
 
   const handleWorkshopsClick = () => {
     setActiveSection("workshops")
-    navigate("/workshops", { state: { ...location.state } })
+    navigate("/studentworkshops", { state: { ...location.state } })
   }
 
   const handleSettingsClick = () => {
@@ -77,21 +77,22 @@ const SidebarStudent = ({ menuOpen, toggleMenu }) => {
     navigate("/viewprofile", { state: { ...location.state } })
   }
 
-  // Sidebar items including the new requested buttons
-  const sidebarItems = [
+
+
+   const sidebarItems = [
     { id: "dashboard", label: "Homepage", icon: "🏠", action: handleHomeClick },
     { id: "profile", label: "Profile", icon: "👤", action: handleProfileClick },
     { id: "courses", label: "All Courses", icon: "📚", action: handleCoursesClick },
+    { id: "companies", label: "Companies", icon: "🏢", action: handleCompaniesClick }, // Action updated
     { id: "jobs", label: "Browse Jobs", icon: "💼", action: handleBrowseJobsClick },
     { id: "applications", label: "All Applications", icon: "📝", action: handleMyApplicationsClick },
     { id: "internships", label: "My Internships", icon: "🏆", action: handleMyInternshipsClick },
-    { id: "companies", label: "Companies", icon: "🏢", action: handleCompaniesClick },
-    // New buttons as requested
+ 
     { id: "appointments", label: "Appointments", icon: "📅", action: handleAppointmentsClick },
     { id: "assessments", label: "Online Assessments", icon: "📋", action: handleAssessmentsClick },
     { id: "workshops", label: "Workshops", icon: "🔧", action: handleWorkshopsClick },
-    { id: "settings", label: "Settings", icon: "⚙️", action: handleSettingsClick },
     { id: "Who viewed my profile", label: "Who viewed my profile", icon: "👁", action: handleviewedprofile},
+    { id: "settings", label: "Settings", icon: "⚙️", action: handleSettingsClick },
   ]
 
   return (

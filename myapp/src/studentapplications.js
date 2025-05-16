@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
+import { getNotification } from "./notification"
 
 const MyApplications = () => {
   const [myApplications, setMyApplications] = useState([])
@@ -16,7 +17,8 @@ const MyApplications = () => {
   const [notifications, setNotifications] = useState([])
   const [viewedNotifications, setViewedNotifications] = useState([])
 
-  const student = location.state?.studentj || location.state?.student || { email: "default@example.com" }
+  const student = location.state?.studentj || location.state?.student || location.state?.user|| location.state ||{ email: "default@example.com" }
+  console.log(student)
   const viewedNotificationsKey = student?.email ? `viewedNotifications_${student.email}` : "viewedNotifications_default"
 
   const loadApplications = useCallback(() => {
@@ -27,8 +29,9 @@ const MyApplications = () => {
 
     if (student?.email) {
       // Now storedApplied is guaranteed to be an array, so .filter will work
-      const studentApps = storedApplied.filter((app) => app.studentProfile?.email === student.email)
+      const studentApps = storedApplied.filter((app) => app.student?.email === student.email)
       setMyApplications(studentApps)
+      console.log(studentApps)
     } else {
       setMyApplications([]) // Clear applications if no profile
     }
@@ -36,6 +39,9 @@ const MyApplications = () => {
     setTimeout(() => {
       setLoading(false)
       showAppNotification("Applications loaded successfully", "success")
+      getNotification(student.email)
+      console.log(student.email)
+      console.log(student)
     }, 800)
   }, [student])
 

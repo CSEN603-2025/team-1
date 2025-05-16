@@ -26,6 +26,8 @@ import AssessmentPage from './online-assessments';
 import StudentWorkshops from './studentworkshops';
 import AppointmentPage from './appointments';
 import StudentJobs from './studentjobs';
+import WhoViewedMyProfile from './viewprofile';
+
 function App() {
   // Manage notification state
  const [notification, setNotification] = useState({ message: '', email: '' });
@@ -393,7 +395,7 @@ const isInitialLoad = useState(true);
         <Route path="/appointments" element={<AppointmentPage />} />
         <Route path="/companyallpostedjobs" element={<AllJobsPosted />} />
         <Route path="/studentjobs" element={<StudentJobs />} />
-        
+        <Route path="/viewprofile" element={<WhoViewedMyProfile />} />
         {/* Add more routes as needed */}
       </Routes>
 

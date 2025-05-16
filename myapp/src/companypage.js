@@ -395,38 +395,6 @@ function CompanyPage() {
        setNotification(`You have been rejected in ${storedCompany.companyEmail}`, applicantEmail);
     }
 
-       if(newStatus === "finalized"){
-         let storedApplied = [];
-  try {
-    const interns = localStorage.getItem("appliedInternships");
-    console.log(interns)
-    storedApplied = interns ? JSON.parse(interns) : [];
-  } catch (e) {
-    console.error("Failed to parse appliedInternships from localStorage", e);
-    return;
-  }
-
-  // Step 2: Find the applicant(s) to update
-  const targetApplicants = storedApplied.filter(app => app.student?.email === applicantEmail);
-  console.log(targetApplicants)
-  if (targetApplicants.length === 0) {
-    console.warn("No applicant found with email:", applicantEmail);
-    return;
-  }
-
-  // Step 3: Update their status
-  const updated = storedApplied.map(app =>
-    app.student?.email === applicantEmail
-      ? { ...app, status: "finalized" }
-      : app
-  );
-
-  // Step 4: Store back in localStorage
-  localStorage.setItem("appliedInternships", JSON.stringify(updated));
-  console.log(updated)
-       setNotification(`You have been finalized in ${storedCompany.companyEmail}`, applicantEmail);
-    }
-
 
 
   }

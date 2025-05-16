@@ -181,7 +181,7 @@ function StudentPage() {
 
   const showAssessmentScores = () => {
     if (assessmentScores.length === 0) {
-      showNotification("You haven't completed any assessments yet!", "info");
+      // showNotification("You haven't completed any assessments yet!", "info");
     } else {
       setShowScoresPopup(true);
     }
@@ -238,13 +238,13 @@ function StudentPage() {
       color: "#c5e8f7",
       action: () => handleMyApplicationsClick(),
     },
-    {
-      title: "Statistics Report",
-      count: 4,
-      icon: "📊",
-      color: "#f7d5c5",
-      action: () => showNotification("Statistics feature coming soon!", "info"),
-    },
+    // {
+    //   title: "Statistics Report",
+    //   count: 4,
+    //   icon: "📊",
+    //   color: "#f7d5c5",
+    //   action: () => handleSatseClick,
+    // },
       {
     title: "Assessment Scores",
     count: assessmentScores.length,

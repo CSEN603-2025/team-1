@@ -32,6 +32,8 @@ function CompanyRegister() {
   const [logoPreview, setLogoPreview] = useState(null);
   const [isDraggingLogo, setIsDraggingLogo] = useState(false);
   const [isDraggingDoc, setIsDraggingDoc] = useState(false);
+  // Add state to track if user has attempted to submit the form
+  const [attemptedSubmit, setAttemptedSubmit] = useState(false);
 
   const navigate = useNavigate();
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -167,14 +169,17 @@ function CompanyRegister() {
       if (!confirmPassword) newErrors.confirmPassword = 'Please confirm your password';
       else if (password !== confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
     } else if (step === 3) {
-      if (!companyLogoFile) newErrors.companyLogo = 'Company logo is required';
-      else if (companyLogoFile.size > 2 * 1024 * 1024) {
-        newErrors.companyLogo = 'Logo must be smaller than 2MB';
-      }
-      
-      if (!documentFile) newErrors.document = 'Document is required';
-      else if (documentFile.size > 5 * 1024 * 1024) {
-        newErrors.document = 'Document must be smaller than 5MB';
+      // Only validate files if the user has attempted to submit the form
+      if (attemptedSubmit) {
+        if (!companyLogoFile) newErrors.companyLogo = 'Company logo is required';
+        else if (companyLogoFile.size > 2 * 1024 * 1024) {
+          newErrors.companyLogo = 'Logo must be smaller than 2MB';
+        }
+        
+        if (!documentFile) newErrors.document = 'Document is required';
+        else if (documentFile.size > 5 * 1024 * 1024) {
+          newErrors.document = 'Document must be smaller than 5MB';
+        }
       }
     }
 
@@ -194,6 +199,9 @@ function CompanyRegister() {
 
   const handleRegister = async (e) => {
     e.preventDefault();
+    
+    // Set attempted submit to true when the user clicks the register button
+    setAttemptedSubmit(true);
     
     if (!validateStep(currentStep)) return;
 
@@ -258,7 +266,7 @@ function CompanyRegister() {
       setIsModalOpen(true);
     } catch (error) {
       console.error('Error processing files:', error);
-      setErrors({ general: 'Failed to process files. Please try again or use smaller files.' });
+      //setErrors({ general: 'Failed to process files. Please try again or use smaller files.' });
       setIsLoading(false);
     }
   };
@@ -733,7 +741,7 @@ function CompanyRegister() {
             onDragLeave={(e) => handleDragLeave(e, 'logo')}
             onDrop={(e) => handleDrop(e, 'logo')}
             style={{
-              border: `2px dashed ${isDraggingLogo ? colors.primary.main : errors.companyLogo ? colors.error.main : colors.neutral[300]}`,
+              border: `2px dashed ${isDraggingLogo ? colors.primary.main : errors.companyLogo && attemptedSubmit ? colors.error.main : colors.neutral[300]}`,
               borderRadius: '12px',
               padding: '24px',
               textAlign: 'center',
@@ -848,7 +856,8 @@ function CompanyRegister() {
               style={{ display: 'none' }}
             />
           </div>
-          {errors.companyLogo && (
+          {/* Only show error message if attempted submit is true */}
+          {errors.companyLogo && attemptedSubmit && (
             <div style={{
               color: colors.error.main,
               fontSize: '14px',
@@ -892,7 +901,7 @@ function CompanyRegister() {
             onDragLeave={(e) => handleDragLeave(e, 'doc')}
             onDrop={(e) => handleDrop(e, 'doc')}
             style={{
-              border: `2px dashed ${isDraggingDoc ? colors.primary.main : errors.document ? colors.error.main : colors.neutral[300]}`,
+              border: `2px dashed ${isDraggingDoc ? colors.primary.main : errors.document && attemptedSubmit ? colors.error.main : colors.neutral[300]}`,
               borderRadius: '12px',
               padding: '24px',
               textAlign: 'center',
@@ -1053,7 +1062,8 @@ function CompanyRegister() {
               style={{ display: 'none' }}
             />
           </div>
-          {errors.document && (
+          {/* Only show error message if attempted submit is true */}
+          {errors.document && attemptedSubmit && (
             <div style={{
               color: colors.error.main,
               fontSize: '14px',

@@ -75,7 +75,7 @@ function SCADPage() {
 
       // Find all users with the 'student' role and send them notifications
       allUsers.forEach((user) => {
-        if (user.role === "student") {
+        if (user.role === "student" ||user.role === "pro" ) {
           setNotification(message, user.email)
           console.log(`Sending notification to ${user.email}: ${message}`)
         }

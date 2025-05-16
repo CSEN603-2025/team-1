@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Link, useNavigate, useLocation } from "react-router-dom"
-import { getNotification, clearNotifications } from "./notification" // Assuming this file exists
+import { getNotification, clearNotifications,setNotification} from "./notification"
 
 function CompanyPage() {
   const [menuOpen, setMenuOpen] = useState(false)

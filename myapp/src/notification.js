@@ -4,7 +4,7 @@
 export const getNotification = (email) => {
   try {
     const data = localStorage.getItem("notifications");
-    // console.log("Raw notifications data:", data); // For debugging
+    console.log("Raw notifications data:", data); // For debugging
     if (!data) return [];
     let allNotifications = JSON.parse(data);
 

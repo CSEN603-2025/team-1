@@ -105,9 +105,9 @@ const defaultReportState = {
   courses: [],
   pdfFile: null,
   pdfFileName: "",
-  submitted: false, // Is there a saved draft?
-  finalSubmitted: false, // Has a version of this report ever been finalized by the student?
-  status: "not_submitted", // "not_submitted", "draft_saved", "pending", "accepted", "rejected", "flagged", "edited_after_final", "pending_appeal"
+  submitted: false, 
+  finalSubmitted: false, 
+  status: "not_submitted", 
   evaluatorComments: "",
   appealMessage: "",
   appealSubmitted: false,
@@ -242,16 +242,12 @@ function MyInternshipsPage() {
     setInternships(tempFiltered)
   }, [statusFilter, processedInternships, searchTerm])
 
-  const handleSearch = () => {
-     // This function is kept for the button's onClick, but filtering is reactive to searchTerm changes via useEffect
-  };
-
+  const handleSearch = () => {};
 
   const clearFilters = () => {
     setSearchTerm("")
     setStatusFilter("all")
   }
-
 
   const handleDownloadSampleReport = () => {
     const link = document.createElement("a")
@@ -273,47 +269,51 @@ function MyInternshipsPage() {
     }
   }
 
-  const handleOpenReportForm = (internshipId) => {
+  const handleOpenReportForm = (internshipId, actionType = "edit_or_add") => {
     const internshipToEdit = allInternships.find((intern) => intern.uniqueInternshipId === internshipId);
-    if (internshipToEdit) {
-        setCurrentInternshipIdForPopup(internshipId);
-        let reportDataForPopup;
+    if (!internshipToEdit) return;
 
-        // Case 1: Report was finalized and now student wants to create a new version
-        if (internshipToEdit.report.finalSubmitted && 
-            !['draft_saved', 'edited_after_final', 'not_submitted'].includes(internshipToEdit.report.status)) {
-            reportDataForPopup = {
-                ...internshipToEdit.report, // Pre-fill with old final report content
-                pdfFile: null, 
-                submitted: true, // This new version is a draft
-                finalSubmitted: true, // Indicates a *previous* version was final
-                status: "edited_after_final",
-                evaluatorComments: "", 
-                appealMessage: "",
-                appealSubmitted: false,
-            };
-        } 
-        // Case 2: Editing an existing draft (either original or an "edited_after_final" draft)
-        else if (internshipToEdit.report.submitted && 
-                 (internshipToEdit.report.status === 'draft_saved' || internshipToEdit.report.status === 'edited_after_final')) {
-            reportDataForPopup = { ...internshipToEdit.report, pdfFile: null };
-        } 
-        // Case 3: Starting a brand new report (never submitted, status 'not_submitted')
-        else {
-            reportDataForPopup = { ...defaultReportState, pdfFile: null }; // Start fresh
-        }
-        
-        setPopupReportData(reportDataForPopup);
-        setReportErrors({});
-        setShowReportPopup(true);
+    setCurrentInternshipIdForPopup(internshipId);
+    let reportDataForPopup;
+
+    if (actionType === "create_new_version" && internshipToEdit.report.finalSubmitted) {
+        // Student wants to create a new version of an already finalized (e.g., pending, accepted, rejected) report
+        const currentFinalReport = internshipToEdit.report;
+        reportDataForPopup = {
+            title: currentFinalReport.title,
+            introduction: currentFinalReport.introduction,
+            body: currentFinalReport.body,
+            major: currentFinalReport.major,
+            courses: [...currentFinalReport.courses],
+            pdfFile: null,
+            pdfFileName: "", // New version starts with no PDF
+            submitted: true, // It's a draft being created
+            finalSubmitted: true, // A previous version was indeed final
+            status: "edited_after_final", // This new draft's status
+            evaluatorComments: "", // Reset for this new version
+            appealMessage: "",
+            appealSubmitted: false,
+        };
+    } else if (internshipToEdit.report.submitted && 
+               (internshipToEdit.report.status === 'draft_saved' || internshipToEdit.report.status === 'edited_after_final')) {
+        // Editing an existing draft (either an original draft or a draft of a new version)
+        reportDataForPopup = { ...internshipToEdit.report, pdfFile: null };
+    } else {
+        // Adding a brand new report (status was not_submitted and submitted was false)
+        reportDataForPopup = { ...defaultReportState, pdfFile: null };
     }
+    
+    setPopupReportData(reportDataForPopup);
+    setReportErrors({});
+    setShowReportPopup(true);
   };
 
   const handleOpenFinalReportView = (internshipId) => {
     const internshipToView = allInternships.find((intern) => intern.uniqueInternshipId === internshipId)
     if (internshipToView) {
       setCurrentInternshipIdForPopup(internshipId)
-       // Load the current state of the report (which could be a draft) for viewing before final submission
+      // Load the current state of the report for viewing.
+      // This data (popupReportData) will be used if the user proceeds to submit.
       setPopupReportData({ ...internshipToView.report, pdfFile: null }) 
       setShowFinalReportView(true)
     }
@@ -367,37 +367,20 @@ function MyInternshipsPage() {
     setReportErrors(errors)
 
     if (Object.keys(errors).length === 0) {
-      const originalInternshipReport = allInternships.find(
-        (intern) => intern.uniqueInternshipId === currentInternshipIdForPopup,
-      ).report
-
-      // Determine the correct status and finalSubmitted state
-      let newStatus = "draft_saved";
-      let newFinalSubmitted = originalInternshipReport.finalSubmitted;
-
-      if (popupReportData.status === "edited_after_final") {
-          newStatus = "edited_after_final";
-          newFinalSubmitted = true; // Retain that a previous version was final
-      }
-      
+      // popupReportData already holds the current state of the draft (either new, or based on previous final)
       const reportToSaveInLocalStorage = {
-        ...popupReportData,
-        submitted: true, 
-        finalSubmitted: newFinalSubmitted, 
+        ...popupReportData, // Contains current title, intro, body, major, courses, status, finalSubmitted
+        submitted: true,    // This action makes it a saved draft
         pdfFileName: popupReportData.pdfFile ? popupReportData.pdfFile.name : popupReportData.pdfFileName,
-        pdfFile: null, 
-        status: newStatus,
-        // Preserve these fields only if it's NOT a new version of a final report
-        evaluatorComments: newStatus === "edited_after_final" ? "" : originalInternshipReport.evaluatorComments,
-        appealMessage: newStatus === "edited_after_final" ? "" : originalInternshipReport.appealMessage,
-        appealSubmitted: newStatus === "edited_after_final" ? false : originalInternshipReport.appealSubmitted,
-      }
+        pdfFile: null,      // Don't save the File object in localStorage
+        // Status should already be 'draft_saved' or 'edited_after_final' from handleOpenReportForm
+      };
 
       localStorage.setItem(`report_${currentInternshipIdForPopup}`, JSON.stringify(reportToSaveInLocalStorage))
 
       const updatedReportForState = {
         ...reportToSaveInLocalStorage,
-        pdfFile: popupReportData.pdfFile || originalInternshipReport.pdfFile, 
+        pdfFile: popupReportData.pdfFile, // Keep File object in state for immediate re-edit/view if needed
       };
 
       setAllInternships((prevInternships) =>
@@ -409,6 +392,7 @@ function MyInternshipsPage() {
       )
       setShowReportPopup(false);
       showAppNotification("Report draft saved successfully", "success");
+      // Open final report view immediately after saving draft
       handleOpenFinalReportView(currentInternshipIdForPopup);
     }
   }
@@ -440,34 +424,31 @@ function MyInternshipsPage() {
     )
 
     if (internshipToFinalize) {
-      // Use data from popupReportData as it's the most current draft being viewed/confirmed
+      // The content for submission is already in popupReportData (loaded when final view was opened)
       const reportContentToFinalize = {
         title: popupReportData.title,
         introduction: popupReportData.introduction,
         body: popupReportData.body,
         major: popupReportData.major,
         courses: [...popupReportData.courses],
-        pdfFileName: popupReportData.pdfFileName, // This should be set from the draft being finalized
+        pdfFileName: popupReportData.pdfFileName, 
       };
       
       const finalizedReport = {
         ...reportContentToFinalize,
         submitted: true, 
-        finalSubmitted: true, // This is now a final submission
-        status: "pending",    // Awaiting evaluation
-        evaluatorComments: "", // Reset for new evaluation cycle
+        finalSubmitted: true, // This action makes it final
+        status: "pending",    
+        evaluatorComments: "", 
         appealMessage: "",
         appealSubmitted: false,
-        pdfFile: null, // Don't save File object in localStorage
+        pdfFile: null, 
       }
       localStorage.setItem(`report_${currentInternshipIdForPopup}`, JSON.stringify(finalizedReport))
       
       const updatedReportForState = {
           ...finalizedReport,
-          // pdfFile in state is mostly for transient form use.
-          // If a file was associated with the draft being finalized, it might be good to clear it here from state too
-          // or ensure it's handled consistently. For now, we can set it to null as it's "submitted".
-          pdfFile: null 
+          pdfFile: null // Clear any transient File object from state upon final submission
       };
 
       setAllInternships((prevInternships) =>
@@ -651,7 +632,7 @@ function MyInternshipsPage() {
               ))}
             </div>
             <div style={{ padding: "15px", borderTop: "1px solid rgba(0,0,0,0.1)" }}>
-              <button onClick={handleLogout} style={{ display: "flex", alignItems: "center", width: "100%", padding: "12px 15px", backgroundColor: "rgba(255, 200, 200, 0.5)", border: "none", borderRadius: "8px", cursor: "pointer", color: "#9a4a4a", fontSize: "14px", fontWeight: "bold", transition: "background-color 0.2s",}} onMouseOver={(e) => (e.target.style.backgroundColor = "rgba(255, 200, 200, 0.7)")} onMouseOut={(e) => (e.target.style.backgroundColor = "rgba(255, 200, 200, 0.5)")}>
+              <button onClick={handleLogout} style={{ display: "flex", alignItems: "center", width: "100%", padding: "12px 15px", backgroundColor: "rgba(255, 200, 200, 0.5)", border: "none", borderRadius: "8px", cursor: "pointer", color: "#9a4a6a", fontSize: "14px", fontWeight: "bold", transition: "background-color 0.2s",}} onMouseOver={(e) => (e.target.style.backgroundColor = "rgba(255, 200, 200, 0.7)")} onMouseOut={(e) => (e.target.style.backgroundColor = "rgba(255, 200, 200, 0.5)")}>
                 <span style={{ marginRight: "10px", fontSize: "18px" }}>🚪</span>Logout
               </button>
             </div>
@@ -775,7 +756,13 @@ function MyInternshipsPage() {
 
               {internships.length > 0 ? (
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))", gap: "20px" }}>
-                  {internships.map((internship) => (
+                  {internships.map((internship) => {
+                    const report = internship.report;
+                    const isReportFinalizedAndEvaluated = report.finalSubmitted && !['draft_saved', 'edited_after_final', 'not_submitted'].includes(report.status);
+                    const isReportDraft = report.submitted && (report.status === 'draft_saved' || report.status === 'edited_after_final');
+                    const isReportNotStarted = report.status === 'not_submitted' && !report.submitted;
+
+                    return (
                     <div key={internship.uniqueInternshipId} style={{ backgroundColor: "white", borderRadius: "8px", padding: "20px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)", border: "1px solid #e2e8f0", transition: "transform 0.2s, box-shadow 0.2s",}} onMouseOver={(e) => {e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 4px 6px rgba(0,0,0,0.1)"}} onMouseOut={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.1)"}}>
                       <h3 style={{ margin: "0 0 10px 0", color: "#6b46c1", fontSize: "18px", fontWeight: "600" }}>{internship.jobTitle}</h3>
                       <div style={{ marginBottom: "15px" }}>
@@ -828,63 +815,52 @@ function MyInternshipsPage() {
 
                            <div style={{ marginTop: "15px", borderTop: "1px solid #e2e8f0", paddingTop: "15px" }}>
                                 <h4 style={{ margin: "0 0 10px 0", fontSize: "15px", fontWeight: "600", color: "#334155", }}>Internship Report</h4>
-                                {internship.report.finalSubmitted && !['draft_saved', 'edited_after_final', 'not_submitted'].includes(internship.report.status) ? (
-                                    // Display for finalized reports (pending, accepted, rejected, etc.)
+                                
+                                {/* Case 1: Report is fully finalized (pending, accepted, rejected, flagged) */}
+                                {isReportFinalizedAndEvaluated ? (
                                     <div>
                                         <div style={{ display: "flex", alignItems: "center", marginBottom: "10px" }}>
                                             <span style={{ marginRight: "8px", color: "#64748b", fontSize: "14px" }}>Report Status:</span>
-                                            <span style={{display: "inline-block", padding: "3px 8px", borderRadius: "4px", fontSize: "12px", fontWeight: "500", ...reportStatusStyle(internship.report.status)}}>
-                                                {internship.report.status.replace(/_/g, " ").toUpperCase()}
+                                            <span style={{display: "inline-block", padding: "3px 8px", borderRadius: "4px", fontSize: "12px", fontWeight: "500", ...reportStatusStyle(report.status)}}>
+                                                {report.status.replace(/_/g, " ").toUpperCase()}
                                             </span>
                                         </div>
                                         <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", alignItems: "center" }}>
-                                            {/* Button to create a new version of a finalized report */}
-                                            <button onClick={() => handleOpenReportForm(internship.uniqueInternshipId)} style={{padding: "6px 10px", backgroundColor: "#fbbf24", color: "#78350f", border: "1px solid #f59e0b", borderRadius: "4px", cursor: "pointer", fontSize: "13px", fontWeight: "500", display: "inline-flex", alignItems: "center", gap: "6px",}}>
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path><path d="M12 22v-3.5"></path><path d="M12 6V3.5"></path></svg>
-                                                Create New Version
-                                            </button>
-                                            {["rejected", "flagged"].includes(internship.report.status) && internship.report.evaluatorComments && (
-                                                <button onClick={() => handleOpenCommentsPopup(internship.report.evaluatorComments)} style={{padding: "6px 10px", backgroundColor: "#fef9c3", color: "#854d0e", border: "1px solid #fde047", borderRadius: "4px", cursor: "pointer", fontSize: "13px", fontWeight: "500", display: "inline-flex", alignItems: "center", gap: "6px",}}>
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>View Comments
-                                                </button>
+                                            <button onClick={() => handleOpenFinalReportView(internship.uniqueInternshipId)} style={{ /* Style for View Report */ }}>View Submitted Report</button>
+                                            <button onClick={() => handleOpenReportForm(internship.uniqueInternshipId, "create_new_version")} style={{ /* Style for Create New */ }}>Create New Version</button>
+                                            {["rejected", "flagged"].includes(report.status) && report.evaluatorComments && (
+                                                <button onClick={() => handleOpenCommentsPopup(report.evaluatorComments)} >View Comments</button>
                                             )}
-                                            {["rejected", "flagged"].includes(internship.report.status) && !internship.report.appealSubmitted && (
-                                                <button onClick={() => handleOpenAppealPopup(internship.uniqueInternshipId)} style={{padding: "6px 10px", backgroundColor: "#fee2e2", color: "#b91c1c", border: "1px solid #fecaca", borderRadius: "4px", cursor: "pointer", fontSize: "13px", fontWeight: "500", display: "inline-flex", alignItems: "center", gap: "6px",}}>
-                                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>Appeal Report
-                                                </button>
+                                            {["rejected", "flagged"].includes(report.status) && !report.appealSubmitted && (
+                                                <button onClick={() => handleOpenAppealPopup(internship.uniqueInternshipId)} >Appeal Report</button>
                                             )}
-                                             <button onClick={() => handleDeleteReport(internship.uniqueInternshipId)} title="Delete Report" style={{ padding: "6px 10px", backgroundColor: "#fee2e2", color: "#dc2626", border: "1px solid #fecaca", borderRadius: "4px", cursor: "pointer", fontSize: "13px", fontWeight: "500", display: "inline-flex", alignItems: "center", gap: "6px",}}>
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-                                                Delete Report
-                                            </button>
+                                            <button onClick={() => handleDeleteReport(internship.uniqueInternshipId)} >Delete Report</button>
                                         </div>
-                                        {internship.report.appealSubmitted && (
-                                            <div style={{marginTop: "10px", padding: "8px 12px", backgroundColor: "#e0f2fe", borderRadius: "4px", fontSize: "13px", color: "#0369a1",}}>
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline", marginRight:"6px"}}><polyline points="20 6 9 17 4 12"></polyline></svg>Appeal Submitted. {internship.report.status !== "pending_appeal" && `Current Report Status: ${internship.report.status.replace(/_/g, " ").toUpperCase()}`}
-                                            </div>
-                                        )}
+                                        {report.appealSubmitted && ( <div style={{marginTop: "10px", padding: "8px 12px", backgroundColor: "#e0f2fe", borderRadius: "4px", fontSize: "13px", color: "#0369a1",}}> {/* Appeal status message */} </div>)}
                                     </div>
-                                ) : ( // For drafts (draft_saved, edited_after_final) or not_submitted
+                                ) : 
+                                // Case 2: Report is a draft or not started
+                                (
                                     <div>
                                         <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", alignItems: "center" }}>
-                                            <button onClick={() => handleOpenReportForm(internship.uniqueInternshipId)} style={{padding: "6px 10px", backgroundColor: "#6b46c1", color: "white", border: "none", borderRadius: "4px", cursor: "pointer", fontSize: "13px", fontWeight: "500", display: "inline-flex", alignItems: "center", gap: "6px",}}>
+                                            <button onClick={() => handleOpenReportForm(internship.uniqueInternshipId, "edit_or_add")} style={{padding: "6px 10px", backgroundColor: "#6b46c1", color: "white", border: "none", borderRadius: "4px", cursor: "pointer", fontSize: "13px", fontWeight: "500", display: "inline-flex", alignItems: "center", gap: "6px",}}>
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                                                {internship.report.status === "not_submitted" && !internship.report.submitted ? "Add Internship Report" : internship.report.status === "edited_after_final" ? "Edit New Version Draft" : "Edit Report Draft"}
+                                                {isReportNotStarted ? "Add Internship Report" : "Edit Report Draft"}
                                             </button>
-                                            {internship.report.submitted && ( // Show this if there's any saved draft
+                                            {report.submitted && ( // Show if there's any draft
                                                 <button onClick={() => handleOpenFinalReportView(internship.uniqueInternshipId)} style={{padding: "6px 10px", backgroundColor: "#10b981", color: "white", border: "none", borderRadius: "4px", cursor: "pointer", fontSize: "13px", fontWeight: "500", display: "inline-flex", alignItems: "center", gap: "6px",}}>
                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>View and Submit Final Report
                                                 </button>
                                             )}
-                                            {internship.report.status !== 'not_submitted' && ( // Show delete for any existing report (draft, etc.)
+                                            {!isReportNotStarted && ( // Show delete for any existing report
                                                 <button onClick={() => handleDeleteReport(internship.uniqueInternshipId)} title="Delete Report" style={{ padding: "6px 10px", backgroundColor: "#fee2e2", color: "#dc2626", border: "1px solid #fecaca", borderRadius: "4px", cursor: "pointer", fontSize: "13px", fontWeight: "500", display: "inline-flex", alignItems: "center", gap: "6px",}}>
                                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                                                     Delete Report
                                                 </button>
                                             )}
                                         </div>
-                                        {internship.report.status === "not_submitted" && !internship.report.submitted && ( <p style={{fontSize: "13px", color: "#64748b", marginTop: "8px", marginBottom:"0"}}>No report draft started.</p> )}
-                                        {internship.report.status === "edited_after_final" && internship.report.submitted && (
+                                        {isReportNotStarted && ( <p style={{fontSize: "13px", color: "#64748b", marginTop: "8px", marginBottom:"0"}}>No report draft started.</p> )}
+                                        {report.status === "edited_after_final" && report.submitted && (
                                             <div style={{marginTop: "8px", padding: "6px 10px", backgroundColor: "#ffedd5", borderRadius: "4px", fontSize: "13px", color: "#9a3412",}}>
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"inline", marginRight:"6px"}}><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>Editing a new version of a previously finalized report.
                                             </div>
@@ -895,7 +871,8 @@ function MyInternshipsPage() {
                         </div>
                       )}
                     </div>
-                  ))}
+                    )
+                  })}
                 </div>
               ) : (
                 <div style={{ backgroundColor: "white", borderRadius: "8px", padding: "40px 20px", textAlign: "center", boxShadow: "0 1px 3px rgba(0,0,0,0.05)", marginTop: "20px", }}>
@@ -914,7 +891,7 @@ function MyInternshipsPage() {
         </div>
       </div>
 
-      {/* Evaluation Popup - Updated Styles */}
+      {/* Evaluation Popup */}
       {showEvaluationPopup && (
         <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0, 0, 0, 0.5)", backdropFilter: "blur(3px)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000,}}>
           <div style={{ backgroundColor: "#fff", padding: "30px", borderRadius: "12px", width: "90%", maxWidth: "600px", maxHeight: "90vh", overflowY: "auto", boxShadow: "0 10px 25px rgba(0,0,0,0.2)", textAlign: "center", }}>
@@ -971,7 +948,7 @@ function MyInternshipsPage() {
             <div style={{ marginBottom: "15px" }}><label htmlFor="reportPdf" style={{ display: "block", marginBottom: "6px", fontSize: "14px", fontWeight: "500", color: "#334155", }}>Upload PDF Report</label><input id="reportPdf" type="file" accept=".pdf" onChange={(e) => { const file = e.target.files[0]; setPopupReportData((prev) => ({ ...prev, pdfFile: file, pdfFileName: file ? file.name : "", }))}} style={{ width: "100%", padding: "10px 12px", borderRadius: "6px", border: reportErrors.pdfFile ? "1px solid #ef4444" : "1px solid #e2e8f0", fontSize: "14px", color: "#334155", backgroundColor: "white",}}/>{popupReportData.pdfFile ? (<p style={{ fontSize: "13px", color: "#64748b", margin: "6px 0 0 0" }}>Selected file: {popupReportData.pdfFile.name}</p>) : popupReportData.pdfFileName ? (<p style={{ fontSize: "13px", color: "#64748b", margin: "6px 0 0 0" }}>Current file: {popupReportData.pdfFileName} (re-select to change)</p>) : null}{reportErrors.pdfFile && (<p style={{ color: "#ef4444", margin: "4px 0 0 0", fontSize: "13px" }}>{reportErrors.pdfFile}</p>)}</div>
             <div style={{ display: "flex", justifyContent: "center", gap: "10px", marginTop: "20px" }}>
               <button onClick={() => setShowReportPopup(false)} style={{ padding: "10px 16px", backgroundColor: "#f1f5f9", color: "#64748b", border: "1px solid #e2e8f0", borderRadius: "6px", cursor: "pointer", fontSize: "14px", fontWeight: "500",}}>Cancel</button>
-              {popupReportData.submitted && !popupReportData.finalSubmitted && ( 
+              {(popupReportData.submitted || popupReportData.status === 'edited_after_final') && !popupReportData.finalSubmitted && ( 
                 <button onClick={() => handleDeleteReport(currentInternshipIdForPopup)} style={{ padding: "10px 16px", backgroundColor: "#fee2e2", color: "#dc2626", border: "1px solid #fecaca", borderRadius: "6px", cursor: "pointer", fontSize: "14px", fontWeight: "500",}}>Delete Draft</button>
               )}
               <button onClick={handleSaveReport} style={{ padding: "10px 16px", backgroundColor: "#6b46c1", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "14px", fontWeight: "500",}}>Save Report Draft</button>
@@ -985,17 +962,27 @@ function MyInternshipsPage() {
         <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0, 0, 0, 0.5)", backdropFilter: "blur(3px)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000, }}>
           <div style={{ backgroundColor: "#fff", padding: "25px", borderRadius: "12px", width: "90%", maxWidth: "700px", maxHeight: "90vh", overflowY: "auto", boxShadow: "0 10px 25px rgba(0,0,0,0.2)", textAlign: "center", }} role="dialog" aria-labelledby="finalReportTitle">
             <h3 id="finalReportTitle" style={{ margin: "0 0 20px 0", color: "#334155", fontSize: "18px", fontWeight: "600", borderBottom: "1px solid #e2e8f0", paddingBottom: "15px", }}>Final Internship Report Review</h3>
-            <div style={{ marginBottom: "15px", textAlign: "left" }}><h4 style={{ margin: "0 0 8px 0", fontSize: "16px", fontWeight: "600", color: "#334155", textAlign:"center" }}>Title</h4><div style={{ padding: "12px 15px", backgroundColor: "#f8fafc", borderRadius: "6px", border: "1px solid #e2e8f0", fontSize: "15px", color: "#334155", textAlign:"center" }}>{reportForFinalView.title || "N/A"}</div></div>
-            <div style={{ marginBottom: "15px", textAlign: "left" }}><h4 style={{ margin: "0 0 8px 0", fontSize: "16px", fontWeight: "600", color: "#334155", textAlign:"center" }}>Introduction</h4><div style={{ padding: "12px 15px", backgroundColor: "#f8fafc", borderRadius: "6px", border: "1px solid #e2e8f0", fontSize: "14px", color: "#334155", whiteSpace: "pre-wrap", maxHeight: "150px", overflowY: "auto", textAlign:"center" }}>{reportForFinalView.introduction || "N/A"}</div></div>
-            <div style={{ marginBottom: "15px", textAlign: "left" }}><h4 style={{ margin: "0 0 8px 0", fontSize: "16px", fontWeight: "600", color: "#334155", textAlign:"center" }}>Body</h4><div style={{ padding: "12px 15px", backgroundColor: "#f8fafc", borderRadius: "6px", border: "1px solid #e2e8f0", fontSize: "14px", color: "#334155", whiteSpace: "pre-wrap", maxHeight: "200px", overflowY: "auto", textAlign:"center" }}>{reportForFinalView.body || "N/A"}</div></div>
-            <div style={{ marginBottom: "15px", textAlign: "left" }}><h4 style={{ margin: "0 0 8px 0", fontSize: "16px", fontWeight: "600", color: "#334155", textAlign:"center" }}>Major</h4><div style={{ padding: "12px 15px", backgroundColor: "#f8fafc", borderRadius: "6px", border: "1px solid #e2e8f0", fontSize: "14px", color: "#334155", textAlign:"center" }}>{reportForFinalView.major || "N/A"}</div></div>
-            {reportForFinalView.major && reportForFinalView.courses.length > 0 && (<div style={{ marginBottom: "15px", textAlign: "left" }}><h4 style={{ margin: "0 0 8px 0", fontSize: "16px", fontWeight: "600", color: "#334155", textAlign:"center" }}>Relevant Courses</h4><div style={{ padding: "12px 15px", backgroundColor: "#f8fafc", borderRadius: "6px", border: "1px solid #e2e8f0", fontSize: "14px", color: "#334155", textAlign:"center" }}><ul style={{ margin: "0", paddingLeft: "20px", listStylePosition: "inside", textAlign:"left" }}>{reportForFinalView.courses.map((course) => (<li key={course} style={{ marginBottom: "4px" }}>{course}</li>))}</ul></div></div>)}
-            <div style={{ marginBottom: "15px", textAlign: "left" }}><h4 style={{ margin: "0 0 8px 0", fontSize: "16px", fontWeight: "600", color: "#334155", textAlign:"center" }}>Uploaded PDF</h4><div style={{ padding: "12px 15px", backgroundColor: "#f8fafc", borderRadius: "6px", border: "1px solid #e2e8f0", fontSize: "14px", color: "#334155", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",}}><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>{reportForFinalView.pdfFileName || "None"}</div></div>
+            <div style={{ marginBottom: "15px", textAlign: "left" }}><h4 style={{ margin: "0 0 8px 0", fontSize: "16px", fontWeight: "600", color: "#334155", textAlign:"center" }}>Title</h4><div style={{ padding: "12px 15px", backgroundColor: "#f8fafc", borderRadius: "6px", border: "1px solid #e2e8f0", fontSize: "15px", color: "#334155", textAlign:"center" }}>{popupReportData.title || "N/A"}</div></div>
+            <div style={{ marginBottom: "15px", textAlign: "left" }}><h4 style={{ margin: "0 0 8px 0", fontSize: "16px", fontWeight: "600", color: "#334155", textAlign:"center" }}>Introduction</h4><div style={{ padding: "12px 15px", backgroundColor: "#f8fafc", borderRadius: "6px", border: "1px solid #e2e8f0", fontSize: "14px", color: "#334155", whiteSpace: "pre-wrap", maxHeight: "150px", overflowY: "auto", textAlign:"center" }}>{popupReportData.introduction || "N/A"}</div></div>
+            <div style={{ marginBottom: "15px", textAlign: "left" }}><h4 style={{ margin: "0 0 8px 0", fontSize: "16px", fontWeight: "600", color: "#334155", textAlign:"center" }}>Body</h4><div style={{ padding: "12px 15px", backgroundColor: "#f8fafc", borderRadius: "6px", border: "1px solid #e2e8f0", fontSize: "14px", color: "#334155", whiteSpace: "pre-wrap", maxHeight: "200px", overflowY: "auto", textAlign:"center" }}>{popupReportData.body || "N/A"}</div></div>
+            <div style={{ marginBottom: "15px", textAlign: "left" }}><h4 style={{ margin: "0 0 8px 0", fontSize: "16px", fontWeight: "600", color: "#334155", textAlign:"center" }}>Major</h4><div style={{ padding: "12px 15px", backgroundColor: "#f8fafc", borderRadius: "6px", border: "1px solid #e2e8f0", fontSize: "14px", color: "#334155", textAlign:"center" }}>{popupReportData.major || "N/A"}</div></div>
+            {popupReportData.major && popupReportData.courses.length > 0 && (<div style={{ marginBottom: "15px", textAlign: "left" }}><h4 style={{ margin: "0 0 8px 0", fontSize: "16px", fontWeight: "600", color: "#334155", textAlign:"center" }}>Relevant Courses</h4><div style={{ padding: "12px 15px", backgroundColor: "#f8fafc", borderRadius: "6px", border: "1px solid #e2e8f0", fontSize: "14px", color: "#334155", textAlign:"center" }}><ul style={{ margin: "0", paddingLeft: "20px", listStylePosition: "inside", textAlign:"left" }}>{popupReportData.courses.map((course) => (<li key={course} style={{ marginBottom: "4px" }}>{course}</li>))}</ul></div></div>)}
+            <div style={{ marginBottom: "15px", textAlign: "left" }}><h4 style={{ margin: "0 0 8px 0", fontSize: "16px", fontWeight: "600", color: "#334155", textAlign:"center" }}>Uploaded PDF</h4><div style={{ padding: "12px 15px", backgroundColor: "#f8fafc", borderRadius: "6px", border: "1px solid #e2e8f0", fontSize: "14px", color: "#334155", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",}}><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>{popupReportData.pdfFileName || "None"}</div></div>
+            
             <div style={{ display: "flex", justifyContent: "center", gap: "10px", marginTop: "20px", paddingTop: "15px", borderTop: "1px solid #e2e8f0",}}>
-              <button onClick={() => { setShowFinalReportView(false); handleOpenReportForm(currentInternshipIdForPopup); }} style={{ padding: "10px 16px", backgroundColor: "#f1f5f9", color: "#64748b", border: "1px solid #e2e8f0", borderRadius: "6px", cursor: "pointer", fontSize: "14px", fontWeight: "500",}}>Back to Edit Draft</button>
-              {/* Delete button for final report view */}
-              <button onClick={() => handleDeleteReport(currentInternshipIdForPopup)} style={{ padding: "10px 16px", backgroundColor: "#fee2e2", color: "#dc2626", border: "1px solid #fecaca", borderRadius: "6px", cursor: "pointer", fontSize: "14px", fontWeight: "500",}}>Delete Submitted Report</button>
-              <button onClick={handleFinalReportSubmit} style={{ padding: "10px 16px", backgroundColor: "#6b46c1", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "14px", fontWeight: "500",}}>Submit Final Report</button>
+              { (popupReportData.status === 'draft_saved' || popupReportData.status === 'edited_after_final') ? (
+                  <>
+                    <button onClick={() => { setShowFinalReportView(false); handleOpenReportForm(currentInternshipIdForPopup, "edit_or_add"); }} style={{ padding: "10px 16px", backgroundColor: "#f1f5f9", color: "#64748b", border: "1px solid #e2e8f0", borderRadius: "6px", cursor: "pointer", fontSize: "14px", fontWeight: "500",}}>Back to Edit Draft</button>
+                    <button onClick={() => handleDeleteReport(currentInternshipIdForPopup)} style={{ padding: "10px 16px", backgroundColor: "#fee2e2", color: "#dc2626", border: "1px solid #fecaca", borderRadius: "6px", cursor: "pointer", fontSize: "14px", fontWeight: "500",}}>Delete Draft</button>
+                    <button onClick={handleFinalReportSubmit} style={{ padding: "10px 16px", backgroundColor: "#6b46c1", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "14px", fontWeight: "500",}}>Submit Final Report</button>
+                  </>
+              ) : ( // Viewing an already finalized report
+                  <>
+                    <button onClick={() => setShowFinalReportView(false)} style={{ padding: "10px 16px", backgroundColor: "#f1f5f9", color: "#64748b", border: "1px solid #e2e8f0", borderRadius: "6px", cursor: "pointer", fontSize: "14px", fontWeight: "500",}}>Close</button>
+                    <button onClick={() => { setShowFinalReportView(false); handleOpenReportForm(currentInternshipIdForPopup, "create_new_version"); }} style={{ padding: "10px 16px", backgroundColor: "#fbbf24", color: "#78350f", border: "1px solid #f59e0b", borderRadius: "6px", cursor: "pointer", fontSize: "14px", fontWeight: "500",}}>Create New Version</button>
+                    <button onClick={() => handleDeleteReport(currentInternshipIdForPopup)} style={{ padding: "10px 16px", backgroundColor: "#fee2e2", color: "#dc2626", border: "1px solid #fecaca", borderRadius: "6px", cursor: "pointer", fontSize: "14px", fontWeight: "500",}}>Delete Report</button>
+                  </>
+              )}
             </div>
           </div>
         </div>

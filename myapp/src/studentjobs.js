@@ -211,6 +211,8 @@ const StudentJobs = () => {
       const interval = setInterval(() => {
         try {
           const newNotifications = getNotification(student.email) || []
+          console.log(student.email)
+          console.log(newNotifications)
           if (JSON.stringify(newNotifications) !== JSON.stringify(notifications)) {
             setNotifications(newNotifications)
           }
@@ -467,47 +469,65 @@ const StudentJobs = () => {
     setExtraDocuments(files)
   }
 
-  const handleApply = () => {
-    if (selectedJob && selectedJob.companyEmail && student) {
-      const alreadyApplied = appliedInternships.some(
-        (applied) => applied.title === selectedJob.title && applied.companyName === selectedJob.companyName,
-      )
-      if (!alreadyApplied) {
-        const message = `${student.email} has applied to ${selectedJob.title}.`
-        setNotification(message, selectedJob.companyEmail)
-        const newApplication = {
-          ...selectedJob,
-          status: "pending",
-          documents: extraDocuments.map((file) => file.name),
-          studentProfile: student,
-        }
-        setAppliedInternships([...appliedInternships, newApplication])
-        showAppNotification(`Applied to ${selectedJob.title} at ${selectedJob.companyName}!`, "success")
-
-        // Update the jobs list to mark this job as applied
-        const updatedAllJobs = jobs.map((job) => {
-          if (job.id === selectedJob.id) {
-            return { ...job, applicants: [...(job.applicants || []), student] }
-          }
-          return job
-        })
-        localStorage.setItem("allJobs", JSON.stringify(updatedAllJobs))
-        setJobs(updatedAllJobs)
-
-        // Clear the selected job and documents
-        setSelectedJob(null)
-        setExtraDocuments([])
-      } else {
-        showAppNotification("You have already applied to this internship.", "info")
-      }
-    } else if (!selectedJob) {
-      showAppNotification("Please select an internship to apply.", "error")
-    } else if (!selectedJob.companyEmail) {
-      showAppNotification("Error applying: Internship details missing company information.", "error")
-    } else if (!student) {
-      showAppNotification("Student information not found. Please log in again.", "error")
-    }
-  }
+ const handleApply = () => {
+     if (selectedJob && selectedJob.companyEmail && student) {
+       const alreadyApplied = appliedInternships.some(
+         (applied) => applied.title === selectedJob.title && applied.companyName === selectedJob.companyName
+       );
+       if (!alreadyApplied) {
+         const message = `${student.email} has applied to ${selectedJob.title}.`;
+         setNotification(message, selectedJob.companyEmail);
+         const newApplication = {
+           ...selectedJob,
+           status: 'pending',
+           documents: extraDocuments.map(file => file.name),
+           studentProfile: student, 
+         };
+         setAppliedInternships([...appliedInternships, newApplication]);
+         alert(`Applied to ${selectedJob.title} at ${selectedJob.companyName}! Status: Pending. Documents uploaded: ${extraDocuments.map(file => file.name).join(', ')}`);
+         setSelectedJob(null);
+         setExtraDocuments([]);
+ 
+         const updatedAllJobs = jobs.map(job => {
+           if (job.title === selectedJob.title && job.companyName === selectedJob.companyName) {
+             return { ...job, applicants: [...(job.applicants || []), student] };
+               
+ 
+           }
+           return job;
+         });
+         localStorage.setItem('allJobs', JSON.stringify(updatedAllJobs));
+         setJobs(updatedAllJobs);
+         console.log(updatedAllJobs)
+         console.log("aloo")
+         
+         const companyJobsKey = `companyJobs_${selectedJob.companyEmail}`;
+         const companyJobsString = localStorage.getItem(companyJobsKey);
+         if (companyJobsString) {
+           const companyJobs = JSON.parse(companyJobsString);
+           const updatedCompanyJobs = companyJobs.map(job => {
+             if (job.title === selectedJob.title) {
+               return { ...job, applicants: [...(job.applicants || []), student] };
+             }
+             return job;
+           });
+           localStorage.setItem(companyJobsKey, JSON.stringify(updatedCompanyJobs));
+           console.log(updatedCompanyJobs)
+         } else {
+           console.warn(`Company jobs not found in localStorage for key: ${companyJobsKey}`);
+         }
+       } 
+       else {
+         alert('You have already applied to this internship.');
+       }
+     } else if (!selectedJob) {
+       alert('Please select an internship to apply.');
+     } else if (!selectedJob.companyEmail) {
+       alert('Error applying: Internship details missing company information.');
+     } else if (!student) {
+       alert('Student information not found. Please log in again.');
+     }
+   };
 
   const handleGoToMyApplications = () => {
     navigate("/studentapplications", { state: { student } })

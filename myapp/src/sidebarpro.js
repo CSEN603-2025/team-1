@@ -72,6 +72,10 @@ const SidebarStudent = ({ menuOpen, toggleMenu }) => {
       navigate("/")
     }
   }
+  const handleviewedprofile = () => {
+    setActiveSection("jobs")
+    navigate("/viewprofile", { state: { ...location.state } })
+  }
 
   // Sidebar items including the new requested buttons
   const sidebarItems = [
@@ -87,6 +91,7 @@ const SidebarStudent = ({ menuOpen, toggleMenu }) => {
     { id: "assessments", label: "Online Assessments", icon: "📋", action: handleAssessmentsClick },
     { id: "workshops", label: "Workshops", icon: "🔧", action: handleWorkshopsClick },
     { id: "settings", label: "Settings", icon: "⚙️", action: handleSettingsClick },
+    { id: "Who viewed my profile", label: "Who viewed my profile", icon: "👁", action: handleviewedprofile},
   ]
 
   return (

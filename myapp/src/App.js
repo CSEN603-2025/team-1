@@ -26,6 +26,8 @@ import AssessmentPage from './online-assessments';
 import StudentWorkshops from './studentworkshops';
 import AppointmentPage from './appointments';
 import StudentJobs from './studentjobs';
+import WhoViewedMyProfile from './viewprofile';
+
 function App() {
   // Manage notification state
  const [notification, setNotification] = useState({ message: '', email: '' });
@@ -144,7 +146,24 @@ const isInitialLoad = useState(true);
         navigate('/company-dashboard', { state: {company:companyUser } });
       }
     }
-  }, [navigate,isInitialLoad]);
+  }, [navigate, isInitialLoad]);
+
+  // Purple theme colors
+  const theme = {
+    primary: {
+      main: '#6a4c93', // Main purple
+      light: '#9d8bb0', // Light purple
+      dark: '#4a2c73', // Dark purple
+      veryLight: '#f5f0fa', // Very light purple for backgrounds
+      transparent: 'rgba(85, 17, 116, 0.27)', // Transparent purple as requested
+    },
+    text: {
+      primary: '#333333',
+      secondary: '#666666',
+      light: '#ffffff',
+    },
+    error: '#d32f2f',
+  };
 
   return (
     <div>
@@ -156,102 +175,194 @@ const isInitialLoad = useState(true);
             <div
               style={{
                 display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
                 height: '100vh',
-                backgroundColor: '#e6f0f5', // Light background
+                width: '100%',
               }}
             >
+              {/* Left Half - Welcome and Logo with transparent purple background */}
               <div
                 style={{
-                  padding: '30px',
-                  borderRadius: '10px',
-                  backgroundColor: '#ffffff', // White background for the form
-                  boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
-                  width: '400px',
-                  textAlign: 'center',
+                  flex: 1,
+                  backgroundColor: theme.primary.transparent, // Transparent purple background
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  padding: '40px',
                 }}
               >
-                {/* SCAD Logo */}
-                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '15px' }}>
-                  <img src="/scad.png" alt="SCAD Logo" style={{ width: '250px', height: 'auto' }} />
-                </div>
-                <h2 style={{ textAlign: 'center', color: '#385e72' }}>Login</h2>
-                <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                  <div style={{ width: '100%', marginBottom: '15px' }}>
-                    <label htmlFor="email" style={{ fontWeight: 'bold', color: '#385e72', textAlign: 'left', display: 'block' }}>Email:</label>
-                    <input
-                      type="email"
-                      id="email"
-                      name="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                      placeholder="Enter your email"
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        border: `1px solid ${emailError ? '#ff4d4d' : '#ccc'}`,
-                        borderRadius: '4px',
-                      }}
-                    />
-                    {emailError && <div style={{ color: '#ff4d4d', fontSize: '12px' }}>{emailError}</div>}
-                  </div>
-                  <div style={{ width: '100%', marginBottom: '15px' }}>
-                    <label htmlFor="password" style={{ fontWeight: 'bold', color: '#385e72', textAlign: 'left', display: 'block' }}>Password:</label>
-                    <input
-                      type="password"
-                      id="password"
-                      name="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      placeholder="Enter your password"
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        border: `1px solid ${passwordError ? '#ff4d4d' : '#ccc'}`,
-                        borderRadius: '4px',
-                      }}
-                    />
-                    {passwordError && <div style={{ color: '#ff4d4d', fontSize: '12px' }}>{passwordError}</div>}
-                  </div>
-                  <button
-                    type="submit"
-                    style={{
-                      padding: '10px',
-                      backgroundColor: '#385e72',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      width: '100%',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Login
-                  </button>
-                  <a
-                    href="/company-register"
-                    style={{
-                      marginTop: '15px',
-                      color: '#385e72',
-                      textDecoration: 'underline',
-                      fontWeight: 'bold',
-                      fontSize: '14px',
-                    }}
-                  >
-                    Register as a Company
-                  </a>
-                  <button
-      onClick={() => {
-        localStorage.clear();
-        alert('Local storage cleared!');
-      }}
-    >
-      Clear Local Storage
-    </button>
+                <img 
+                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/20240821000231%21German_University_in_Cairo_logo-JrPReAORyb41fBSa6NRLevScQhijEI.png" 
+                  alt="GUC Logo" 
+                  style={{ 
+                    width: '50%', // Smaller logo
+                    maxWidth: '300px', 
+                    marginBottom: '40px' 
+                  }} 
+                />
+                <h1 style={{ 
+                  fontSize: '32px', 
+                  color: 'black', 
+                  textAlign: 'center',
+                  fontWeight: 'bold',
+                  marginBottom: '20px'
+                }}>
+                  Welcome to the GUC SCAD System
+                </h1>
+                <p style={{ 
+                  fontSize: '18px', 
+                  color: 'black', 
+                  textAlign: 'center',
+                  maxWidth: '600px',
+                  lineHeight: '1.6'
+                }}>
+                  Student Career and Alumni Development portal for the German University in Cairo
+                </p>
+              </div>
 
-                </form>
+              {/* Right Half - Login Form with light purple accents */}
+              <div
+                style={{
+                  flex: 1,
+                  backgroundColor: 'white',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  boxShadow: '-5px 0 15px rgba(0, 0, 0, 0.1)',
+                }}
+              >
+                <div
+                  style={{
+                    width: '80%',
+                    maxWidth: '400px',
+                    padding: '40px 0',
+                  }}
+                >
+                  <h2 style={{ 
+                    textAlign: 'center', 
+                    color: theme.primary.main, 
+                    fontSize: '28px',
+                    marginBottom: '40px'
+                  }}>
+                    Login to Your Account
+                  </h2>
+                  
+                  <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ marginBottom: '20px' }}>
+                      <label htmlFor="email" style={{ 
+                        fontWeight: 'bold', 
+                        color: theme.primary.main, 
+                        display: 'block',
+                        marginBottom: '8px'
+                      }}>
+                        Email:
+                      </label>
+                      <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                        placeholder="Enter your email"
+                        style={{
+                          width: '100%',
+                          padding: '12px',
+                          border: `1px solid ${emailError ? theme.error : theme.primary.light}`,
+                          borderRadius: '4px',
+                          fontSize: '16px',
+                          backgroundColor: theme.primary.veryLight,
+                        }}
+                      />
+                      {emailError && <div style={{ color: theme.error, fontSize: '14px', marginTop: '5px' }}>{emailError}</div>}
+                    </div>
+                    
+                    <div style={{ marginBottom: '25px' }}>
+                      <label htmlFor="password" style={{ 
+                        fontWeight: 'bold', 
+                        color: theme.primary.main, 
+                        display: 'block',
+                        marginBottom: '8px'
+                      }}>
+                        Password:
+                      </label>
+                      <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        placeholder="Enter your password"
+                        style={{
+                          width: '100%',
+                          padding: '12px',
+                          border: `1px solid ${passwordError ? theme.error : theme.primary.light}`,
+                          borderRadius: '4px',
+                          fontSize: '16px',
+                          backgroundColor: theme.primary.veryLight,
+                        }}
+                      />
+                      {passwordError && <div style={{ color: theme.error, fontSize: '14px', marginTop: '5px' }}>{passwordError}</div>}
+                    </div>
+                    
+                    <button
+                      type="submit"
+                      style={{
+                        padding: '14px',
+                        backgroundColor: theme.primary.main,
+                        color: theme.text.light,
+                        border: 'none',
+                        borderRadius: '4px',
+                        width: '105%',
+                        cursor: 'pointer',
+                        fontSize: '16px',
+                        fontWeight: 'bold',
+                        transition: 'background-color 0.3s'
+                      }}
+                      onMouseOver={(e) => e.currentTarget.style.backgroundColor = theme.primary.dark}
+                      onMouseOut={(e) => e.currentTarget.style.backgroundColor = theme.primary.main}
+                    >
+                      Login
+                    </button>
+                    
+                    <div style={{ textAlign: 'center', marginTop: '25px' }}>
+                      <a
+                        href="/company-register"
+                        style={{
+                          color: theme.primary.main,
+                          textDecoration: 'none',
+                          fontWeight: 'bold',
+                          fontSize: '18px',
+                        }}
+                        onMouseOver={(e) => e.currentTarget.style.textDecoration = 'underline'}
+                        onMouseOut={(e) => e.currentTarget.style.textDecoration = 'none'}
+                      >
+                        Register as a Company
+                      </a>
+                    </div>
+                    
+                    <div style={{ textAlign: 'center', marginTop: '15px' }}>
+                      <button
+                        onClick={() => {
+                          localStorage.clear();
+                          alert('Local storage cleared!');
+                        }}
+                        style={{
+                          backgroundColor: 'transparent',
+                          border: `1px solid ${theme.primary.light}`,
+                          borderRadius: '4px',
+                          padding: '8px 12px',
+                          color: theme.primary.main,
+                          cursor: 'pointer',
+                          fontSize: '14px'
+                        }}
+                      >
+                        Clear Local Storage
+                      </button>
+                    </div>
+                  </form>
+                </div>
               </div>
             </div>
           }
@@ -280,26 +391,24 @@ const isInitialLoad = useState(true);
         <Route path="/evaluation" element={<EvaluationPage />} />
         <Route path="/statistics" element={<StatisticsDashboard />} />
         <Route path="/online-assessments" element={<AssessmentPage />} />
-        
         <Route path="/studentworkshops" element={<StudentWorkshops />} />
         <Route path="/appointments" element={<AppointmentPage />} />
-
         <Route path="/companyallpostedjobs" element={<AllJobsPosted />} />
         <Route path="/studentjobs" element={<StudentJobs />} />
-        
+        <Route path="/viewprofile" element={<WhoViewedMyProfile />} />
         {/* Add more routes as needed */}
       </Routes>
 
       {/* Display Notification Message */}
-       {notification.message && (
+      {notification.message && (
         <div
           style={{
             position: 'fixed',
             top: '10px',
             left: '50%',
             transform: 'translateX(-50%)',
-            backgroundColor: '#6aabd2', // Blue Grotto
-            color: 'white',
+            backgroundColor: theme.primary.main,
+            color: theme.text.light,
             padding: '10px',
             borderRadius: '4px',
           }}

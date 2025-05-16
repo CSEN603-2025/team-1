@@ -10,10 +10,10 @@ function Jobs() {
   const [paidFilter, setPaidFilter] = useState('');
   const [filteredJobs, setFilteredJobs] = useState([]);
   const [selectedJob, setSelectedJob] = useState(null);
-  const [appliedInternships, setAppliedInternships] = useState(() => {
-    const storedApplied = localStorage.getItem('appliedInternships');
-    return storedApplied ? JSON.parse(storedApplied) : [];
-  });
+const [appliedInternships, setAppliedInternships] = useState(() => {
+  const storedApplied = localStorage.getItem('appliedInternships');
+  return storedApplied ? JSON.parse(storedApplied) : [];
+});
   const [extraDocuments, setExtraDocuments] = useState([]);
   const navigate = useNavigate();
   const location = useLocation();
@@ -71,59 +71,57 @@ function Jobs() {
     setExtraDocuments(files);
   };
 
-  const handleApply = () => {
-    if (selectedJob && selectedJob.companyEmail && studentj) {
-      const alreadyApplied = appliedInternships.some(
-        (applied) => applied.title === selectedJob.title && applied.companyName === selectedJob.companyName
-      );
-      if (!alreadyApplied) {
-        const message = `${studentj.email} has applied to ${selectedJob.title}.`;
-        setNotification(message, selectedJob.companyEmail);
-        const newApplication = {
-          ...selectedJob,
-          status: 'pending',
-          documents: extraDocuments.map(file => file.name),
-          studentProfile: studentj, 
-        };
-        setAppliedInternships([...appliedInternships, newApplication]);
-        alert(`Applied to ${selectedJob.title} at ${selectedJob.companyName}! Status: Pending. Documents uploaded: ${extraDocuments.map(file => file.name).join(', ')}`);
-        setSelectedJob(null);
-        setExtraDocuments([]);
+const handleApply = () => {
+  if (selectedJob && selectedJob.companyEmail && studentj) {
+    const alreadyApplied = isAlreadyApplied(selectedJob);
+    if (!alreadyApplied) {
+      const message = `${studentj.email} has applied to ${selectedJob.title}.`;
+      setNotification(message, selectedJob.companyEmail);
+      const newApplication = {
+        ...selectedJob,
+        status: 'pending',
+        documents: extraDocuments.map(file => file.name),
+        studentProfile: studentj, 
+      };
+      setAppliedInternships([...appliedInternships, newApplication]);
+      alert(`Applied to ${selectedJob.title} at ${selectedJob.companyName}! Status: Pending. Documents uploaded: ${extraDocuments.map(file => file.name).join(', ')}`);
+      setSelectedJob(null);
+      setExtraDocuments([]);
 
-        const updatedAllJobs = jobs.map(job => {
-          if (job.title === selectedJob.title && job.companyName === selectedJob.companyName) {
+      const updatedAllJobs = jobs.map(job => {
+        if (job.title === selectedJob.title && job.companyName === selectedJob.companyName) {
+          return { ...job, applicants: [...(job.applicants || []), studentj] };
+        }
+        return job;
+      });
+      localStorage.setItem('allJobs', JSON.stringify(updatedAllJobs));
+      setJobs(updatedAllJobs);
+      
+      const companyJobsKey = `companyJobs_${selectedJob.companyEmail}`;
+      const companyJobsString = localStorage.getItem(companyJobsKey);
+      if (companyJobsString) {
+        const companyJobs = JSON.parse(companyJobsString);
+        const updatedCompanyJobs = companyJobs.map(job => {
+          if (job.title === selectedJob.title) {
             return { ...job, applicants: [...(job.applicants || []), studentj] };
           }
           return job;
         });
-        localStorage.setItem('allJobs', JSON.stringify(updatedAllJobs));
-        setJobs(updatedAllJobs);
-        
-        const companyJobsKey = `companyJobs_${selectedJob.companyEmail}`;
-        const companyJobsString = localStorage.getItem(companyJobsKey);
-        if (companyJobsString) {
-          const companyJobs = JSON.parse(companyJobsString);
-          const updatedCompanyJobs = companyJobs.map(job => {
-            if (job.title === selectedJob.title) {
-              return { ...job, applicants: [...(job.applicants || []), studentj] };
-            }
-            return job;
-          });
-          localStorage.setItem(companyJobsKey, JSON.stringify(updatedCompanyJobs));
-        } else {
-          console.warn(`Company jobs not found in localStorage for key: ${companyJobsKey}`);
-        }
+        localStorage.setItem(companyJobsKey, JSON.stringify(updatedCompanyJobs));
       } else {
-        alert('You have already applied to this internship.');
+        console.warn(`Company jobs not found in localStorage for key: ${companyJobsKey}`);
       }
-    } else if (!selectedJob) {
-      alert('Please select an internship to apply.');
-    } else if (!selectedJob.companyEmail) {
-      alert('Error applying: Internship details missing company information.');
-    } else if (!studentj) {
-      alert('Student information not found. Please log in again.');
+    } else {
+      alert('You have already applied to this internship.');
     }
-  };
+  } else if (!selectedJob) {
+    alert('Please select an internship to apply.');
+  } else if (!selectedJob.companyEmail) {
+    alert('Error applying: Internship details missing company information.');
+  } else if (!studentj) {
+    alert('Student information not found. Please log in again.');
+  }
+};
 
   const handleGoToMyApplications = () => {
     navigate('/studentapplications', { state: { studentj } });
@@ -133,9 +131,13 @@ function Jobs() {
     navigate('/studentpage', { state: { studentj } });
   };
 
-  const isAlreadyApplied = (job) => {
-    return appliedInternships.some(applied => applied.title === job.title && applied.companyName === job.companyName);
-  };
+const isAlreadyApplied = (job) => {
+  return appliedInternships.some(applied => 
+    applied.title === job.title && 
+    applied.companyName === job.companyName &&
+    applied.studentProfile?.email === studentj?.email
+  );
+};
 
   const getInternshipVideoInfo = () => {
     const defaultVideo = {

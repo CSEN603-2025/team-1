@@ -4,12 +4,13 @@ import { useState, useEffect } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
 import SidebarFac from "./sidebarfaculty"
 import Sidebar from "./sidebarscad"
+import { setNotification } from "./notification"
 
 // Helper function to simulate notification service
-const setNotification = (message, email) => {
-  console.log(`Notification to ${email}: ${message}`)
-  // In a real app, this would send a notification to the user
-}
+// const setNotification = (message, email) => {
+//   console.log(`Notification to ${email}: ${message}`)
+//   // In a real app, this would send a notification to the user
+// }
 
 const FacultyReport = () => {
   const navigate = useNavigate()
@@ -165,6 +166,46 @@ const FacultyReport = () => {
     setShowCommentModal(true)
     setEditingComment(true) // This is for editing/adding comment only
   }
+const handleStatusWithoutcomment = (id, status) => {
+  setPendingStatus(status)
+
+  const updatedReports = reports.map((report) =>
+    report.id === id ? { ...report, status } : report
+  )
+  setReports(updatedReports)
+
+  const reportKey = `report_${id}`
+  const reportData = localStorage.getItem(reportKey)
+
+  if (reportData) {
+    const parsedReport = JSON.parse(reportData)
+    const updatedReport = {
+      ...parsedReport,
+      status: status,
+    }
+    localStorage.setItem(reportKey, JSON.stringify(updatedReport))
+  }
+
+  const savedReports = localStorage.getItem("reports")
+  if (savedReports) {
+    const parsedReports = JSON.parse(savedReports)
+    const updatedSavedReports = parsedReports.map((report) =>
+      report.id === id ? { ...report, status: status } : report
+    )
+    localStorage.setItem("reports", JSON.stringify(updatedSavedReports))
+  }
+
+  const report = reports.find((r) => r.id === id)
+  if (report) {
+    const email = report.studentemail
+    const title = report.title
+    const message = `Your internship report "${title}" has been ${status}.`
+    setNotification(message, email)
+    showNotification(`Report ${status} successfully`, "success")
+    
+  }
+}
+
 
   const saveCommentAndStatus = () => {
     if (!comment.trim()) {
@@ -946,7 +987,7 @@ const FacultyReport = () => {
                                 🚩 Flag
                               </button>
                               <button
-                                onClick={() => handleStatusWithComment(report.id, "accepted")}
+                                onClick={() => handleStatusWithoutcomment(report.id, "accepted")}
                                 style={{
                                   display: "inline-flex",
                                   alignItems: "center",

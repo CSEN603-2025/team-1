@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Link, useNavigate, useLocation } from "react-router-dom"
-import { getNotification, clearNotifications } from "./notification"
+import { getNotification, clearNotifications,setNotification} from "./notification"
 
 function CompanyPage() {
   const generateDummyData = () => {
@@ -114,6 +114,7 @@ function CompanyPage() {
 
       // Load posted jobs
       const storedJobs = localStorage.getItem(`companyJobs_${storedCompany.companyEmail}`)
+      console.log(storedJobs)
 
       // Combine stored jobs with dummy data if toggle is on
       const jobsToSet = [...(storedJobs ? JSON.parse(storedJobs) : []), ...(useDummyData ? generateDummyData() : [])]
@@ -339,6 +340,9 @@ function CompanyPage() {
       if (acceptedApplicant && storedCompany?.companyEmail) {
         const companyInternsKey = `companyInterns_${storedCompany.companyEmail}`
         const currentInterns = JSON.parse(localStorage.getItem(companyInternsKey)) || []
+        setNotification(`You have been accepted in ${storedCompany.companyEmail}`, applicantEmail);
+
+        console.log(applicantEmail)
 
         const isAlreadyAdded = currentInterns.some(
           (intern) => intern.email === acceptedApplicant.email && intern.jobTitle === job.title,

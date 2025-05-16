@@ -3,8 +3,9 @@
 import { useState, useEffect, useMemo } from "react"
 import Sidebar from "./sidebarscad"
 import { X, Building, Users, Mail, Phone, Globe, MapPin, FileText, Calendar, Briefcase } from "lucide-react"
+import { setNotification as systemSetNotification } from './notification.js';
 
-function ViewRegistration({ setNotification }) {
+function ViewRegistration() {
   const [companyDetails, setCompanyDetails] = useState(null)
   const [companies, setCompanies] = useState([])
   const [searchQuery, setSearchQuery] = useState("")
@@ -70,11 +71,15 @@ function ViewRegistration({ setNotification }) {
     localStorage.setItem("companies", JSON.stringify(updated))
     localStorage.setItem("companiesUpdated", Date.now())
 
-    // Updated notification logic
-    setNotification({
-      message: `Registration for ${companyDetails.companyName} accepted.`,
-      email: companyDetails.companyEmail,
-    })
+    // Updated notification lo
+
+    const acceptancemessage = `Your Registration for ${companyDetails.companyName} accepted.`;
+    systemSetNotification(
+        acceptancemessage, 
+        companyDetails.companyEmail,
+        true // Make it false so it persists until the company views it in their login notification popup.
+              // The CompanyLogin's togglePopup will then handle clearing it.
+    );
 
     setCompanies((prev) => prev.filter((c) => c.companyEmail !== companyDetails.companyEmail))
     setCompanyDetails(null)
@@ -84,15 +89,17 @@ function ViewRegistration({ setNotification }) {
     console.log("Rejecting company:", companyDetails)
     if (!companyDetails) return
     const all = JSON.parse(localStorage.getItem("companies")) || []
-    const updated = all.filter((c) => c.companyEmail !== companyDetails.companyEmail)
+    const updated = all.filter((c) => c.companyEmail !== companyDetails.companyEmail )
     localStorage.setItem("companies", JSON.stringify(updated))
     localStorage.setItem("companiesUpdated", Date.now())
 
-    // Updated notification logic
-    setNotification({
-      message: `Registration for ${companyDetails.companyName} rejected.`,
-      email: companyDetails.companyEmail,
-    })
+    const rejectionMessage = `Your registration for ${companyDetails.companyName} has been rejected.`;
+    systemSetNotification(
+        rejectionMessage, 
+        companyDetails.companyEmail,
+        false // Make it false so it persists until the company views it in their login notification popup.
+              // The CompanyLogin's togglePopup will then handle clearing it.
+    );
 
     setCompanies((prev) => prev.filter((c) => c.companyEmail !== companyDetails.companyEmail))
     setCompanyDetails(null)

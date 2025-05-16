@@ -1,5 +1,6 @@
 "use client"
 
+// import { RollerCoaster } from "lucide-react"
 import { useState, useEffect } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
 
@@ -22,6 +23,7 @@ function CompanyInterns() {
   const [evaluation, setEvaluation] = useState("")
   const [selectedInternEmail, setSelectedInternEmail] = useState("")
   const [evaluationScore, setEvaluationScore] = useState(0)
+  let nrole="student";
 
   // Load interns from localStorage on component mount
   useEffect(() => {
@@ -44,6 +46,36 @@ function CompanyInterns() {
 
     const updatedInterns = interns.map((intern) => {
       if (intern.email === email && intern.jobTitle === jobTitle) {
+        let updatedEmail = intern.email;
+        let dur=intern.jobDuration;
+        const allUsers = JSON.parse(localStorage.getItem("allUsers")) || [];
+
+   const student = allUsers.find((user) => user.email === updatedEmail);
+
+    if (student) {
+       const parsedDur = parseInt(dur);
+       const totalDuration = (student.duration) + parsedDur;
+
+      const newRole = totalDuration >= 3 ? "pro" : "student";
+      const updatedStudent = {
+        ...student,
+        role: newRole,
+        duration: totalDuration,
+      };
+
+      console.log(nrole)
+      console.log(updatedStudent.role)
+      console.log(totalDuration)
+      // Replace the old student in allUsers array
+      const updatedUsers = allUsers.map(user =>
+        user.email === updatedEmail ? updatedStudent : user
+      );
+
+      // Save the updated array to localStorage
+      localStorage.setItem("allUsers", JSON.stringify(updatedUsers));
+      console.log(updatedUsers)
+    }
+        // console.log(updatedEmail,dur)
         return { ...intern, status: "completed" }
       }
       return intern
@@ -53,6 +85,8 @@ function CompanyInterns() {
 
     const companyInternsKey = `companyInterns_${storedCompany.companyEmail}`
     localStorage.setItem(companyInternsKey, JSON.stringify(updatedInterns))
+    
+    
 
     // Show success toast
     setToastMessage(`${email} marked as completed`)

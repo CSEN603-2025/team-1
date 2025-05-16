@@ -2,11 +2,54 @@
 
 import { useState, useEffect } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
-import { getNotification, clearNotifications } from "./notification" // Assuming this file exists
+// import { getNotification, clearNotifications } from "./notification" // Original import
+
+// --- START: Dummy Data and Stubs ---
+
+// 1. Define a dummy student object
+const dummyStudent = {
+  email: "john.doe@example.com",
+  name: "John Doe (Default)", // A default name for the student object
+};
+
+// 2. Define initial dummy profile data
+const dummyInitialProfileData = {
+  name: "Johnathan Doe", // Profile name, can be edited
+  email: dummyStudent.email, // Email will be tied to dummyStudent
+  jobInterests: "Software Development, AI Research, Cloud Computing",
+  industry: "Technology",
+  internships: "AI Research Intern at Innovatech (Summer 2023)\n- Developed a prototype for a recommendation engine.",
+  partTimeJobs: "Freelance Web Developer (2022-Present)\n- Built several small business websites.",
+  collegeActivities: "President of the AI Club, Member of Coding Bootcamp",
+  major: "Mechatronics",
+  semester: "8",
+};
+
+// 3. Stub for notification functions (replace actual import)
+const getNotification = (userEmail) => {
+  // console.log(`[Stub] getNotification for ${userEmail}`);
+  if (userEmail === dummyStudent.email) {
+    // Return a couple of sample notifications for the dummy user
+    return [
+      { id: 'dummy_notif_1', message: `Welcome to your profile, ${dummyInitialProfileData.name}! Feel free to look around.`, timestamp: Date.now() - (60 * 60 * 1000) }, // 1 hour ago
+      { id: 'dummy_notif_2', message: 'Your internship application for "Tech Solutions" was viewed.', timestamp: Date.now() - (10 * 60 * 1000) }, // 10 minutes ago
+    ];
+  }
+  return []; // Default to empty for other emails
+};
+
+const clearNotifications = (userEmail) => {
+  console.log(`[Stub] clearNotifications called for ${userEmail}`);
+  // In a real app, this would interact with storage or an API.
+  // For the stub, we can just log it. The state will be cleared in handleClosePopup.
+};
+
+// --- END: Dummy Data and Stubs ---
+
 
 function StudentProfilePage() {
   const navigate = useNavigate()
-  const location = useLocation()
+  const location = useLocation() // Kept for other potential uses or if parts of navigation rely on it
   const [menuOpen, setMenuOpen] = useState(false)
   const [activeSection, setActiveSection] = useState("profile")
   const [loading, setLoading] = useState(true)
@@ -17,16 +60,18 @@ function StudentProfilePage() {
   const [notifications, setNotifications] = useState([])
   const [viewedNotifications, setViewedNotifications] = useState([])
 
-  // Get student data from location state
-  const student = location.state?.student || { email: "default@example.com" }
-  const profileKey = `studentProfile_${student.email}`
+  // Use the dummyStudent object
+  const student = location.state?.user ||
+    location.state?.studentj ||
+    location.state?.student || dummyStudent;
+  const profileKey = `studentProfile_${student.email}`; // Key for localStorage, specific to the dummy student
   const viewedNotificationsKey = student?.email ? `viewedNotifications_${student.email}` : "viewedNotifications_default"
-  const status = null
+  const status = null // Kept from original code
 
-  // Profile state
+  // Profile state - initial values will be set by useEffect
   const [profile, setProfile] = useState({
     name: "",
-    email: student.email,
+    email: student.email, // Default to dummy student's email
     jobInterests: "",
     industry: "",
     internships: "",
@@ -56,19 +101,11 @@ function StudentProfilePage() {
     setLoading(true)
     try {
       const savedProfile = localStorage.getItem(profileKey)
+      // If a profile is saved in localStorage for the dummy student, use it. Otherwise, use dummyInitialProfileData.
       const initialProfile = savedProfile
         ? JSON.parse(savedProfile)
-        : {
-            name: "",
-            email: student?.email || "",
-            jobInterests: "",
-            industry: "",
-            internships: "",
-            partTimeJobs: "",
-            collegeActivities: "",
-            major: "",
-            semester: "",
-          }
+        : { ...dummyInitialProfileData, email: student.email }; // Ensure email is correct
+
       setProfile(initialProfile)
       setDraftProfile(initialProfile)
       setSelectedMajor(initialProfile.major || "")
@@ -77,16 +114,20 @@ function StudentProfilePage() {
       // Simulate API call
       setTimeout(() => {
         setLoading(false)
-        showNotification("Profile loaded successfully", "info")
+        showNotification(savedProfile ? "Profile loaded from saved session" : "Profile loaded with dummy data", "info")
       }, 800)
     } catch (err) {
       console.error("Error loading profile:", err)
+      setProfile({ ...dummyInitialProfileData, email: student.email }); // Fallback to dummy on error
+      setDraftProfile({ ...dummyInitialProfileData, email: student.email });
+      setSelectedMajor(dummyInitialProfileData.major || "");
+      setSelectedSemester(dummyInitialProfileData.semester || "");
       setLoading(false)
-      showNotification("Failed to load profile data", "error")
+      showNotification("Failed to load profile data, using defaults", "error")
     }
-  }, [profileKey, student?.email])
+  }, [profileKey, student.email]) // student.email comes from dummyStudent
 
-  // Notification logic
+  // Notification logic (uses stubbed getNotification)
   useEffect(() => {
     if (student?.email) {
       const interval = setInterval(() => {
@@ -103,11 +144,10 @@ function StudentProfilePage() {
 
       return () => clearInterval(interval) // cleanup on unmount
     }
-  }, [student?.email, notifications])
+  }, [student?.email, notifications]) // notifications dependency to re-check if cleared
 
   // Calculate unread notifications
   const unreadNotifications = notifications.filter((notification) => {
-    // Check if this notification ID is not in the viewedNotifications array
     return !viewedNotifications.includes(notification.id)
   })
 
@@ -121,7 +161,7 @@ function StudentProfilePage() {
       setLoading(true)
       showNotification("Logging out...", "info")
       setTimeout(() => {
-        navigate("/")
+        navigate("/") // Navigate to home or login page
       }, 1000)
     }
   }
@@ -139,20 +179,15 @@ function StudentProfilePage() {
 
   const handleBellClick = () => {
     if (student?.email) {
-      const fetchedNotifications = getNotification(student.email) || []
+      const fetchedNotifications = getNotification(student.email) || [] // Uses stubbed getNotification
       setNotifications(fetchedNotifications)
       setIsPopupOpen((prev) => !prev)
 
-      // Hide any active notification toast when opening the popup
       if (!isPopupOpen) {
         setNotification({ show: false, message: "", type: "" })
-
-        // Mark all current notifications as viewed
         const notificationIds = fetchedNotifications.map((notification) => notification.id)
         const updatedViewedNotifications = [...new Set([...viewedNotifications, ...notificationIds])]
         setViewedNotifications(updatedViewedNotifications)
-
-        // Save to local storage
         try {
           localStorage.setItem(viewedNotificationsKey, JSON.stringify(updatedViewedNotifications))
         } catch (err) {
@@ -166,23 +201,29 @@ function StudentProfilePage() {
 
   const handleClosePopup = () => {
     if (student?.email) {
-      clearNotifications(student.email) // clear from storage
+      clearNotifications(student.email) // Calls stubbed clearNotifications
     }
-    setNotifications([]) // clear from state
-    setIsPopupOpen(false) // close popup
+    setNotifications([]) // Clear from state
+    setIsPopupOpen(false) // Close popup
+    // Clear viewed notifications from localStorage as well, or they will persist
+    // setViewedNotifications([]); // Optionally clear viewed state too
+    // localStorage.removeItem(viewedNotificationsKey); // Optionally clear from storage
+    showNotification("Notifications cleared", "info");
   }
 
-  // Navigation handlers
+  // Navigation handlers - `student` is now `dummyStudent`
   const handleHomeClick = () => {
     navigate("/studentpage", { state: { student } })
   }
 
   const handleProfileClick = () => {
     setActiveSection("profile")
+    // If using react-router to navigate to #profile or similar, do it here
+    // For now, it just sets the active section for styling
   }
 
   const handleCoursesClick = () => {
-    navigate("/studentpage", { state: { student } })
+    navigate("/studentpage", { state: { student } }) // Or navigate to a specific courses page
   }
 
   const handleBrowseJobsClick = () => {
@@ -208,12 +249,15 @@ function StudentProfilePage() {
   // Profile edit handlers
   const handleEditClick = () => {
     setIsEditingProfile(true)
-    setDraftProfile(profile)
+    setDraftProfile(profile) // Start editing with current profile data
   }
 
   const handleCancelEdit = () => {
     setIsEditingProfile(false)
     setDraftProfile(profile) // Reset draft to current profile
+    // Also reset selectedMajor and selectedSemester to match the current profile
+    setSelectedMajor(profile.major || "");
+    setSelectedSemester(profile.semester || "");
     showNotification("Edit cancelled", "info")
   }
 
@@ -230,12 +274,14 @@ function StudentProfilePage() {
         ...draftProfile,
         major: selectedMajor,
         semester: selectedSemester,
-        email: student.email,
+        email: student.email, // Ensure email is from the (dummy) student object
       }
 
+      // Save to localStorage for persistence of the dummy profile's edits
       localStorage.setItem(profileKey, JSON.stringify(updatedDraftProfile))
 
-      const profileWithStatus = { ...updatedDraftProfile, status }
+      // This part for 'studentusers' can be kept if it's part of a larger system simulation
+      const profileWithStatus = { ...updatedDraftProfile, status } // status is null
       const studentUsers = JSON.parse(localStorage.getItem("studentusers")) || []
       const existingUserIndex = studentUsers.findIndex((user) => user.email === updatedDraftProfile.email)
 
@@ -246,7 +292,7 @@ function StudentProfilePage() {
       }
       localStorage.setItem("studentusers", JSON.stringify(studentUsers))
 
-      setProfile(updatedDraftProfile)
+      setProfile(updatedDraftProfile) // Update the main profile state
       setIsEditingProfile(false)
       showNotification("Profile updated successfully!", "success")
     } catch (err) {
@@ -257,7 +303,7 @@ function StudentProfilePage() {
     }
   }
 
-  // Sidebar component to match the faculty page structure
+  // Sidebar component (remains largely unchanged, uses `profile` state which is now dummy-driven)
   const Sidebar = ({ menuOpen, toggleMenu }) => {
     const sidebarItems = [
       { id: "dashboard", label: "Homepage", icon: "🏠", action: handleHomeClick },
@@ -335,7 +381,7 @@ function StudentProfilePage() {
                   marginRight: "10px",
                 }}
               >
-                {profile.name ? profile.name.charAt(0).toUpperCase() : "S"}
+                {profile.name ? profile.name.charAt(0).toUpperCase() : (student.name ? student.name.charAt(0).toUpperCase() : "S")}
               </div>
               <div>
                 <div style={{ fontSize: "14px", fontWeight: "bold", color: "#4a4a6a" }}>Student User</div>
@@ -358,7 +404,7 @@ function StudentProfilePage() {
                     transition: "background-color 0.2s",
                     color: "#4a4a6a",
                   }}
-                  onClick={item.action}
+                  onClick={() => { item.action(); if(item.id === 'profile') setActiveSection('profile');}}
                   onMouseOver={(e) => {
                     if (activeSection !== item.id) {
                       e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.3)"
@@ -603,15 +649,15 @@ function StudentProfilePage() {
                 <div
                   style={{
                     position: "absolute",
-                    top: "45px",
-                    right: "-10px",
+                    top: "45px", // Adjusted for bell icon size
+                    right: "-10px", // Adjusted for alignment
                     backgroundColor: "white",
                     boxShadow: "0 4px 15px rgba(0, 0, 0, 0.1)",
                     borderRadius: "12px",
                     width: "320px",
-                    zIndex: 1001,
+                    zIndex: 1001, // Ensure it's above other content
                     border: "1px solid rgba(230, 230, 250, 0.5)",
-                    overflow: "hidden",
+                    overflow: "hidden", // Ensures rounded corners are applied to children
                   }}
                 >
                   <div
@@ -621,7 +667,7 @@ function StudentProfilePage() {
                       alignItems: "center",
                       padding: "15px 20px",
                       borderBottom: "1px solid rgba(230, 230, 250, 0.7)",
-                      backgroundColor: "rgba(230, 230, 250, 0.2)",
+                      backgroundColor: "rgba(230, 230, 250, 0.2)", // Light purple tint for header
                     }}
                   >
                     <h4
@@ -707,13 +753,13 @@ function StudentProfilePage() {
                       >
                         {notifications.map((notification, index) => (
                           <li
-                            key={index}
+                            key={notification.id || index} // Use notification.id if available
                             style={{
                               padding: "12px 20px",
                               borderBottom:
                                 index < notifications.length - 1 ? "1px solid rgba(230, 230, 250, 0.4)" : "none",
                               transition: "background-color 0.2s",
-                              cursor: "default",
+                              cursor: "default", // Or 'pointer' if notifications are clickable
                             }}
                             onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "rgba(230, 230, 250, 0.2)")}
                             onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
@@ -721,7 +767,7 @@ function StudentProfilePage() {
                             <p
                               style={{
                                 margin: "0 0 5px 0",
-                                fontWeight: "500",
+                                fontWeight: "500", // Slightly bolder for message
                                 color: "#4a4a6a",
                                 fontSize: "14px",
                                 lineHeight: "1.4",
@@ -769,9 +815,9 @@ function StudentProfilePage() {
                       }}
                     >
                       <button
-                        onClick={handleClosePopup}
+                        onClick={handleClosePopup} // This now calls the modified clear logic
                         style={{
-                          backgroundColor: "#d5c5f7",
+                          backgroundColor: "#d5c5f7", // A slightly more prominent purple
                           color: "#4a4a6a",
                           border: "none",
                           borderRadius: "6px",
@@ -809,7 +855,7 @@ function StudentProfilePage() {
                 marginRight: "10px",
               }}
             >
-              {profile.name ? profile.name.charAt(0).toUpperCase() : "S"}
+              {profile.name ? profile.name.charAt(0).toUpperCase() : (student.name ? student.name.charAt(0).toUpperCase() : "S")}
             </div>
             <div style={{ marginRight: "20px" }}>
               <div style={{ fontSize: "14px", fontWeight: "bold", color: "#4a4a6a" }}>Student User</div>
@@ -852,11 +898,12 @@ function StudentProfilePage() {
           {loading && (
             <div
               style={{
-                position: "absolute",
+                position: "absolute", // Changed from fixed to absolute for centering within this div
                 top: "50%",
-                left: "50%",
+                left: "50%", // This will be 50% of the main content area if sidebar is open
                 transform: "translate(-50%, -50%)",
                 textAlign: "center",
+                zIndex: 10, // Ensure it's above profile content but below nav/sidebar
               }}
             >
               <div
@@ -881,8 +928,8 @@ function StudentProfilePage() {
                 borderRadius: "8px",
                 padding: "25px",
                 boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
-                maxWidth: "1000px",
-                margin: "0 auto",
+                maxWidth: "1000px", // Max width for content
+                margin: "0 auto", // Center content
               }}
             >
               <div
@@ -891,6 +938,8 @@ function StudentProfilePage() {
                   justifyContent: "space-between",
                   alignItems: "center",
                   marginBottom: "20px",
+                  borderBottom: "1px solid #eee",
+                  paddingBottom: "15px",
                 }}
               >
                 <h2
@@ -931,15 +980,17 @@ function StudentProfilePage() {
                 <div
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "repeat(auto-fill, minmax(400px, 1fr))",
-                    gap: "30px",
+                    gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", // Responsive columns
+                    gap: "30px", // Gap between grid items
                   }}
                 >
+                  {/* Personal Information Card */}
                   <div
                     style={{
                       backgroundColor: "#f9f9fa",
                       borderRadius: "8px",
                       padding: "20px",
+                      boxShadow: "0 1px 3px rgba(0,0,0,0.03)",
                     }}
                   >
                     <h3
@@ -977,11 +1028,13 @@ function StudentProfilePage() {
                     </div>
                   </div>
 
+                  {/* Career Interests Card */}
                   <div
                     style={{
                       backgroundColor: "#f9f9fa",
                       borderRadius: "8px",
                       padding: "20px",
+                       boxShadow: "0 1px 3px rgba(0,0,0,0.03)",
                     }}
                   >
                     <h3
@@ -997,7 +1050,7 @@ function StudentProfilePage() {
                     </h3>
                     <div style={{ marginBottom: "15px" }}>
                       <div style={{ color: "#6a6a8a", fontSize: "14px", marginBottom: "5px" }}>Job Interests</div>
-                      <div style={{ color: "#4a4a6a", fontSize: "16px", fontWeight: "500" }}>
+                      <div style={{ color: "#4a4a6a", fontSize: "16px", fontWeight: "500", whiteSpace: "pre-line" }}>
                         {profile.jobInterests || "Not specified"}
                       </div>
                     </div>
@@ -1009,12 +1062,14 @@ function StudentProfilePage() {
                     </div>
                   </div>
 
+                  {/* Experience Card - Spans full width if needed, or adjust grid */}
                   <div
                     style={{
                       backgroundColor: "#f9f9fa",
                       borderRadius: "8px",
                       padding: "20px",
-                      gridColumn: "1 / -1",
+                      gridColumn: "1 / -1", // Make this card span all columns
+                       boxShadow: "0 1px 3px rgba(0,0,0,0.03)",
                     }}
                   >
                     <h3
@@ -1026,7 +1081,7 @@ function StudentProfilePage() {
                         paddingBottom: "10px",
                       }}
                     >
-                      Experience
+                      Experience & Activities
                     </h3>
                     <div style={{ marginBottom: "15px" }}>
                       <div style={{ color: "#6a6a8a", fontSize: "14px", marginBottom: "5px" }}>
@@ -1037,7 +1092,7 @@ function StudentProfilePage() {
                           color: "#4a4a6a",
                           fontSize: "16px",
                           fontWeight: "500",
-                          whiteSpace: "pre-line",
+                          whiteSpace: "pre-line", // Preserve line breaks from textarea
                         }}
                       >
                         {profile.internships || "None specified"}
@@ -1072,20 +1127,23 @@ function StudentProfilePage() {
                   </div>
                 </div>
               ) : (
+                // Editing Form
                 <div style={{ maxWidth: "900px", margin: "0 auto" }}>
                   <div
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "1fr",
+                      gridTemplateColumns: "1fr", // Single column for editing form sections
                       gap: "30px",
                       marginBottom: "30px",
                     }}
                   >
+                    {/* Personal Information Edit Section */}
                     <div
                       style={{
                         backgroundColor: "#f9f9fa",
                         borderRadius: "8px",
-                        padding: "20px",
+                        padding: "25px", // Increased padding for edit form sections
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.03)",
                       }}
                     >
                       <h3
@@ -1097,11 +1155,12 @@ function StudentProfilePage() {
                           paddingBottom: "10px",
                         }}
                       >
-                        Personal Information
+                        Edit Personal Information
                       </h3>
 
                       <div style={{ marginBottom: "20px" }}>
                         <label
+                          htmlFor="name"
                           style={{
                             display: "block",
                             marginBottom: "8px",
@@ -1113,6 +1172,7 @@ function StudentProfilePage() {
                           Name
                         </label>
                         <input
+                          id="name"
                           type="text"
                           name="name"
                           value={draftProfile.name}
@@ -1132,6 +1192,7 @@ function StudentProfilePage() {
 
                       <div style={{ marginBottom: "20px" }}>
                         <label
+                           htmlFor="email"
                           style={{
                             display: "block",
                             marginBottom: "8px",
@@ -1143,9 +1204,10 @@ function StudentProfilePage() {
                           Email
                         </label>
                         <input
+                          id="email"
                           type="email"
                           name="email"
-                          value={student.email}
+                          value={student.email} // Display dummy student's email
                           style={{
                             width: "100%",
                             padding: "12px 15px",
@@ -1153,26 +1215,27 @@ function StudentProfilePage() {
                             borderRadius: "6px",
                             fontSize: "14px",
                             color: "#6a6a8a",
-                            backgroundColor: "#f1f1f1",
+                            backgroundColor: "#f1f1f1", // Indicate it's not editable
                             boxSizing: "border-box",
                           }}
                           readOnly
                         />
                         <div style={{ fontSize: "12px", color: "#6a6a8a", marginTop: "8px" }}>
-                          Email cannot be changed
+                          Email cannot be changed.
                         </div>
                       </div>
 
                       <div
                         style={{
                           display: "grid",
-                          gridTemplateColumns: "1fr 1fr",
+                          gridTemplateColumns: "1fr 1fr", // Two columns for major and semester
                           gap: "20px",
-                          marginBottom: "10px",
+                          marginBottom: "10px", // Reduced bottom margin as it's inside a section
                         }}
                       >
-                        <div style={{ marginBottom: "20px" }}>
+                        <div> {/* Removed marginBottom: "20px" from here */}
                           <label
+                            htmlFor="major"
                             style={{
                               display: "block",
                               marginBottom: "8px",
@@ -1184,6 +1247,7 @@ function StudentProfilePage() {
                             Major
                           </label>
                           <select
+                            id="major"
                             name="major"
                             value={selectedMajor}
                             onChange={(e) => setSelectedMajor(e.target.value)}
@@ -1204,11 +1268,13 @@ function StudentProfilePage() {
                             <option value="Mechatronics">Mechatronics</option>
                             <option value="Business Informatics">Business Informatics</option>
                             <option value="Pharmacy">Pharmacy</option>
+                            <option value="CS">Computer Science</option> {/* Added one more */}
                           </select>
                         </div>
 
-                        <div style={{ marginBottom: "20px" }}>
+                        <div> {/* Removed marginBottom: "20px" from here */}
                           <label
+                            htmlFor="semester"
                             style={{
                               display: "block",
                               marginBottom: "8px",
@@ -1220,6 +1286,7 @@ function StudentProfilePage() {
                             Semester
                           </label>
                           <select
+                            id="semester"
                             name="semester"
                             value={selectedSemester}
                             onChange={(e) => setSelectedSemester(e.target.value)}
@@ -1245,11 +1312,13 @@ function StudentProfilePage() {
                       </div>
                     </div>
 
+                    {/* Career Interests Edit Section */}
                     <div
                       style={{
                         backgroundColor: "#f9f9fa",
                         borderRadius: "8px",
-                        padding: "20px",
+                        padding: "25px",
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.03)",
                       }}
                     >
                       <h3
@@ -1261,11 +1330,12 @@ function StudentProfilePage() {
                           paddingBottom: "10px",
                         }}
                       >
-                        Career Interests
+                        Edit Career Interests
                       </h3>
 
                       <div style={{ marginBottom: "20px" }}>
                         <label
+                          htmlFor="jobInterests"
                           style={{
                             display: "block",
                             marginBottom: "8px",
@@ -1274,9 +1344,10 @@ function StudentProfilePage() {
                             fontWeight: "500",
                           }}
                         >
-                          Job Interests (comma-separated)
+                          Job Interests (comma-separated or one per line)
                         </label>
                         <textarea
+                          id="jobInterests"
                           name="jobInterests"
                           value={draftProfile.jobInterests}
                           onChange={handleDraftChange}
@@ -1295,8 +1366,9 @@ function StudentProfilePage() {
                         />
                       </div>
 
-                      <div style={{ marginBottom: "20px" }}>
+                      <div style={{ marginBottom: "20px" }}> {/* Consistent margin for last item in section */}
                         <label
+                          htmlFor="industry"
                           style={{
                             display: "block",
                             marginBottom: "8px",
@@ -1308,6 +1380,7 @@ function StudentProfilePage() {
                           Preferred Industry
                         </label>
                         <input
+                          id="industry"
                           type="text"
                           name="industry"
                           value={draftProfile.industry}
@@ -1325,12 +1398,14 @@ function StudentProfilePage() {
                         />
                       </div>
                     </div>
-
+                    
+                    {/* Experience Edit Section */}
                     <div
                       style={{
                         backgroundColor: "#f9f9fa",
                         borderRadius: "8px",
-                        padding: "20px",
+                        padding: "25px",
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.03)",
                       }}
                     >
                       <h3
@@ -1342,11 +1417,12 @@ function StudentProfilePage() {
                           paddingBottom: "10px",
                         }}
                       >
-                        Experience
+                        Edit Experience & Activities
                       </h3>
 
                       <div style={{ marginBottom: "20px" }}>
                         <label
+                          htmlFor="internships"
                           style={{
                             display: "block",
                             marginBottom: "8px",
@@ -1355,9 +1431,10 @@ function StudentProfilePage() {
                             fontWeight: "500",
                           }}
                         >
-                          Previous Internships (Details)
+                          Previous Internships (Details, one per line recommended)
                         </label>
                         <textarea
+                          id="internships"
                           name="internships"
                           value={draftProfile.internships}
                           onChange={handleDraftChange}
@@ -1378,6 +1455,7 @@ function StudentProfilePage() {
 
                       <div style={{ marginBottom: "20px" }}>
                         <label
+                          htmlFor="partTimeJobs"
                           style={{
                             display: "block",
                             marginBottom: "8px",
@@ -1386,9 +1464,10 @@ function StudentProfilePage() {
                             fontWeight: "500",
                           }}
                         >
-                          Part-time Jobs (Details)
+                          Part-time Jobs (Details, one per line recommended)
                         </label>
                         <textarea
+                          id="partTimeJobs"
                           name="partTimeJobs"
                           value={draftProfile.partTimeJobs}
                           onChange={handleDraftChange}
@@ -1407,8 +1486,9 @@ function StudentProfilePage() {
                         />
                       </div>
 
-                      <div style={{ marginBottom: "20px" }}>
+                      <div style={{ marginBottom: "20px" }}> {/* Consistent margin for last item in section */}
                         <label
+                          htmlFor="collegeActivities"
                           style={{
                             display: "block",
                             marginBottom: "8px",
@@ -1417,9 +1497,10 @@ function StudentProfilePage() {
                             fontWeight: "500",
                           }}
                         >
-                          College Activities/Clubs
+                          College Activities/Clubs (one per line recommended)
                         </label>
                         <textarea
+                          id="collegeActivities"
                           name="collegeActivities"
                           value={draftProfile.collegeActivities}
                           onChange={handleDraftChange}
@@ -1438,29 +1519,32 @@ function StudentProfilePage() {
                         />
                       </div>
 
+                      {/* Action Buttons for Edit Mode */}
                       <div
                         style={{
                           display: "flex",
                           justifyContent: "flex-end",
                           gap: "15px",
-                          marginTop: "30px",
+                          marginTop: "30px", // Space above buttons
+                          paddingTop: "20px", // Additional space, visual separation
+                          borderTop: "1px solid #eee" // Separator line
                         }}
                       >
                         <button
                           onClick={handleCancelEdit}
                           style={{
                             padding: "12px 25px",
-                            backgroundColor: "#f44336",
-                            color: "white",
-                            border: "none",
+                            backgroundColor: "#f1f1f1", // Lighter cancel button
+                            color: "#4a4a6a",
+                            border: "1px solid #ddd",
                             borderRadius: "6px",
                             cursor: "pointer",
                             fontSize: "14px",
                             fontWeight: "500",
                             transition: "background-color 0.2s",
                           }}
-                          onMouseOver={(e) => (e.target.style.backgroundColor = "#d32f2f")}
-                          onMouseOut={(e) => (e.target.style.backgroundColor = "#f44336")}
+                          onMouseOver={(e) => (e.target.style.backgroundColor = "#e0e0e0")}
+                          onMouseOut={(e) => (e.target.style.backgroundColor = "#f1f1f1")}
                         >
                           Cancel
                         </button>
@@ -1468,7 +1552,7 @@ function StudentProfilePage() {
                           onClick={handleSaveProfile}
                           style={{
                             padding: "12px 25px",
-                            backgroundColor: "#4CAF50",
+                            backgroundColor: "#4CAF50", // Standard green for save
                             color: "white",
                             border: "none",
                             borderRadius: "6px",
@@ -1509,7 +1593,7 @@ function StudentProfilePage() {
             padding: "12px 20px",
             borderRadius: "8px",
             boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-            zIndex: 1000,
+            zIndex: 2000, // Ensure it's above everything
             maxWidth: "300px",
             animation: "fadeIn 0.3s ease-out",
           }}
@@ -1531,16 +1615,17 @@ function StudentProfilePage() {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            zIndex: 1000,
+            zIndex: 2000, // Ensure it's above everything
           }}
         >
           <div
             style={{
               backgroundColor: "white",
               borderRadius: "8px",
-              padding: "20px",
-              width: "300px",
+              padding: "25px", // Increased padding
+              width: "320px", // Slightly wider
               boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+              textAlign: "center", // Center text content
             }}
           >
             <h3
@@ -1548,14 +1633,16 @@ function StudentProfilePage() {
                 margin: "0 0 15px 0",
                 color: "#4a4a6a",
                 fontSize: "18px",
+                fontWeight: "600",
               }}
             >
               Confirm Logout
             </h3>
             <p
               style={{
-                margin: "0 0 20px 0",
+                margin: "0 0 25px 0", // Increased margin
                 color: "#6a6a8a",
+                fontSize: "15px", // Slightly larger
               }}
             >
               Are you sure you want to log out?
@@ -1563,20 +1650,21 @@ function StudentProfilePage() {
             <div
               style={{
                 display: "flex",
-                justifyContent: "flex-end",
-                gap: "10px",
+                justifyContent: "center", // Center buttons
+                gap: "15px", // Increased gap
               }}
             >
               <button
                 onClick={() => confirmLogoutAction(false)}
                 style={{
-                  padding: "8px 16px",
+                  padding: "10px 20px", // Larger padding
                   backgroundColor: "#f1f1f1",
-                  color: "#6a6a8a",
-                  border: "none",
+                  color: "#4a4a6a",
+                  border: "1px solid #ddd",
                   borderRadius: "6px",
                   cursor: "pointer",
                   fontSize: "14px",
+                  fontWeight: "500",
                 }}
               >
                 Cancel
@@ -1584,14 +1672,14 @@ function StudentProfilePage() {
               <button
                 onClick={() => confirmLogoutAction(true)}
                 style={{
-                  padding: "8px 16px",
-                  backgroundColor: "rgba(255, 200, 200, 0.5)",
-                  color: "#9a4a4a",
+                  padding: "10px 20px",
+                  backgroundColor: "#f44336", // Red for logout confirmation
+                  color: "white",
                   border: "none",
                   borderRadius: "6px",
                   cursor: "pointer",
                   fontSize: "14px",
-                  fontWeight: "bold",
+                  fontWeight: "500",
                 }}
               >
                 Logout

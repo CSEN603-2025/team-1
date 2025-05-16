@@ -21,20 +21,7 @@ const majorCourses = {
       semester: 3,
       description: "Basic principles of energy conversion and heat transfer.",
     },
-    {
-      id: 3,
-      code: "MET305",
-      title: "Fluid Mechanics",
-      semester: 5,
-      description: "Behavior of fluids at rest and in motion.",
-    },
-    {
-      id: 4,
-      code: "MET410",
-      title: "Machine Design",
-      semester: 7,
-      description: "Design and analysis of machine components.",
-    },
+    // ... other MET courses
   ],
   IET: [
     {
@@ -44,27 +31,7 @@ const majorCourses = {
       semester: 1,
       description: "Overview of industrial engineering principles and practices.",
     },
-    {
-      id: 12,
-      code: "IET205",
-      title: "Operations Research I",
-      semester: 4,
-      description: "Introduction to optimization techniques and modeling.",
-    },
-    {
-      id: 13,
-      code: "IET315",
-      title: "Work Systems Design",
-      semester: 6,
-      description: "Analysis and design of efficient work processes.",
-    },
-    {
-      id: 14,
-      code: "IET420",
-      title: "Supply Chain Management",
-      semester: 8,
-      description: "Planning and management of supply chain activities.",
-    },
+    // ... other IET courses
   ],
   Mechatronics: [
     {
@@ -74,27 +41,7 @@ const majorCourses = {
       semester: 1,
       description: "Synergistic integration of mechanics, electronics, and computing.",
     },
-    {
-      id: 22,
-      code: "MTR210",
-      title: "Digital Logic Design",
-      semester: 3,
-      description: "Fundamentals of digital circuits and systems.",
-    },
-    {
-      id: 23,
-      code: "MTR320",
-      title: "Control Systems",
-      semester: 5,
-      description: "Analysis and design of feedback control systems.",
-    },
-    {
-      id: 24,
-      code: "MTR430",
-      title: "Robotics",
-      semester: 7,
-      description: "Kinematics, dynamics, and control of robotic manipulators.",
-    },
+    // ... other Mechatronics courses
   ],
   "Business Informatics": [
     {
@@ -104,27 +51,7 @@ const majorCourses = {
       semester: 1,
       description: "Intersection of business processes and information technology.",
     },
-    {
-      id: 32,
-      code: "BINF220",
-      title: "Database Management Systems",
-      semester: 4,
-      description: "Design, implementation, and management of databases.",
-    },
-    {
-      id: 33,
-      code: "BINF330",
-      title: "Enterprise Resource Planning (ERP)",
-      semester: 6,
-      description: "Concepts and application of ERP systems in business.",
-    },
-    {
-      id: 34,
-      code: "BINF440",
-      title: "Business Intelligence & Analytics",
-      semester: 8,
-      description: "Using data for business decision-making.",
-    },
+    // ... other Business Informatics courses
   ],
   Pharmacy: [
     {
@@ -134,30 +61,62 @@ const majorCourses = {
       semester: 1,
       description: "Overview of the pharmacy profession and pharmaceutical sciences.",
     },
-    {
-      id: 42,
-      code: "PHM210",
-      title: "Organic Chemistry for Pharmacy",
-      semester: 3,
-      description: "Fundamental organic chemistry principles relevant to drugs.",
-    },
-    {
-      id: 43,
-      code: "PHM315",
-      title: "Pharmacology I",
-      semester: 5,
-      description: "Study of drug actions and their effects on the body.",
-    },
-    {
-      id: 44,
-      code: "PHM425",
-      title: "Pharmaceutics I",
-      semester: 7,
-      description: "Principles of drug formulation and delivery systems.",
-    },
+    // ... other Pharmacy courses
   ],
 }
 // --- END: Added Dummy Course Data ---
+
+// --- START: Dummy Company Data (similar to CompaniesForStudentsPage) ---
+const dummyCompaniesData = [
+  {
+    companyEmail: "techinnovations@example.com",
+    companyName: "Tech Innovations Inc.",
+    industry: "Technology",
+    companySize: "50-200 employees",
+    jobs: ["Software Development", "Data Science", "UI/UX Design"],
+    description: "A leading tech company focused on innovative solutions.",
+  },
+  {
+    companyEmail: "globalmanufacturing@example.com",
+    companyName: "Global Manufacturing Ltd.",
+    industry: "Manufacturing",
+    companySize: "1000+ employees",
+    jobs: [
+      { title: "Mechanical Engineering Intern", duration: "3 months", skills: "CAD, Problem-solving" },
+      "Supply Chain Management Trainee",
+    ],
+    description: "A global leader in industrial manufacturing.",
+  },
+  {
+    companyEmail: "creativeagency@example.com",
+    companyName: "Creative Agency Pro",
+    industry: "Marketing & Advertising",
+    companySize: "20-50 employees",
+    jobs: [
+      "Digital Marketing Specialist",
+      { title: "Graphic Design Intern", duration: "6 months", skills: "Adobe Creative Suite" },
+      "Content Creator",
+    ],
+    description: "A vibrant agency specializing in creative campaigns.",
+  },
+  {
+    companyEmail: "healthfirst@example.com",
+    companyName: "HealthFirst Group",
+    industry: "Healthcare",
+    companySize: "500+ employees",
+    jobs: ["Research Assistant", "Healthcare Administration"],
+    description: "Committed to providing quality healthcare services.",
+  },
+  {
+    companyEmail: "greenearth@example.com",
+    companyName: "Green Earth Solutions",
+    industry: "Environmental Science", // Matched to student profile for testing
+    companySize: "10-30 employees",
+    jobs: ["Environmental Consulting Intern", "Sustainability Research Fellow"],
+    description: "Dedicated to creating a sustainable future.",
+  },
+]
+// --- END: Dummy Company Data ---
 
 // Sample recent activities data
 const recentActivities = [
@@ -172,18 +131,19 @@ function StudentPage() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [activeSection, setActiveSection] = useState("dashboard")
   const [loading, setLoading] = useState(true)
-  const [notification, setNotification] = useState({ show: false, message: "", type: "" })
+  const [notificationContent, setNotificationContent] = useState({ show: false, message: "", type: "" }) // Renamed to avoid conflict
   const [confirmLogout, setConfirmLogout] = useState(false)
+  const [notification, setNotification] = useState({ show: false, message: "", type: "" })
 
   // Student specific states
-  const [selectedMajor, setSelectedMajor] = useState("")
-  const [selectedSemester, setSelectedSemester] = useState("")
-  const [showProfile, setShowProfile] = useState(false)
-  const [isEditingProfile, setIsEditingProfile] = useState(false)
-  const [showCompanies, setShowCompanies] = useState(false)
-  const [showmyinternships, setshowmyinternships] = useState(false)
-  const [showCourses, setShowCourses] = useState(false)
-  const companies = JSON.parse(localStorage.getItem("companies")) || []
+  const [selectedMajorForCourses, setSelectedMajorForCourses] = useState("") // Renamed for clarity
+  console.log(selectedMajorForCourses)
+  const [selectedSemesterForCourses, setSelectedSemesterForCourses] = useState("") // Renamed for clarity
+  // No need for showProfile, isEditingProfile here if StudentProfilePage handles it
+  const [showCompaniesView, setShowCompaniesView] = useState(false) // To show companies section
+  const [showMyInternshipsView, setShowMyInternshipsView] = useState(false) // To show my internships section
+  const [showCoursesView, setShowCoursesView] = useState(false) // To show courses section
+
   const [isPopupOpen, setIsPopupOpen] = useState(false)
   const [notifications, setNotifications] = useState([])
   const [viewedNotifications, setViewedNotifications] = useState([])
@@ -193,30 +153,32 @@ function StudentPage() {
     name: "",
     email: "",
     jobInterests: "",
-    industry: "",
+    industry: "", // Make sure this can be set in profile for filter to work
     internships: "",
     partTimeJobs: "",
     collegeActivities: "",
     major: "",
     semester: "",
   })
-  const [draftProfile, setDraftProfile] = useState({ ...profile })
+  // draftProfile is not directly used in this page if editing is on StudentProfilePage
 
-  // Robust check for student data in location state
   const student = location.state?.user ||
     location.state?.studentj ||
-    location.state?.student || { email: "default@example.com" }
+    location.state?.student || { email: "default@example.com" } // Default for safety
 
-  // Use student email for profile key, ensure student exists
   const profileKey = student?.email ? `studentProfile_${student.email}` : "studentProfile_default"
-
-  // Track viewed notifications in local storage
   const viewedNotificationsKey = student?.email ? `viewedNotifications_${student.email}` : "viewedNotifications_default"
 
   //online assessments scores
   const [showScoresPopup, setShowScoresPopup] = useState(false);
   const [assessmentScores, setAssessmentScores] = useState([]);
-
+  const showNotification = (message, type = "info") => {
+      setNotification({ show: true, message, type })
+      console.log(notification)
+      setTimeout(() => {
+        setNotification({ show: false, message: "", type: "" })
+      }, 3000)
+    }
   useEffect(() => {
     // Load completed assessments from localStorage
     const savedScores = localStorage.getItem('completedAssessments');
@@ -234,29 +196,63 @@ function StudentPage() {
   };
 
 
-  // Dashboard cards data
+  // --- START: Company Filtering States and Logic ---
+  const [allCompaniesForFiltering, setAllCompaniesForFiltering] = useState([])
+  const [filteredCompaniesList, setFilteredCompaniesList] = useState([])
+  const [showFilteredCompanies, setShowFilteredCompanies] = useState(false)
+  const [showRecommendedCompanies, setShowRecommendedCompanies] = useState(false)
+  // --- END: Company Filtering States and Logic ---
+
+  // Initialize companies from localStorage or use dummy data
+  useEffect(() => {
+    try {
+      const storedCompanies = localStorage.getItem("companies")
+      if (storedCompanies) {
+        setAllCompaniesForFiltering(JSON.parse(storedCompanies))
+      } else {
+        localStorage.setItem("companies", JSON.stringify(dummyCompaniesData))
+        setAllCompaniesForFiltering(dummyCompaniesData)
+        console.log("Initialized localStorage 'companies' with dummy data.")
+      }
+    } catch (e) {
+      console.error("Error handling companies in localStorage:", e)
+      setAllCompaniesForFiltering(dummyCompaniesData) // Fallback
+    }
+  }, [])
+
+  const allUsers = JSON.parse(localStorage.getItem("allUsers")) || []
+  const s = allUsers.find((user) => user.email === student.email)
+  const studentrole = s?.role // Added optional chaining for safety
+
   const dashboardCards = [
     {
       title: "Available Courses",
-      count: profile.major ? majorCourses[profile.major]?.length || 0 : 0,
+      count: profile.major ? majorCourses[profile.major]?.length || 0 : Object.values(majorCourses).flat().length,
       icon: "📚",
       color: "#d5c5f7",
       action: () => handleCoursesClick(),
     },
     {
+      title: "Companies & Opportunities",
+      count: allCompaniesForFiltering.length, // Show total companies
+      icon: "🏢",
+      color: "#c5d5f7", // Different color
+      action: () => handleCompaniesClick(),
+    },
+    {
       title: "Active Applications",
-      count: 0,
+      count: 0, // Placeholder
       icon: "📝",
       color: "#c5e8f7",
       action: () => handleMyApplicationsClick(),
     },
-    {
-      title: "Statistics Report",
-      count: 4,
-      icon: "📊",
-      color: "#f7d5c5",
-      action: () => showNotification("Statistics feature coming soon!", "info"),
-    },
+    // {
+    //   title: "Statistics Report",
+    //   count: 4,
+    //   icon: "📊",
+    //   color: "#f7d5c5",
+    //   action: () => handleSatseClick,
+    // },
       {
     title: "Assessment Scores",
     count: assessmentScores.length,
@@ -279,7 +275,6 @@ function StudentPage() {
     }
   }, [viewedNotificationsKey])
 
-  // Simulate loading data on component mount
   useEffect(() => {
     setLoading(true)
     try {
@@ -287,10 +282,10 @@ function StudentPage() {
       const initialProfile = savedProfile
         ? JSON.parse(savedProfile)
         : {
-            name: "",
-            email: student?.email || "",
+            name: student?.name || "Student User", // Use student.name if available
+            email: student?.email || "default@example.com",
             jobInterests: "",
-            industry: "",
+            industry: "", // Example: "Environmental Science" to test filter
             internships: "",
             partTimeJobs: "",
             collegeActivities: "",
@@ -298,150 +293,205 @@ function StudentPage() {
             semester: "",
           }
       setProfile(initialProfile)
-      setDraftProfile(initialProfile)
-      setSelectedMajor(initialProfile.major || "")
-      setSelectedSemester(initialProfile.semester || "")
+      setSelectedMajorForCourses(initialProfile.major || "")
+      setSelectedSemesterForCourses(initialProfile.semester || "")
 
-      // Simulate API call
       setTimeout(() => {
         setLoading(false)
-        showNotification("Welcome to Student Portal", "info")
+        showAppNotification("Welcome to Student Portal", "info")
       }, 800)
     } catch (err) {
       setError("Failed to load profile data. Please try again.")
       setLoading(false)
     }
-  }, [student?.email, profileKey])
+  }, [student?.email, student?.name, profileKey])
 
-  // Notification logic
   useEffect(() => {
     if (student?.email) {
       const interval = setInterval(() => {
         try {
           const newNotifications = getNotification(student.email) || []
-
-          // Only update state if notifications have actually changed to avoid unnecessary re-renders
           if (JSON.stringify(newNotifications) !== JSON.stringify(notifications)) {
             setNotifications(newNotifications)
           }
         } catch (err) {
           console.error("Error fetching notifications:", err)
         }
-      }, 3000) // check every 3 seconds
-
-      return () => clearInterval(interval) // cleanup on unmount
+      }, 3000)
+      return () => clearInterval(interval)
     }
   }, [student?.email, notifications])
 
-  // Calculate unread notifications
-  const unreadNotifications = notifications.filter((notification) => {
-    // Check if this notification ID is not in the viewedNotifications array
-    return !viewedNotifications.includes(notification.id)
-  })
+  const unreadNotifications = notifications.filter((n) => !viewedNotifications.includes(n.id))
 
-  const handleLogout = () => {
-    setConfirmLogout(true)
-  }
+  const handleLogout = () => setConfirmLogout(true)
 
   const confirmLogoutAction = (confirm) => {
     setConfirmLogout(false)
     if (confirm) {
       setLoading(true)
-      showNotification("Logging out...", "info")
-      setTimeout(() => {
-        navigate("/")
-      }, 1000)
+      showAppNotification("Logging out...", "info")
+      setTimeout(() => navigate("/"), 1000)
     }
   }
 
-  const toggleMenu = () => {
-    setMenuOpen(!menuOpen)
+  const toggleMenu = () => setMenuOpen(!menuOpen)
+
+  const showAppNotification = (message, type = "info") => {
+    // Renamed
+    setNotificationContent({ show: true, message, type })
+    setTimeout(() => setNotificationContent({ show: false, message: "", type: "" }), 3000)
   }
 
-  const showNotification = (message, type = "info") => {
-    setNotification({ show: true, message, type })
-    setTimeout(() => {
-      setNotification({ show: false, message: "", type: "" })
-    }, 3000)
+  const resetViews = () => {
+    setShowCoursesView(false)
+    setShowCompaniesView(false)
+    setShowMyInternshipsView(false)
   }
 
-  // Navigation handlers
   const handleHomeClick = () => {
-    setShowProfile(false)
-    setShowCompanies(false)
-    setshowmyinternships(false)
-    setShowCourses(false)
+    resetViews()
     setActiveSection("dashboard")
-    showNotification("Welcome to your dashboard!", "success")
+    showAppNotification("Welcome to your dashboard!", "success")
   }
 
   const handleProfileClick = () => {
-    setShowProfile(false)
-    setShowCompanies(false)
-    setshowmyinternships(false)
-    setShowCourses(false)
-    setIsEditingProfile(false)
+    resetViews()
+    // Navigation to a separate profile page is good
     navigate("/studentprofile", { state: { student } })
-    setActiveSection("profile")
-    showNotification("Navigating to profile page...", "info")
+    // setActiveSection("profile") // Set on StudentProfilePage if needed
+    showAppNotification("Navigating to profile page...", "info")
   }
 
   const handleCoursesClick = () => {
-    setShowProfile(false)
-    setShowCompanies(false)
-    setshowmyinternships(false)
-    setShowCourses(true)
+    resetViews()
+    setShowCoursesView(true)
     setActiveSection("courses")
-    showNotification("Viewing available courses for your major", "success")
+    showAppNotification("Viewing available courses", "info")
   }
 
   const handleBrowseJobsClick = () => {
-    setShowProfile(false)
-    setShowCompanies(false)
-    setshowmyinternships(false)
-    setShowCourses(false)
+    resetViews()
     setActiveSection("jobs")
-    navigate("/jobspage", { state: { student } })
-    showNotification("Navigating to jobs page...", "info")
+    navigate("/studentjobs", { state: { student } })
+    showAppNotification("Navigating to jobs page...", "info")
   }
 
   const handleMyApplicationsClick = () => {
-    setShowProfile(false)
-    setShowCompanies(false)
-    setshowmyinternships(false)
-    setShowCourses(false)
+    resetViews()
     setActiveSection("applications")
     navigate("/studentapplications", { state: { student } })
-    showNotification("Navigating to applications page...", "info")
+    showAppNotification("Navigating to applications page...", "info")
   }
 
   const handleMyInternshipsClick = () => {
-    setShowProfile(false)
-    setShowCompanies(false)
-    setshowmyinternships(false)
-    setShowCourses(false)
-    navigate("/myinternships", { state: { student } })
+    resetViews()
+    // setShowMyInternshipsView(true); // Keep if you want to display internships here
     setActiveSection("internships")
-    showNotification("Navigating to internships page...", "info")
+    navigate("/myinternships", { state: { student } }) // Or display content here
+    showAppNotification("Navigating to internships page...", "info")
   }
 
   const handleCompaniesClick = () => {
-    setShowProfile(false)
-    setShowCompanies(false)
-    setshowmyinternships(false)
-    setShowCourses(false)
+    resetViews()
+    setShowCompaniesView(true) // This will make the companies section visible
     setActiveSection("companies")
-    navigate("/companiesforstudents", { state: { student } })
-    showNotification("Navigating to companies page...", "info")
+    showAppNotification("Browsing companies...", "info")
+     navigate("/companiesforstudents", { state: { student } })
+    // No navigation, companies will be shown within this page
   }
 
+  // --- START: Company Filter Functions (adapted from CompaniesForStudentsPage) ---
+  const handleFilterCompaniesListClick = () => {
+    if (!profile.jobInterests && !profile.industry) {
+      alert("Please update your profile with your job interests or industry to use the filter.")
+      return
+    }
+
+    const interestedJobsRaw = profile.jobInterests || ""
+    const interestedJobs = interestedJobsRaw
+      .split(",")
+      .map((item) => item.trim().toLowerCase())
+      .filter(Boolean)
+    const studentIndustry = (profile.industry || "").toLowerCase().trim()
+
+    const filtered = allCompaniesForFiltering.filter((company) => {
+      // Process company jobs data
+      const companyJobs = Array.isArray(company.jobs)
+        ? company.jobs.flatMap((job) => {
+            if (typeof job === "string") {
+              return job.toLowerCase()
+            } else if (job && typeof job === "object") {
+              // Extract both title and skills if available
+              const jobData = []
+              if (job.title) jobData.push(job.title.toLowerCase())
+              if (job.skills) {
+                const skillsList = job.skills.toLowerCase().split(",")
+                jobData.push(...skillsList.map((s) => s.trim()))
+              }
+              return jobData
+            }
+            return ""
+          })
+        : typeof company.jobs === "string"
+          ? company.jobs.split(",").map((job) => job.trim().toLowerCase())
+          : []
+
+      const companyIndustry = (company.industry || "").toLowerCase().trim()
+      const companyDescription = (company.description || "").toLowerCase().trim()
+
+      // Check for job interest matches (more flexible matching)
+      const hasJobMatch =
+        interestedJobs.length > 0
+          ? interestedJobs.some((interest) =>
+              companyJobs.some(
+                (job) => job.includes(interest) || (Array.isArray(job) && job.some((j) => j.includes(interest))),
+              ),
+            )
+          : true
+
+      // Check for industry match
+      const isIndustryMatch = studentIndustry
+        ? companyIndustry.includes(studentIndustry) ||
+          (companyDescription && companyDescription.includes(studentIndustry))
+        : true
+
+      // Return companies that match either job interests OR industry
+      return hasJobMatch || isIndustryMatch
+    })
+
+    setFilteredCompaniesList(filtered)
+    setShowFilteredCompanies(true)
+
+    // Show a notification about the filter results
+    if (filtered.length === 0) {
+      showAppNotification("No companies match your profile. Try updating your interests.", "info")
+    } else {
+      showAppNotification(`Found ${filtered.length} companies matching your profile!`, "success")
+    }
+  }
+
+  const handleShowRecommendedCompanies = () => {
+    // This would normally fetch from a database
+    // For demo purposes, we'll just filter to show 2-3 companies as "recommended"
+    const recommendedCompanies = allCompaniesForFiltering.filter((_, index) => [0, 2, 4].includes(index))
+    setFilteredCompaniesList(recommendedCompanies)
+    setShowFilteredCompanies(true)
+    setShowRecommendedCompanies(true)
+    showAppNotification("Showing companies recommended by other interns", "success")
+  }
+
+  const handleShowAllCompaniesClick = () => {
+    setShowFilteredCompanies(false)
+    setFilteredCompaniesList([])
+    setShowRecommendedCompanies(false)
+  }
+  // --- END: Company Filter Functions ---
+
   const handleSettingsClick = () => {
-    setShowProfile(false)
-    setShowCompanies(false)
-    setshowmyinternships(false)
-    setShowCourses(false)
+    resetViews()
     setActiveSection("settings")
-    showNotification("Settings page coming soon!", "info")
+    showAppNotification("Settings page coming soon!", "info")
   }
 
   const handleBellClick = () => {
@@ -449,17 +499,11 @@ function StudentPage() {
       const fetchedNotifications = getNotification(student.email) || []
       setNotifications(fetchedNotifications)
       setIsPopupOpen((prev) => !prev)
-
-      // Hide any active notification toast when opening the popup
       if (!isPopupOpen) {
-        setNotification({ show: false, message: "", type: "" })
-
-        // Mark all current notifications as viewed
-        const notificationIds = fetchedNotifications.map((notification) => notification.id)
+        setNotificationContent({ show: false, message: "", type: "" })
+        const notificationIds = fetchedNotifications.map((n) => n.id)
         const updatedViewedNotifications = [...new Set([...viewedNotifications, ...notificationIds])]
         setViewedNotifications(updatedViewedNotifications)
-
-        // Save to local storage
         try {
           localStorage.setItem(viewedNotificationsKey, JSON.stringify(updatedViewedNotifications))
         } catch (err) {
@@ -472,24 +516,25 @@ function StudentPage() {
   }
 
   const handleClosePopup = () => {
-    if (student?.email) {
-      clearNotifications(student.email) // clear from storage
-    }
-    setNotifications([]) // clear from state
-    setIsPopupOpen(false) // close popup
+    if (student?.email) clearNotifications(student.email)
+    setNotifications([])
+    setIsPopupOpen(false)
   }
 
   const handleAppointmentsClick = () => {
+    resetViews()
     setActiveSection("appointments")
     navigate("/appointments", { state: { student } })
   }
 
   const handleAssessmentsClick = () => {
+    resetViews()
     setActiveSection("assessments")
     navigate("/online-assessments", { state: { student } })
   }
 
   const handleWorkshopsClick = () => {
+    resetViews()
     setActiveSection("workshops")
     navigate("/studentworkshops", { state: { student } })
   }
@@ -498,30 +543,31 @@ function StudentPage() {
     { id: "dashboard", label: "Homepage", icon: "🏠", action: handleHomeClick },
     { id: "profile", label: "Profile", icon: "👤", action: handleProfileClick },
     { id: "courses", label: "All Courses", icon: "📚", action: handleCoursesClick },
+    { id: "companies", label: "Companies", icon: "🏢", action: handleCompaniesClick }, // Action updated
     { id: "jobs", label: "Browse Jobs", icon: "💼", action: handleBrowseJobsClick },
     { id: "applications", label: "All Applications", icon: "📝", action: handleMyApplicationsClick },
     { id: "internships", label: "My Internships", icon: "🏆", action: handleMyInternshipsClick },
-    { id: "companies", label: "Companies", icon: "🏢", action: handleCompaniesClick },
   ]
   const proSpecificItems = [
     { id: "appointments", label: "Appointments", icon: "📅", action: handleAppointmentsClick },
     { id: "assessments", label: "Online Assessments", icon: "📋", action: handleAssessmentsClick },
-    { id: "workshops", label: "Workshops", icon: "🔧", action: handleWorkshopsClick }, // Pro gets the detailed workshop link
+    { id: "workshops", label: "Workshops", icon: "🔧", action: handleWorkshopsClick },
   ]
 
   const Sidebar = ({ menuOpen, toggleMenu }) => {
-    const sidebarItems = [...commonItems] // Start with common items
-
-    if (student && student.role === "pro") {
+    const sidebarItems = [...commonItems]
+    if (student && studentrole === "pro") {
       sidebarItems.push(...proSpecificItems)
     }
+    // Add settings at the end
+    sidebarItems.push({ id: "settings", label: "Settings", icon: "⚙️", action: handleSettingsClick })
 
     return (
       <div
         style={{
           width: menuOpen ? "250px" : "0",
           height: "100vh",
-          backgroundColor: "#e6e6fa", // Light purple background
+          backgroundColor: "#e6e6fa",
           transition: "width 0.3s ease",
           overflow: "hidden",
           position: "fixed",
@@ -544,18 +590,8 @@ function StudentPage() {
                 justifyContent: "center",
               }}
             >
-              <h2
-                style={{
-                  margin: 0,
-                  fontSize: "20px",
-                  color: "#4a4a6a",
-                  fontWeight: "bold",
-                }}
-              >
-                Student Portal
-              </h2>
+              <h2 style={{ margin: 0, fontSize: "20px", color: "#4a4a6a", fontWeight: "bold" }}>Student Portal</h2>
             </div>
-
             <div
               style={{
                 padding: "15px",
@@ -584,29 +620,31 @@ function StudentPage() {
                 {profile.name ? profile.name.charAt(0).toUpperCase() : "S"}
               </div>
               <div>
-                <div style={{ fontSize: "14px", fontWeight: "bold", color: "#4a4a6a" }}>Student User{student.role === "pro" && (
-                  <span
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      marginLeft: "8px",
-                      backgroundColor: "#ffd700", // Gold color
-                      color: "#4a4a6a",
-                      fontSize: "10px",
-                      fontWeight: "bold",
-                      padding: "2px 6px",
-                      borderRadius: "10px",
-                      boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-                    }}
-                  >
-                    PRO
-                  </span>
-                )}</div>
+                <div style={{ fontSize: "14px", fontWeight: "bold", color: "#4a4a6a" }}>
+                  Student User
+                  {studentrole === "pro" && (
+                    <span
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        marginLeft: "8px",
+                        backgroundColor: "#ffd700",
+                        color: "#4a4a6a",
+                        fontSize: "10px",
+                        fontWeight: "bold",
+                        padding: "2px 6px",
+                        borderRadius: "10px",
+                        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                      }}
+                    >
+                      PRO
+                    </span>
+                  )}
+                </div>
                 <div style={{ fontSize: "12px", color: "#6a6a8a" }}>{profile.name || student.email}</div>
               </div>
             </div>
-
             <div style={{ flex: 1, overflowY: "auto", padding: "10px" }}>
               {sidebarItems.map((item) => (
                 <div
@@ -624,35 +662,20 @@ function StudentPage() {
                   }}
                   onClick={item.action}
                   onMouseOver={(e) => {
-                    if (activeSection !== item.id) {
-                      e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.3)"
-                    }
+                    if (activeSection !== item.id) e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.3)"
                   }}
                   onMouseOut={(e) => {
-                    if (activeSection !== item.id) {
-                      e.currentTarget.style.backgroundColor = "transparent"
-                    }
+                    if (activeSection !== item.id) e.currentTarget.style.backgroundColor = "transparent"
                   }}
                 >
                   <span style={{ marginRight: "10px", fontSize: "18px" }}>{item.icon}</span>
-                  <span
-                    style={{
-                      fontSize: "14px",
-                      fontWeight: activeSection === item.id ? "bold" : "normal",
-                    }}
-                  >
+                  <span style={{ fontSize: "14px", fontWeight: activeSection === item.id ? "bold" : "normal" }}>
                     {item.label}
                   </span>
                 </div>
               ))}
             </div>
-
-            <div
-              style={{
-                padding: "15px",
-                borderTop: "1px solid rgba(0,0,0,0.1)",
-              }}
-            >
+            <div style={{ padding: "15px", borderTop: "1px solid rgba(0,0,0,0.1)" }}>
               <button
                 onClick={handleLogout}
                 style={{
@@ -672,8 +695,7 @@ function StudentPage() {
                 onMouseOver={(e) => (e.target.style.backgroundColor = "rgba(255, 200, 200, 0.7)")}
                 onMouseOut={(e) => (e.target.style.backgroundColor = "rgba(255, 200, 200, 0.5)")}
               >
-                <span style={{ marginRight: "10px", fontSize: "18px" }}>🚪</span>
-                Logout
+                <span style={{ marginRight: "10px", fontSize: "18px" }}>🚪</span>Logout
               </button>
             </div>
           </>
@@ -745,10 +767,7 @@ function StudentPage() {
         overflow: "hidden",
       }}
     >
-      {/* Sidebar */}
       <Sidebar menuOpen={menuOpen} toggleMenu={toggleMenu} />
-
-      {/* Main Content */}
       <div
         style={{
           flex: 1,
@@ -761,7 +780,6 @@ function StudentPage() {
           width: menuOpen ? "calc(100% - 250px)" : "100%",
         }}
       >
-        {/* Top Navigation Bar */}
         <div
           style={{
             display: "flex",
@@ -772,7 +790,6 @@ function StudentPage() {
             zIndex: 5,
           }}
         >
-          {/* Hamburger Icon */}
           <div
             style={{
               display: "flex",
@@ -820,27 +837,13 @@ function StudentPage() {
               }}
             ></div>
           </div>
-
-          <h1
-            style={{
-              margin: "0 0 0 20px",
-              fontSize: "20px",
-              color: "#4a4a6a",
-              fontWeight: "bold",
-            }}
-          >
+          <h1 style={{ margin: "0 0 0 20px", fontSize: "20px", color: "#4a4a6a", fontWeight: "bold" }}>
             Student Portal
           </h1>
-
-          {/* Navigation Breadcrumbs */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              marginLeft: "20px",
-            }}
-          >
-            <span style={{ color: "#6a6a8a", fontSize: "14px" }}>Home</span>
+          <div style={{ display: "flex", alignItems: "center", marginLeft: "20px" }}>
+            <span style={{ color: "#6a6a8a", fontSize: "14px", cursor: "pointer" }} onClick={handleHomeClick}>
+              Home
+            </span>
             {activeSection !== "dashboard" && (
               <>
                 <span style={{ margin: "0 8px", color: "#6a6a8a" }}>/</span>
@@ -850,10 +853,7 @@ function StudentPage() {
               </>
             )}
           </div>
-
-          {/* User Profile - Rearranged order with bell first */}
           <div style={{ marginLeft: "auto", display: "flex", alignItems: "center" }}>
-            {/* Notification Bell - Now comes first */}
             <div style={{ position: "relative", marginRight: "20px" }}>
               <div
                 onClick={handleBellClick}
@@ -892,7 +892,6 @@ function StudentPage() {
                   <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
                   <path d="M13.73 21a2 2 0 0 1-3.46 0" />
                 </svg>
-                {/* Only show the notification badge when popup is closed and there are unread notifications */}
                 {!isPopupOpen && unreadNotifications.length > 0 && (
                   <span
                     style={{
@@ -917,8 +916,6 @@ function StudentPage() {
                   </span>
                 )}
               </div>
-
-              {/* Notification Popup */}
               {isPopupOpen && (
                 <div
                   style={{
@@ -944,18 +941,11 @@ function StudentPage() {
                       backgroundColor: "rgba(230, 230, 250, 0.2)",
                     }}
                   >
-                    <h4
-                      style={{
-                        margin: "0",
-                        color: "#4a4a6a",
-                        fontSize: "16px",
-                        fontWeight: "600",
-                      }}
-                    >
+                    <h4 style={{ margin: "0", color: "#4a4a6a", fontSize: "16px", fontWeight: "600" }}>
                       Notifications
                     </h4>
                     <button
-                      onClick={() => setIsPopupOpen(false)} // Only close the popup without clearing
+                      onClick={() => setIsPopupOpen(false)}
                       style={{
                         background: "transparent",
                         border: "none",
@@ -1018,16 +1008,10 @@ function StudentPage() {
                         <p style={{ margin: "0" }}>No new notifications</p>
                       </div>
                     ) : (
-                      <ul
-                        style={{
-                          listStyle: "none",
-                          padding: 0,
-                          margin: 0,
-                        }}
-                      >
-                        {notifications.map((notification, index) => (
+                      <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+                        {notifications.map((n, index) => (
                           <li
-                            key={index}
+                            key={n.id || index}
                             style={{
                               padding: "12px 20px",
                               borderBottom:
@@ -1047,7 +1031,7 @@ function StudentPage() {
                                 lineHeight: "1.4",
                               }}
                             >
-                              {notification.message}
+                              {n.message}
                             </p>
                             <div
                               style={{
@@ -1072,7 +1056,7 @@ function StudentPage() {
                                 <circle cx="12" cy="12" r="10"></circle>
                                 <polyline points="12 6 12 12 16 14"></polyline>
                               </svg>
-                              <span>{new Date(notification.timestamp).toLocaleString()}</span>
+                              <span>{new Date(n.timestamp).toLocaleString()}</span>
                             </div>
                           </li>
                         ))}
@@ -1112,8 +1096,6 @@ function StudentPage() {
                 </div>
               )}
             </div>
-
-            {/* User Profile - Now comes after the bell */}
             <div
               style={{
                 width: "36px",
@@ -1142,14 +1124,14 @@ function StudentPage() {
                 }}
               >
                 Student User
-                {student.role === "pro" && (
+                {studentrole === "pro" && (
                   <span
                     style={{
                       display: "inline-flex",
                       alignItems: "center",
                       justifyContent: "center",
                       marginLeft: "8px",
-                      backgroundColor: "#ffd700", // Gold color
+                      backgroundColor: "#ffd700",
                       color: "#4a4a6a",
                       fontSize: "10px",
                       fontWeight: "bold",
@@ -1164,7 +1146,6 @@ function StudentPage() {
               </div>
               <div style={{ fontSize: "12px", color: "#6a6a8a" }}>{profile.name || student.email}</div>
             </div>
-
             <button
               onClick={handleLogout}
               style={{
@@ -1190,15 +1171,7 @@ function StudentPage() {
           </div>
         </div>
 
-        {/* Main Content Area */}
-        <div
-          style={{
-            flex: 1,
-            padding: "20px",
-            overflowY: "auto",
-          }}
-        >
-          {/* Loading Indicator */}
+        <div style={{ flex: 1, padding: "20px", overflowY: "auto" }}>
           {loading && (
             <div
               style={{
@@ -1226,10 +1199,8 @@ function StudentPage() {
 
           {!loading && (
             <>
-              {/* Dashboard Content */}
               {activeSection === "dashboard" && (
                 <>
-                  {/* Welcome Section */}
                   <div
                     style={{
                       backgroundColor: "white",
@@ -1239,50 +1210,35 @@ function StudentPage() {
                       boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
                     }}
                   >
-                    <h2
-                      style={{
-                        margin: "0 0 10px 0",
-                        color: "#4a4a6a",
-                        fontSize: "22px",
-                      }}
-                    >
-                      Welcome to Student Portal
+                    <h2 style={{ margin: "0 0 10px 0", color: "#4a4a6a", fontSize: "22px" }}>
+                      Welcome, {profile.name || "Student"}!
                     </h2>
-                    <p
-                      style={{
-                        margin: "0",
-                        color: "#6a6a8a",
-                        lineHeight: "1.5",
-                      }}
-                    >
-                      This is your dashboard where you can manage courses, browse jobs, track applications, and access
-                      all student resources.
+                    <p style={{ margin: "0", color: "#6a6a8a", lineHeight: "1.5" }}>
+                      This is your dashboard. Manage courses, browse companies, track applications, and access student
+                      resources.
                     </p>
                   </div>
-
-                  {/* Dashboard Cards */}
                   <div
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
-                      gap: "30px",
-                      marginBottom: "30px",
-                      maxWidth: "1200px",
-                      width: "100%",
+                      gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
+                      gap: "20px",
+                      marginBottom: "20px",
                     }}
                   >
                     {dashboardCards.map((card, index) => (
                       <div
                         key={index}
                         style={{
-                          backgroundColor: "white",
+                          backgroundColor: card.color || "white",
                           borderRadius: "12px",
-                          padding: "30px",
+                          padding: "25px",
                           boxShadow: "0 4px 10px rgba(0,0,0,0.08)",
                           cursor: "pointer",
                           transition: "transform 0.2s, box-shadow 0.2s",
                           position: "relative",
                           overflow: "hidden",
+                          border: "1px solid rgba(0,0,0,0.05)",
                         }}
                         onClick={card.action}
                         onMouseOver={(e) => {
@@ -1298,44 +1254,13 @@ function StudentPage() {
                         onKeyDown={(e) => e.key === "Enter" && card.action()}
                         aria-label={`View ${card.title}`}
                       >
-                        <div
-                          style={{
-                            position: "absolute",
-                            top: "0",
-                            right: "0",
-                            width: "100px",
-                            height: "100px",
-                            borderRadius: "0 0 0 100px",
-                            backgroundColor: card.color,
-                            opacity: "0.2",
-                          }}
-                        ></div>
-                        <div
-                          style={{
-                            fontSize: "48px",
-                            marginBottom: "10px",
-                          }}
-                        >
+                        <div style={{ fontSize: "40px", marginBottom: "10px", color: "rgba(0,0,0,0.6)" }}>
                           {card.icon}
                         </div>
-                        <div
-                          style={{
-                            fontSize: "38px",
-                            fontWeight: "bold",
-                            color: "#4a4a6a",
-                            marginBottom: "5px",
-                          }}
-                        >
+                        <div style={{ fontSize: "32px", fontWeight: "bold", color: "#4a4a6a", marginBottom: "5px" }}>
                           {card.count}
                         </div>
-                        <div
-                          style={{
-                            fontSize: "16px",
-                            color: "#6a6a8a",
-                          }}
-                        >
-                          {card.title}
-                        </div>
+                        <div style={{ fontSize: "16px", color: "#5a5a7a", fontWeight: "500" }}>{card.title}</div>
                       </div>
                     ))}
                   </div>
@@ -1458,24 +1383,9 @@ function StudentPage() {
                       boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
                     }}
                   >
-                    <h2
-                      style={{
-                        margin: "0 0 20px 0",
-                        color: "#4a4a6a",
-                        fontSize: "18px",
-                      }}
-                    >
-                      Recent Activities
-                    </h2>
-
+                    <h2 style={{ margin: "0 0 20px 0", color: "#4a4a6a", fontSize: "18px" }}>Recent Activities</h2>
                     <div style={{ overflowX: "auto" }}>
-                      <table
-                        style={{
-                          width: "100%",
-                          borderCollapse: "collapse",
-                          fontSize: "14px",
-                        }}
-                      >
+                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px" }}>
                         <thead>
                           <tr>
                             <th
@@ -1513,30 +1423,13 @@ function StudentPage() {
                         <tbody>
                           {recentActivities.map((activity) => (
                             <tr key={activity.id}>
-                              <td
-                                style={{
-                                  padding: "12px 15px",
-                                  borderBottom: "1px solid #eee",
-                                  color: "#6a6a8a",
-                                }}
-                              >
+                              <td style={{ padding: "12px 15px", borderBottom: "1px solid #eee", color: "#6a6a8a" }}>
                                 {activity.activity}
                               </td>
-                              <td
-                                style={{
-                                  padding: "12px 15px",
-                                  borderBottom: "1px solid #eee",
-                                  color: "#6a6a8a",
-                                }}
-                              >
+                              <td style={{ padding: "12px 15px", borderBottom: "1px solid #eee", color: "#6a6a8a" }}>
                                 {activity.date}
                               </td>
-                              <td
-                                style={{
-                                  padding: "12px 15px",
-                                  borderBottom: "1px solid #eee",
-                                }}
-                              >
+                              <td style={{ padding: "12px 15px", borderBottom: "1px solid #eee" }}>
                                 <span
                                   style={{
                                     display: "inline-block",
@@ -1563,8 +1456,7 @@ function StudentPage() {
                 </>
               )}
 
-              {/* Courses Section */}
-              {showCourses && (
+              {showCoursesView && (
                 <div
                   style={{
                     backgroundColor: "white",
@@ -1573,17 +1465,10 @@ function StudentPage() {
                     boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
                   }}
                 >
-                  <h2
-                    style={{
-                      margin: "0 0 20px 0",
-                      color: "#4a4a6a",
-                      fontSize: "22px",
-                    }}
-                  >
+                  <h2 style={{ margin: "0 0 20px 0", color: "#4a4a6a", fontSize: "22px" }}>
                     Available Courses for {profile.major || "Your Major"}
                   </h2>
-
-                  {profile.major ? (
+                  {profile.major && majorCourses[profile.major] ? (
                     (() => {
                       const coursesForMajor = majorCourses[profile.major] || []
                       if (coursesForMajor.length > 0) {
@@ -1611,8 +1496,8 @@ function StudentPage() {
                                 </label>
                                 <select
                                   id="semesterFilter"
-                                  value={selectedSemester}
-                                  onChange={(e) => setSelectedSemester(e.target.value)}
+                                  value={selectedSemesterForCourses}
+                                  onChange={(e) => setSelectedSemesterForCourses(e.target.value)}
                                   style={{
                                     padding: "8px 12px",
                                     borderRadius: "6px",
@@ -1623,28 +1508,34 @@ function StudentPage() {
                                   }}
                                 >
                                   <option value="">All Semesters</option>
-                                  <option value="1">Semester 1</option>
-                                  <option value="2">Semester 2</option>
-                                  <option value="3">Semester 3</option>
-                                  <option value="4">Semester 4</option>
-                                  <option value="5">Semester 5</option>
-                                  <option value="6">Semester 6</option>
-                                  <option value="7">Semester 7</option>
-                                  <option value="8">Semester 8</option>
+                                  {[...new Set(coursesForMajor.map((c) => c.semester))]
+                                    .sort((a, b) => a - b)
+                                    .map((sem) => (
+                                      <option key={sem} value={sem}>
+                                        Semester {sem}
+                                      </option>
+                                    ))}
                                 </select>
                               </div>
                             </div>
-
-                            <div style={{ display: "grid", gap: "15px" }}>
+                            <div
+                              style={{
+                                display: "grid",
+                                gap: "15px",
+                                gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
+                              }}
+                            >
                               {coursesForMajor
                                 .filter(
-                                  (course) => !selectedSemester || course.semester.toString() === selectedSemester,
+                                  (course) =>
+                                    !selectedSemesterForCourses ||
+                                    course.semester.toString() === selectedSemesterForCourses,
                                 )
                                 .map((course) => (
                                   <div
                                     key={course.id}
                                     style={{
-                                      backgroundColor: "white",
+                                      backgroundColor: "#f9f9fc",
                                       borderRadius: "8px",
                                       padding: "15px",
                                       boxShadow: "0 2px 5px rgba(0,0,0,0.05)",
@@ -1670,23 +1561,10 @@ function StudentPage() {
                                     >
                                       {course.code} - {course.title}
                                     </h3>
-                                    <p
-                                      style={{
-                                        margin: "0 0 8px 0",
-                                        color: "#6a6a8a",
-                                        fontSize: "14px",
-                                      }}
-                                    >
+                                    <p style={{ margin: "0 0 8px 0", color: "#6a6a8a", fontSize: "14px" }}>
                                       <strong>Semester:</strong> {course.semester}
                                     </p>
-                                    <p
-                                      style={{
-                                        margin: "0",
-                                        color: "#6a6a8a",
-                                        fontSize: "14px",
-                                        lineHeight: "1.5",
-                                      }}
-                                    >
+                                    <p style={{ margin: "0", color: "#6a6a8a", fontSize: "14px", lineHeight: "1.5" }}>
                                       {course.description}
                                     </p>
                                   </div>
@@ -1704,30 +1582,9 @@ function StudentPage() {
                               borderRadius: "8px",
                             }}
                           >
-                            <p
-                              style={{
-                                fontSize: "16px",
-                                color: "#6a6a8a",
-                                marginBottom: "20px",
-                              }}
-                            >
-                              No courses listed for the selected major ({profile.major}).
+                            <p style={{ fontSize: "16px", color: "#6a6a8a", marginBottom: "20px" }}>
+                              No courses listed for {profile.major}.
                             </p>
-                            <button
-                              onClick={handleProfileClick}
-                              style={{
-                                padding: "10px 20px",
-                                backgroundColor: "#6c757d",
-                                color: "white",
-                                border: "none",
-                                borderRadius: "6px",
-                                cursor: "pointer",
-                                fontSize: "14px",
-                                fontWeight: "bold",
-                              }}
-                            >
-                              Update Profile
-                            </button>
                           </div>
                         )
                       }
@@ -1741,14 +1598,8 @@ function StudentPage() {
                         borderRadius: "8px",
                       }}
                     >
-                      <p
-                        style={{
-                          fontSize: "16px",
-                          color: "#6a6a8a",
-                          marginBottom: "20px",
-                        }}
-                      >
-                        Please select a major in your profile to view available courses.
+                      <p style={{ fontSize: "16px", color: "#6a6a8a", marginBottom: "20px" }}>
+                        Please select a major in your profile to view courses.
                       </p>
                       <button
                         onClick={handleProfileClick}
@@ -1770,8 +1621,8 @@ function StudentPage() {
                 </div>
               )}
 
-              {/* My Internships Section */}
-              {showmyinternships && (
+              {/* --- START: Companies Section with Filter --- */}
+              {showCompaniesView && (
                 <div
                   style={{
                     backgroundColor: "white",
@@ -1780,15 +1631,439 @@ function StudentPage() {
                     boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
                   }}
                 >
-                  <h2
+                  <div
                     style={{
-                      margin: "0 0 20px 0",
-                      color: "#4a4a6a",
-                      fontSize: "22px",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginBottom: "24px",
                     }}
                   >
-                    My Internships
-                  </h2>
+                    <h2 style={{ margin: 0, fontSize: "18px", fontWeight: "600", color: "#1e293b" }}>
+                      Companies & Opportunities
+                    </h2>
+                    <div
+                      style={{
+                        fontSize: "14px",
+                        color: "#64748b",
+                        backgroundColor: "#f8fafc",
+                        padding: "4px 10px",
+                        borderRadius: "4px",
+                      }}
+                    >
+                      {showFilteredCompanies
+                        ? `Showing ${filteredCompaniesList.length} companies`
+                        : `Showing all ${allCompaniesForFiltering.length} companies`}
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", marginBottom: "20px" }}>
+                    <button
+                      onClick={handleFilterCompaniesListClick}
+                      style={{
+                        padding: "10px 16px",
+                        backgroundColor: "#6b46c1",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: "4px",
+                        cursor: "pointer",
+                        fontSize: "14px",
+                        fontWeight: "500",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        transition: "background-color 0.2s",
+                      }}
+                      onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#553c9a")}
+                      onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#6b46c1")}
+                      disabled={loading}
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                      </svg>
+                      Filter Based on My Profile
+                    </button>
+
+                    <button
+                      onClick={handleShowRecommendedCompanies}
+                      style={{
+                        padding: "10px 16px",
+                        backgroundColor: showRecommendedCompanies ? "#e9d8fd" : "white",
+                        color: "#6b46c1",
+                        border: "1px solid #6b46c1",
+                        borderRadius: "4px",
+                        cursor: "pointer",
+                        fontSize: "14px",
+                        fontWeight: "500",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        transition: "all 0.2s",
+                      }}
+                      onMouseOver={(e) => {
+                        e.currentTarget.style.backgroundColor = "#e9d8fd"
+                        e.currentTarget.style.borderColor = "#553c9a"
+                      }}
+                      onMouseOut={(e) => {
+                        e.currentTarget.style.backgroundColor = showRecommendedCompanies ? "#e9d8fd" : "white"
+                        e.currentTarget.style.borderColor = "#6b46c1"
+                      }}
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                      </svg>
+                      Intern Recommendations
+                    </button>
+
+                    {showFilteredCompanies && (
+                      <button
+                        onClick={handleShowAllCompaniesClick}
+                        style={{
+                          padding: "10px 16px",
+                          backgroundColor: "white",
+                          color: "#64748b",
+                          border: "1px solid #e2e8f0",
+                          borderRadius: "4px",
+                          cursor: "pointer",
+                          fontSize: "14px",
+                          fontWeight: "500",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          transition: "all 0.2s",
+                        }}
+                        onMouseOver={(e) => {
+                          e.currentTarget.style.backgroundColor = "#f8fafc"
+                        }}
+                        onMouseOut={(e) => {
+                          e.currentTarget.style.backgroundColor = "white"
+                        }}
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <line x1="8" y1="6" x2="21" y2="6"></line>
+                          <line x1="8" y1="12" x2="21" y2="12"></line>
+                          <line x1="8" y1="18" x2="21" y2="18"></line>
+                          <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                          <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                          <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                        </svg>
+                        Show All Companies
+                      </button>
+                    )}
+                  </div>
+
+                  <div
+                    style={{
+                      backgroundColor: "white",
+                      borderRadius: "8px",
+                      boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+                      overflow: "hidden",
+                      border: "1px solid #e2e8f0",
+                      marginBottom: "30px",
+                    }}
+                  >
+                    {(showFilteredCompanies ? filteredCompaniesList : allCompaniesForFiltering).length > 0 ? (
+                      (showFilteredCompanies ? filteredCompaniesList : allCompaniesForFiltering).map(
+                        (company, index) => (
+                          <div
+                            key={index}
+                            style={{
+                              padding: "20px",
+                              borderBottom:
+                                index <
+                                (showFilteredCompanies ? filteredCompaniesList : allCompaniesForFiltering).length - 1
+                                  ? "1px solid #e2e8f0"
+                                  : "none",
+                              transition: "background-color 0.2s",
+                            }}
+                            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#f8fafc")}
+                            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "white")}
+                          >
+                            <div
+                              style={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "flex-start",
+                                marginBottom: "15px",
+                              }}
+                            >
+                              <div>
+                                <h3
+                                  style={{ margin: "0 0 8px 0", fontSize: "18px", fontWeight: "600", color: "#1e293b" }}
+                                >
+                                  {company.companyName}
+                                </h3>
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    flexWrap: "wrap",
+                                    gap: "15px",
+                                    fontSize: "14px",
+                                    color: "#64748b",
+                                  }}
+                                >
+                                  <div>
+                                    <strong style={{ color: "#334155" }}>Email:</strong> {company.companyEmail}
+                                  </div>
+                                  <div>
+                                    <strong style={{ color: "#334155" }}>Industry:</strong> {company.industry}
+                                  </div>
+                                  <div>
+                                    <strong style={{ color: "#334155" }}>Size:</strong> {company.companySize}
+                                  </div>
+                                </div>
+                              </div>
+                              <button
+                                style={{
+                                  backgroundColor: "#e9d8fd",
+                                  color: "#6b46c1",
+                                  border: "none",
+                                  borderRadius: "4px",
+                                  padding: "8px 12px",
+                                  fontSize: "13px",
+                                  fontWeight: "500",
+                                  cursor: "pointer",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "6px",
+                                  transition: "all 0.2s",
+                                }}
+                                onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#d6bcfa")}
+                                onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#e9d8fd")}
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="14"
+                                  height="14"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                  <circle cx="8.5" cy="7" r="4"></circle>
+                                  <polyline points="17 11 19 13 23 9"></polyline>
+                                </svg>
+                                Apply Now
+                              </button>
+                            </div>
+
+                            <div
+                              style={{
+                                backgroundColor: "#f8fafc",
+                                borderRadius: "6px",
+                                padding: "15px",
+                                marginTop: "10px",
+                              }}
+                            >
+                              <h4
+                                style={{
+                                  margin: "0 0 12px 0",
+                                  fontSize: "15px",
+                                  fontWeight: "600",
+                                  color: "#334155",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "8px",
+                                }}
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="16"
+                                  height="16"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="#6b46c1"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                                  <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                                  <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                                </svg>
+                                Jobs/Internships Offered
+                              </h4>
+
+                              {Array.isArray(company.jobs) && company.jobs.length > 0 ? (
+                                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                                  {company.jobs.map((job, jobIndex) => (
+                                    <div
+                                      key={jobIndex}
+                                      style={{
+                                        padding: "10px 15px",
+                                        backgroundColor: "white",
+                                        borderRadius: "4px",
+                                        border: "1px solid #e2e8f0",
+                                        fontSize: "14px",
+                                        color: "#334155",
+                                      }}
+                                    >
+                                      {typeof job === "object" && job !== null ? (
+                                        <>
+                                          <div style={{ fontWeight: "600", marginBottom: "4px", color: "#1e293b" }}>
+                                            {job.title || "N/A"}
+                                          </div>
+                                          <div
+                                            style={{ display: "flex", flexWrap: "wrap", gap: "10px", fontSize: "13px" }}
+                                          >
+                                            {job.duration && (
+                                              <span
+                                                style={{
+                                                  backgroundColor: "#e9d8fd",
+                                                  color: "#6b46c1",
+                                                  padding: "2px 8px",
+                                                  borderRadius: "4px",
+                                                  fontWeight: "500",
+                                                }}
+                                              >
+                                                {job.duration}
+                                              </span>
+                                            )}
+                                            {job.skills && (
+                                              <span
+                                                style={{
+                                                  backgroundColor: "#f1f5f9",
+                                                  color: "#64748b",
+                                                  padding: "2px 8px",
+                                                  borderRadius: "4px",
+                                                }}
+                                              >
+                                                {job.skills}
+                                              </span>
+                                            )}
+                                          </div>
+                                        </>
+                                      ) : (
+                                        <div>{job}</div>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : typeof company.jobs === "string" && company.jobs.trim() !== "" ? (
+                                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                                  {company.jobs.split(",").map((job, jobIndex) => (
+                                    <div
+                                      key={jobIndex}
+                                      style={{
+                                        padding: "10px 15px",
+                                        backgroundColor: "white",
+                                        borderRadius: "4px",
+                                        border: "1px solid #e2e8f0",
+                                        fontSize: "14px",
+                                        color: "#334155",
+                                      }}
+                                    >
+                                      {job.trim()}
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p style={{ margin: "0", fontSize: "14px", color: "#64748b", fontStyle: "italic" }}>
+                                  No specific jobs listed.
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        ),
+                      )
+                    ) : (
+                      <div style={{ padding: "40px", textAlign: "center" }}>
+                        <div
+                          style={{
+                            width: "64px",
+                            height: "64px",
+                            borderRadius: "50%",
+                            backgroundColor: "#e9d8fd",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            margin: "0 auto 16px auto",
+                          }}
+                        >
+                          <svg
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="#6b46c1"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                          </svg>
+                        </div>
+                        <h3 style={{ margin: "0 0 8px 0", fontSize: "18px", fontWeight: "600", color: "#1e293b" }}>
+                          {showFilteredCompanies ? "No companies match your filter criteria" : "No companies available"}
+                        </h3>
+                        <p
+                          style={{
+                            margin: "0",
+                            fontSize: "14px",
+                            color: "#64748b",
+                            maxWidth: "400px",
+                            marginLeft: "auto",
+                            marginRight: "auto",
+                          }}
+                        >
+                          {showFilteredCompanies
+                            ? "Try updating your profile with different interests or industry preferences."
+                            : "Check back later for available companies."}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+              {/* --- END: Companies Section with Filter --- */}
+
+              {showMyInternshipsView && ( // Re-enable if you want this section
+                <div
+                  style={{
+                    backgroundColor: "white",
+                    borderRadius: "8px",
+                    padding: "20px",
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+                  }}
+                >
+                  <h2 style={{ margin: "0 0 20px 0", color: "#4a4a6a", fontSize: "22px" }}>My Internships</h2>
                   <div
                     style={{
                       textAlign: "center",
@@ -1797,14 +2072,8 @@ function StudentPage() {
                       borderRadius: "8px",
                     }}
                   >
-                    <p
-                      style={{
-                        fontSize: "16px",
-                        color: "#6a6a8a",
-                        marginBottom: "20px",
-                      }}
-                    >
-                      You currently have no active internships. Browse available opportunities in the Jobs section.
+                    <p style={{ fontSize: "16px", color: "#6a6a8a", marginBottom: "20px" }}>
+                      You currently have no active internships. Browse available opportunities.
                     </p>
                     <button
                       onClick={handleBrowseJobsClick}
@@ -1829,33 +2098,31 @@ function StudentPage() {
         </div>
       </div>
 
-      {/* Notification Toast */}
-      {notification.show && (
+      {notificationContent.show && (
         <div
           style={{
             position: "fixed",
             bottom: "20px",
             right: "20px",
             backgroundColor:
-              notification.type === "success"
+              notificationContent.type === "success"
                 ? "rgba(76, 175, 80, 0.9)"
-                : notification.type === "error"
+                : notificationContent.type === "error"
                   ? "rgba(244, 67, 54, 0.9)"
                   : "rgba(33, 150, 243, 0.9)",
             color: "white",
             padding: "12px 20px",
             borderRadius: "8px",
             boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-            zIndex: 1000,
+            zIndex: 2000,
             maxWidth: "300px",
             animation: "fadeIn 0.3s ease-out",
           }}
         >
-          {notification.message}
+          {notificationContent.message}
         </div>
       )}
 
-      {/* Logout Confirmation Dialog */}
       {confirmLogout && (
         <div
           style={{
@@ -1868,52 +2135,37 @@ function StudentPage() {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            zIndex: 1000,
+            zIndex: 2000,
           }}
         >
           <div
             style={{
               backgroundColor: "white",
               borderRadius: "8px",
-              padding: "20px",
-              width: "300px",
+              padding: "25px",
+              width: "320px",
               boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+              textAlign: "center",
             }}
           >
-            <h3
-              style={{
-                margin: "0 0 15px 0",
-                color: "#4a4a6a",
-                fontSize: "18px",
-              }}
-            >
+            <h3 style={{ margin: "0 0 15px 0", color: "#4a4a6a", fontSize: "18px", fontWeight: 600 }}>
               Confirm Logout
             </h3>
-            <p
-              style={{
-                margin: "0 0 20px 0",
-                color: "#6a6a8a",
-              }}
-            >
+            <p style={{ margin: "0 0 25px 0", color: "#6a6a8a", fontSize: "15px" }}>
               Are you sure you want to log out?
             </p>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "flex-end",
-                gap: "10px",
-              }}
-            >
+            <div style={{ display: "flex", justifyContent: "center", gap: "15px" }}>
               <button
                 onClick={() => confirmLogoutAction(false)}
                 style={{
-                  padding: "8px 16px",
+                  padding: "10px 20px",
                   backgroundColor: "#f1f1f1",
-                  color: "#6a6a8a",
-                  border: "none",
+                  color: "#4a4a6a",
+                  border: "1px solid #ddd",
                   borderRadius: "6px",
                   cursor: "pointer",
                   fontSize: "14px",
+                  fontWeight: 500,
                 }}
               >
                 Cancel
@@ -1921,14 +2173,14 @@ function StudentPage() {
               <button
                 onClick={() => confirmLogoutAction(true)}
                 style={{
-                  padding: "8px 16px",
-                  backgroundColor: "rgba(255, 200, 200, 0.5)",
-                  color: "#9a4a4a",
+                  padding: "10px 20px",
+                  backgroundColor: "#f44336",
+                  color: "white",
                   border: "none",
                   borderRadius: "6px",
                   cursor: "pointer",
                   fontSize: "14px",
-                  fontWeight: "bold",
+                  fontWeight: 500,
                 }}
               >
                 Logout
@@ -1937,21 +2189,7 @@ function StudentPage() {
           </div>
         </div>
       )}
-
-      {/* CSS Animations */}
-      <style>
-        {`
-                    @keyframes fadeIn {
-                        from { opacity: 0; transform: translateY(20px); }
-                        to { opacity: 1; transform: translateY(0); }
-                    }
-                    
-                    @keyframes spin {
-                        0% { transform: rotate(0deg); }
-                        100% { transform: rotate(360deg); }
-                    }
-                `}
-      </style>
+      <style>{` @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } } @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } } `}</style>
     </div>
   )
 }

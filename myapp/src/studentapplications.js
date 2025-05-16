@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
-import { getNotification } from "./notification"
 
 const MyApplications = () => {
   const [myApplications, setMyApplications] = useState([])
@@ -17,43 +16,79 @@ const MyApplications = () => {
   const [notifications, setNotifications] = useState([])
   const [viewedNotifications, setViewedNotifications] = useState([])
 
-  const student = location.state?.studentj || location.state?.student || location.state?.user|| location.state ||{ email: "default@example.com" }
-    const allUsers = JSON.parse(localStorage.getItem("allUsers")) || []
+  const student = location.state?.studentj ||
+    location.state?.student ||
+    location.state?.user ||
+    location.state || { email: "default@example.com" }
+  const allUsers = JSON.parse(localStorage.getItem("allUsers")) || []
   const s = allUsers.find((user) => user.email === student.email)
   const studentrole = s?.role // Added optional chaining for safety
   console.log(student)
   const viewedNotificationsKey = student?.email ? `viewedNotifications_${student.email}` : "viewedNotifications_default"
 
+  const showAppNotification = (message, type = "info") => {
+    setNotificationContent({ show: true, message, type })
+    setTimeout(() => setNotificationContent({ show: false, message: "", type: "" }), 3000)
+  }
+
   const loadApplications = useCallback(() => {
     setLoading(true)
-    // Ensure storedApplied is an array, defaulting to [] if not found or invalid
-    const storedAppliedString = localStorage.getItem("appliedInternships")
-    const storedApplied = storedAppliedString ? JSON.parse(storedAppliedString) : [] // Default to []
-    console.log(storedApplied)
-    if (student?.email) {
-      // Now storedApplied is guaranteed to be an array, so .filter will work
-      const studentApps = storedApplied.filter((app) => app.student?.email === student.email)
-      setMyApplications(studentApps)
-      console.log(studentApps)
-    } else {
-      setMyApplications([]) // Clear applications if no profile
+    console.log("Loading applications for student:", student?.email)
+
+    try {
+      // Ensure storedApplied is an array, defaulting to [] if not found or invalid
+      const storedAppliedString = localStorage.getItem("appliedInternships")
+      console.log("Raw stored applications:", storedAppliedString)
+
+      let storedApplied = []
+      if (storedAppliedString) {
+        try {
+          storedApplied = JSON.parse(storedAppliedString)
+          if (!Array.isArray(storedApplied)) {
+            console.error("Stored applications is not an array, resetting to empty array")
+            storedApplied = []
+          }
+        } catch (e) {
+          console.error("Error parsing applications:", e)
+          storedApplied = []
+        }
+      }
+
+      if (student?.email) {
+        // Now storedApplied is guaranteed to be an array, so .filter will work
+        const studentApps = storedApplied.filter((app) => {
+          const matches = app.student?.email === student.email
+          return matches
+        })
+        console.log("Filtered applications for student:", studentApps)
+        setMyApplications(studentApps)
+      } else {
+        console.warn("No student email available")
+        setMyApplications([]) // Clear applications if no profile
+      }
+    } catch (error) {
+      console.error("Error in loadApplications:", error)
+      setMyApplications([])
     }
 
     setTimeout(() => {
       setLoading(false)
       showAppNotification("Applications loaded successfully", "success")
-      getNotification(student.email)
-      console.log(student.email)
-      console.log(student)
     }, 800)
   }, [student])
 
   useEffect(() => {
     loadApplications()
 
+    // Set up polling to check for updates every 5 seconds
+    const pollingInterval = setInterval(() => {
+      console.log("Polling for application updates...")
+      loadApplications()
+    }, 5000)
+
     const handleStatusUpdate = (e) => {
       // Ensure student is available before accessing email
-      if (student && e.detail?.applicantEmail === student.email ) {
+      if (student && e.detail?.applicantEmail === student.email) {
         loadApplications()
       }
     }
@@ -61,7 +96,7 @@ const MyApplications = () => {
     const handleStorageChange = (event) => {
       // Specifically check if the 'appliedInternships' key changed
       if (event.key === "appliedInternships" || event.key === null) {
-        // null for clearStorage
+        console.log("Storage changed, reloading applications...")
         loadApplications()
       }
     }
@@ -79,6 +114,7 @@ const MyApplications = () => {
     }
 
     return () => {
+      clearInterval(pollingInterval)
       window.removeEventListener("applicationStatusUpdated", handleStatusUpdate)
       window.removeEventListener("storage", handleStorageChange)
     }
@@ -96,11 +132,6 @@ const MyApplications = () => {
   }
 
   const toggleMenu = () => setMenuOpen(!menuOpen)
-
-  const showAppNotification = (message, type = "info") => {
-    setNotificationContent({ show: true, message, type })
-    setTimeout(() => setNotificationContent({ show: false, message: "", type: "" }), 3000)
-  }
 
   const resetViews = () => {
     // Reset any specific views if needed
@@ -178,30 +209,27 @@ const MyApplications = () => {
   }
 
   const unreadNotifications = notifications.filter((n) => !viewedNotifications.includes(n.id))
-    
+
   const handleAppointmentsClick = () => {
-  
     setActiveSection("appointments")
     navigate("/appointments", { state: { student } })
   }
 
   const handleAssessmentsClick = () => {
-   
     setActiveSection("assessments")
     navigate("/online-assessments", { state: { student } })
   }
 
   const handleWorkshopsClick = () => {
-   
     setActiveSection("workshops")
     navigate("/studentworkshops", { state: { student } })
   }
 
-    const handleviewedprofile = () => {
+  const handleviewedprofile = () => {
     setActiveSection("jobs")
     navigate("/viewprofile", { state: { ...location.state } })
   }
- const commonItems = [
+  const commonItems = [
     { id: "dashboard", label: "Homepage", icon: "🏠", action: handleHomeClick },
     { id: "profile", label: "Profile", icon: "👤", action: handleProfileClick },
     { id: "courses", label: "All Courses", icon: "📚", action: handleCoursesClick },
@@ -214,11 +242,10 @@ const MyApplications = () => {
     { id: "appointments", label: "Appointments", icon: "📅", action: handleAppointmentsClick },
     { id: "assessments", label: "Online Assessments", icon: "📋", action: handleAssessmentsClick },
     { id: "workshops", label: "Workshops", icon: "🔧", action: handleWorkshopsClick },
-    { id: "Who viewed my profile", label: "Who viewed my profile", icon: "👁", action: handleviewedprofile},
+    { id: "Who viewed my profile", label: "Who viewed my profile", icon: "👁", action: handleviewedprofile },
   ]
 
- 
- const Sidebar = ({ menuOpen, toggleMenu }) => {
+  const Sidebar = ({ menuOpen, toggleMenu }) => {
     const sidebarItems = [...commonItems]
     if (student && studentrole === "pro") {
       sidebarItems.push(...proSpecificItems)
@@ -284,7 +311,9 @@ const MyApplications = () => {
                 {student.name ? student.name.charAt(0).toUpperCase() : "S"}
               </div>
               <div>
-                <div style={{ fontSize: "14px", fontWeight: "bold", color: "#4a4a6a" }}>Student User{studentrole === "pro" && (
+                <div style={{ fontSize: "14px", fontWeight: "bold", color: "#4a4a6a" }}>
+                  Student User
+                  {studentrole === "pro" && (
                     <span
                       style={{
                         display: "inline-flex",
@@ -606,8 +635,11 @@ const MyApplications = () => {
                           strokeLinejoin="round"
                           style={{ color: "#d5c5f7", opacity: 0.7 }}
                         >
-                          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                          <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                          <polyline points="14 2 14 8 20 8"></polyline>
+                          <line x1="16" y1="13" x2="8" y2="13"></line>
+                          <line x1="16" y1="17" x2="8" y2="17"></line>
+                          <polyline points="10 9 9 9 8 9"></polyline>
                         </svg>
                         <p style={{ margin: "0" }}>No new notifications</p>
                       </div>
@@ -728,26 +760,26 @@ const MyApplications = () => {
                 }}
               >
                 Student User
-              {studentrole === "pro" && (
-                    <span
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        marginLeft: "8px",
-                        backgroundColor: "#ffd700",
-                        color: "#4a4a6a",
-                        fontSize: "10px",
-                        fontWeight: "bold",
-                        padding: "2px 6px",
-                        borderRadius: "10px",
-                        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-                      }}
-                    >
-                      PRO
-                    </span>
-                  )}
-                </div>
+                {studentrole === "pro" && (
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      marginLeft: "8px",
+                      backgroundColor: "#ffd700",
+                      color: "#4a4a6a",
+                      fontSize: "10px",
+                      fontWeight: "bold",
+                      padding: "2px 6px",
+                      borderRadius: "10px",
+                      boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                    }}
+                  >
+                    PRO
+                  </span>
+                )}
+              </div>
               <div style={{ fontSize: "12px", color: "#6a6a8a" }}>{student.name || student.email}</div>
             </div>
             <button

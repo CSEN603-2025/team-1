@@ -34,51 +34,21 @@ function CompanyInterns() {
       setTimeout(() => {
         const companyInternsKey = `companyInterns_${email}`
         console.log("Loading interns from:", companyInternsKey)
-
-        try {
-          const storedInternsData = localStorage.getItem(companyInternsKey)
-          console.log("Raw stored interns data:", storedInternsData)
-
-          if (storedInternsData) {
-            const storedInterns = JSON.parse(storedInternsData)
-            console.log("Parsed interns:", storedInterns)
-
-            // Ensure we have an array and each intern has the required fields
-            if (Array.isArray(storedInterns)) {
-              const processedInterns = storedInterns.map((intern) => {
-                // Make sure each intern has a student object and other required fields
-                return {
-                  ...intern,
-                  // Use student data or create placeholder if missing
-                  name: intern.student?.name || (intern.student?.email === "student@example.com" ? "Mariam" : "John"),
-                  email: intern.student?.email || intern.email || "unknown@example.com",
-                  status: intern.status || "current",
-                  jobTitle: intern.title || intern.jobTitle || "Unknown Position",
-                  jobDuration: intern.duration || intern.jobDuration || "Unknown Duration",
-                }
-              })
-
-              console.log("Processed interns:", processedInterns)
-              setInterns(processedInterns)
-            } else {
-              console.error("Stored interns is not an array:", storedInterns)
-              setInterns([])
-            }
-          } else {
-            console.log("No interns found in localStorage")
-            setInterns([])
-          }
-        } catch (error) {
-          console.error("Error loading interns:", error)
-          setInterns([])
-        }
-
+        const storedInterns = JSON.parse(localStorage.getItem(companyInternsKey)) || []
+        console.log("Loaded interns:", storedInterns)
+        // Ensure all interns have a status, defaulting to "current" if missing
+        setInterns(
+          storedInterns.map((intern) => ({
+            ...intern,
+            status: intern.status || "current",
+          })),
+        )
         setIsLoading(false)
       }, 800)
     } else {
       setIsLoading(false)
     }
-  }, [email])
+  }, [email, storedCompany])
 
   // Update intern status in both state and localStorage
   const updateInternStatus = (email, jobTitle) => {
@@ -138,7 +108,11 @@ function CompanyInterns() {
       intern.email?.toLowerCase().includes(searchLower) ||
       intern.jobTitle?.toLowerCase().includes(searchLower)
 
-    const matchesStatus = statusFilter === "all" || intern.status === statusFilter
+    // Show both "current" and "accepted" interns when "current" filter is selected
+    const matchesStatus =
+      statusFilter === "all" ||
+      (statusFilter === "current" && (intern.status === "current" || intern.status === "accepted")) ||
+      (statusFilter === "completed" && intern.status === "completed")
 
     return matchesSearch && matchesStatus
   })

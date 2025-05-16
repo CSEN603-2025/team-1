@@ -322,6 +322,7 @@ function CompanyPage() {
 
     // Only update the specific application that matches both email AND title
     const updatedApplied = allApplied.map((app) => {
+      
       if (
         app.student?.email === applicantEmail &&
         app.title === title // Match by title to ensure we only update the specific application
@@ -331,6 +332,7 @@ function CompanyPage() {
       return app
     })
     localStorage.setItem("appliedInternships", JSON.stringify(updatedApplied))
+    console.log(updatedApplied)
 
     // 3. Update applicants in the currently viewed modal if open
     if (selectedJobApplicants) {
@@ -346,14 +348,57 @@ function CompanyPage() {
 
     // 5. Handle adding to accepted interns list
     if (newStatus === "accepted") {
+
+      // const job = postedJobs[currentJobIndex];
+          let storedApplied = [];
+  try {
+    const interns = localStorage.getItem("appliedInternships");
+    console.log(interns)
+    storedApplied = interns ? JSON.parse(interns) : [];
+  } catch (e) {
+    console.error("Failed to parse appliedInternships from localStorage", e);
+    return;
+  }
+
+  // Step 2: Find the applicant(s) to update
+  const targetApplicants = storedApplied.filter(app => app.student?.email === applicantEmail);
+  console.log(targetApplicants)
+  if (targetApplicants.length === 0) {
+    console.warn("No applicant found with email:", applicantEmail);
+    return;
+  }
+
+  // Step 3: Update their status
+  const updated = storedApplied.map(app =>
+    app.student?.email === applicantEmail
+      ? { ...app, status: "accepted" }
+      : app
+  );
+
+  // Step 4: Store back in localStorage
+  localStorage.setItem("appliedInternships", JSON.stringify(updated));
+  console.log(updated)
+       setNotification(`You have been accepted in ${storedCompany.companyEmail}`, applicantEmail);
+
+
+
+
+
+
       const companyInternsKey = `companyInterns_${storedCompany.companyEmail}`
       console.log("Adding to interns:", companyInternsKey)
 
-      // Find the specific application that matches both email AND title
-      const targetApplication = allApplied.find((app) => app.student?.email === applicantEmail && app.title === title)
+      // Find the complete job details from postedJobs
+      const job = postedJobs[currentJobIndex]
+      if (!job) {
+        console.error("Job not found for index:", currentJobIndex)
+        return
+      }
 
-      if (!targetApplication) {
-        console.warn("No matching application found for:", applicantEmail, title)
+      // Find the specific applicant
+      const applicant = job.applicants.find((app) => app.email === applicantEmail)
+      if (!applicant) {
+        console.error("Applicant not found:", applicantEmail)
         return
       }
 
@@ -365,26 +410,96 @@ function CompanyPage() {
         console.error("Failed to parse companyInterns", e)
       }
 
+      // Create a complete intern object with all necessary information
+      const internToAdd = {
+        name: applicant.name,
+        email: applicant.email,
+        jobTitle: job.title,
+        jobDuration: job.duration,
+        isPaid: job.isPaid,
+        salary: job.salary,
+        skills: applicant.skills || job.skills,
+        status: "accepted",
+        companyName: storedCompany.companyName,
+        companyEmail: storedCompany.companyEmail,
+        timestamp: new Date().toISOString(),
+      }
+
       // Check if this intern is already in the list to avoid duplicates
-      if (!currentInterns.some((intern) => intern.student?.email === applicantEmail && intern.title === title)) {
-        // Add the complete application object to interns
-        currentInterns.push(targetApplication)
+      if (!currentInterns.some((intern) => intern.email === applicantEmail && intern.jobTitle === job.title)) {
+        currentInterns.push(internToAdd)
         localStorage.setItem(companyInternsKey, JSON.stringify(currentInterns))
         console.log("Updated companyInterns:", currentInterns)
       }
 
-      setNotification(`You have been accepted for ${title} at ${storedCompany.companyName}`, applicantEmail)
+      // Send notification to student
+      setNotification(`You have been accepted for ${job.title} at ${storedCompany.companyName}`, applicantEmail)
     }
 
-    if (newStatus === "rejected") {
-      setNotification(`Your application for ${title} at ${storedCompany.companyName} has been rejected`, applicantEmail)
+      if (newStatus === "rejected") {
+      // const job = postedJobs[currentJobIndex];
+          let storedApplied = [];
+  try {
+    const interns = localStorage.getItem("appliedInternships");
+    console.log(interns)
+    storedApplied = interns ? JSON.parse(interns) : [];
+  } catch (e) {
+    console.error("Failed to parse appliedInternships from localStorage", e);
+    return;
+  }
+
+  // Step 2: Find the applicant(s) to update
+  const targetApplicants = storedApplied.filter(app => app.student?.email === applicantEmail);
+  console.log(targetApplicants)
+  if (targetApplicants.length === 0) {
+    console.warn("No applicant found with email:", applicantEmail);
+    return;
+  }
+
+  // Step 3: Update their status
+  const updated = storedApplied.map(app =>
+    app.student?.email === applicantEmail
+      ? { ...app, status: "rejected" }
+      : app
+  );
+
+  // Step 4: Store back in localStorage
+  localStorage.setItem("appliedInternships", JSON.stringify(updated));
+  console.log(updated)
+       setNotification(`You have been rejected in ${storedCompany.companyEmail}`, applicantEmail);
     }
 
-    if (newStatus === "finalized") {
-      setNotification(
-        `Your application for ${title} at ${storedCompany.companyName} has been finalized`,
-        applicantEmail,
-      )
+      if (newStatus === "finalized") {
+      // const job = postedJobs[currentJobIndex];
+          let storedApplied = [];
+  try {
+    const interns = localStorage.getItem("appliedInternships");
+    console.log(interns)
+    storedApplied = interns ? JSON.parse(interns) : [];
+  } catch (e) {
+    console.error("Failed to parse appliedInternships from localStorage", e);
+    return;
+  }
+
+  // Step 2: Find the applicant(s) to update
+  const targetApplicants = storedApplied.filter(app => app.student?.email === applicantEmail);
+  console.log(targetApplicants)
+  if (targetApplicants.length === 0) {
+    console.warn("No applicant found with email:", applicantEmail);
+    return;
+  }
+
+  // Step 3: Update their status
+  const updated = storedApplied.map(app =>
+    app.student?.email === applicantEmail
+      ? { ...app, status: "finalized" }
+      : app
+  );
+
+  // Step 4: Store back in localStorage
+  localStorage.setItem("appliedInternships", JSON.stringify(updated));
+  console.log(updated)
+       setNotification(`You have been finalized in ${storedCompany.companyEmail}`, applicantEmail);
     }
   }
 

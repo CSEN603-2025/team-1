@@ -4,25 +4,22 @@ import { useState, useEffect } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
 import SidebarFac from "./sidebarfaculty"
 import Sidebar from "./sidebarscad"
-import { setNotification, getNotification } from "./notification"
-
-// Helper function to simulate notification service
-// const setNotification = (message, email) => {
-//   console.log(`Notification to ${email}: ${message}`)
-//   // In a real app, this would send a notification to the user
-// }
+// Import the updated notification functions, including the new one
+import { setNotification, getNotification , clearNotifications} from "./notification"
 
 const FacultyReport = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const [menuOpen, setMenuOpen] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [notification, setNotificationState] = useState({ show: false, message: "", type: "" })
+  const [notification, setNotificationState] = useState({ show: false, message: "", type: "" }) // This is for the toast message
   const [confirmLogout, setConfirmLogout] = useState(false)
   const [downloading, setDownloading] = useState(false)
 
   const [isPopupOpen, setIsPopupOpen] = useState(false)
   const [unreadNotifications, setUnreadNotifications] = useState(0)
+  // NEW state for the list of notifications
+  const [notificationsList, setNotificationsList] = useState([])
 
   // Reports state
   const [reports, setReports] = useState([])
@@ -39,13 +36,24 @@ const FacultyReport = () => {
   // Determine user type from location state
   const userType = location.state?.type || "faculty"
   const isSCAD = userType === "scad"
+  // Determine user email based on type (assuming simple hardcoded emails for demo)
+  const userEmail = isSCAD ? "scad@example.com" : "faculty@example.com"
 
-  // Load reports on component mount
+  // Function to fetch and update notification state from localStorage
+  const updateNotificationState = () => {
+    const notifications = getNotification(userEmail) // Get the list
+    setNotificationsList(notifications) // Store the list
+    const unreadCount = notifications.filter((n) => !n.read).length // Calculate unread count
+    setUnreadNotifications(unreadCount)
+    console.log(`Fetched ${notifications.length} notifications for ${userEmail}. Unread: ${unreadCount}`)
+  }
+
+  // Load reports and initial notifications on component mount
   useEffect(() => {
     setLoading(true)
-    const email= isSCAD? "scad@example.com":"faculty@example.com"
-   
-    setUnreadNotifications( getNotification(email))
+    // Fetch initial notifications
+    updateNotificationState()
+
     // Get all internship reports from localStorage
     setTimeout(() => {
       // Get all reports from localStorage
@@ -104,7 +112,7 @@ const FacultyReport = () => {
                 body: reportData.body || "No content provided",
                 courses: reportData.courses || [],
                 pdfFilename: reportData.pdfFileName || "report.pdf",
-                status: reportData.status || "pending" || "draft_saved",
+                status: reportData.status || "pending", // Default status
                 comment: reportData.evaluatorComments || "",
               }
               allReports.push(report)
@@ -116,14 +124,26 @@ const FacultyReport = () => {
 
       setReports(allReports)
       setLoading(false)
-      showNotification("Reports loaded successfully", "success")
+      // Only show 'Reports loaded' toast, not a notification for the bell icon list
+      // showNotification("Reports loaded successfully", "success")
+
+      // Example: Add a test notification on first load (remove in production)
+      // if (!localStorage.getItem('faculty_report_initial_notif_shown')) {
+      //    setNotification("Example: A new report has been submitted.", userEmail);
+      //    localStorage.setItem('faculty_report_initial_notif_shown', 'true');
+      //    updateNotificationState(); // Update state after adding test notification
+      // }
     }, 800)
-  }, [])
+  }, [isSCAD, userEmail]) // Add userEmail as dependency
 
   const handleLogout = () => {
     setConfirmLogout(true)
   }
 
+  const handleclose=()=>{
+     setIsPopupOpen(false)
+     clearNotifications(userEmail)
+  }
   const confirmLogoutAction = (confirm) => {
     setConfirmLogout(false)
     if (confirm) {
@@ -139,6 +159,7 @@ const FacultyReport = () => {
     setMenuOpen(!menuOpen)
   }
 
+  // This function is for the temporary toast notifications at the bottom right
   const showNotification = (message, type = "info") => {
     setNotificationState({ show: true, message, type })
     setTimeout(() => {
@@ -165,18 +186,20 @@ const FacultyReport = () => {
     // Find the current comment for this report
     const report = reports.find((r) => r.id === id)
     setComment(report?.comment || "")
-    setPendingStatus(report?.status || "pending" || "draft_saved") // Preserve current status
+    setPendingStatus(report?.status || "pending") // Preserve current status when editing comment
 
     setCommentError("")
     setShowCommentModal(true)
     setEditingComment(true) // This is for editing/adding comment only
   }
+
   const handleStatusWithoutcomment = (id, status) => {
     setPendingStatus(status)
 
     const updatedReports = reports.map((report) => (report.id === id ? { ...report, status } : report))
     setReports(updatedReports)
 
+    // Update the report in localStorage
     const reportKey = `report_${id}`
     const reportData = localStorage.getItem(reportKey)
 
@@ -189,6 +212,7 @@ const FacultyReport = () => {
       localStorage.setItem(reportKey, JSON.stringify(updatedReport))
     }
 
+    // Also update in the reports collection if it exists
     const savedReports = localStorage.getItem("reports")
     if (savedReports) {
       const parsedReports = JSON.parse(savedReports)
@@ -200,11 +224,17 @@ const FacultyReport = () => {
 
     const report = reports.find((r) => r.id === id)
     if (report) {
-      const email = report.studentemail
+      const email = report.studentemail // Notification is FOR the student
       const title = report.title
       const message = `Your internship report "${title}" has been ${status}.`
-      setNotification(message, email)
-      showNotification(`Report ${status} successfully`, "success")
+      setNotification(message, email) // Use the imported notification function
+
+      // If the notification function adds to localStorage for this user (faculty/scad),
+      // you might need to update state here as well, but typically
+      // status changes notify the student, not the faculty/scad user themselves.
+      // If faculty/scad gets notifications e.g. "Report X status changed", you'd call
+      // setNotification with userEmail here too. Assuming not for now.
+      showNotification(`Report status updated to ${status}`, "success") // Toast for the faculty user
     }
   }
 
@@ -245,12 +275,14 @@ const FacultyReport = () => {
 
     const report = reports.find((r) => r.id === commentingReportId)
     if (report) {
-      const email = report.studentemail
+      const email = report.studentemail // Notification is FOR the student
       const title = report.title
       const message = editingComment
         ? `Your internship report "${title}" has been updated with a new comment: ${comment}`
         : `Your internship report "${title}" has been ${pendingStatus}. Comment: ${comment}`
-      setNotification(message, email)
+      setNotification(message, email) // Use the imported notification function
+
+      // Again, assuming status changes notify the student, not the faculty/scad user directly.
       showNotification(
         editingComment ? "Comment updated successfully" : `Report ${pendingStatus} successfully`,
         "success",
@@ -293,7 +325,7 @@ const FacultyReport = () => {
     // Show success message
     setTimeout(() => {
       setDownloading(false)
-      showNotification("Report downloaded successfully", "success")
+      showNotification("Report downloaded successfully", "success") // Toast
     }, 1000)
   }
 
@@ -313,6 +345,8 @@ const FacultyReport = () => {
         return "#d9534f"
       case "flagged":
         return "#ff9800"
+      case "draft_saved": // Assuming draft might appear, though reports list should be submitted ones
+        return "#6c757d"
       default:
         return "#6c757d"
     }
@@ -449,8 +483,18 @@ const FacultyReport = () => {
             <div style={{ position: "relative", marginRight: "20px" }}>
               <div
                 onClick={() => {
-                  // Toggle notification popup
-                  setIsPopupOpen(!isPopupOpen)
+                  // NEW: Handle opening/closing and marking as read
+                  if (!isPopupOpen && unreadNotifications > 0) {
+                    // If opening and there are unread notifications
+
+                    // markAllNotificationsAsRead(userEmail); // Mark as read in localStorage
+                    updateNotificationState() // Fetch updated list and count (should be 0 unread)
+                  }
+                  //  else if(!isPopupOpen && unreadNotifications===0){
+                  //    clearNotifications(userEmail)
+                  //  }
+
+                  setIsPopupOpen(!isPopupOpen) // Toggle popup visibility
                 }}
                 style={{
                   cursor: "pointer",
@@ -487,6 +531,7 @@ const FacultyReport = () => {
                   <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
                   <path d="M13.73 21a2 2 0 0 1-3.46 0" />
                 </svg>
+                {/* Corrected: Badge shows only when not poped up AND unread > 0 */}
                 {!isPopupOpen && unreadNotifications > 0 && (
                   <span
                     style={{
@@ -511,6 +556,7 @@ const FacultyReport = () => {
                   </span>
                 )}
               </div>
+              {/* NEW: Conditional rendering based on notificationsList */}
               {isPopupOpen && (
                 <div
                   style={{
@@ -521,9 +567,13 @@ const FacultyReport = () => {
                     boxShadow: "0 4px 15px rgba(0, 0, 0, 0.1)",
                     borderRadius: "12px",
                     width: "320px",
+                    maxWidth: "90vw",
                     zIndex: 1001,
                     border: "1px solid rgba(230, 230, 250, 0.5)",
                     overflow: "hidden",
+                    maxHeight: "80vh",
+                    display: "flex",
+                    flexDirection: "column",
                   }}
                 >
                   <div
@@ -540,7 +590,7 @@ const FacultyReport = () => {
                       Notifications
                     </h4>
                     <button
-                      onClick={() => setIsPopupOpen(false)}
+                      onClick={() =>handleclose()}
                       style={{
                         background: "transparent",
                         border: "none",
@@ -572,35 +622,74 @@ const FacultyReport = () => {
                       </svg>
                     </button>
                   </div>
-                  <div style={{ maxHeight: "350px", overflowY: "auto", padding: "10px 0" }}>
-                    <div
-                      style={{
-                        padding: "30px 20px",
-                        textAlign: "center",
-                        color: "#6a6a8a",
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        gap: "10px",
-                      }}
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="40"
-                        height="40"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        style={{ color: "#d5c5f7", opacity: 0.7 }}
+                  <div
+                    style={{
+                      maxHeight: "350px",
+                      overflowY: "auto",
+                      padding: "10px 0",
+                      flexGrow: 1,
+                      overflowX: "hidden",
+                    }}
+                  >
+                    {/* NEW: Map over notificationsList */}
+                    {notificationsList.length === 0 ? (
+                      <div
+                        style={{
+                          padding: "30px 20px",
+                          textAlign: "center",
+                          color: "#6a6a8a",
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          gap: "10px",
+                        }}
                       >
-                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-                      </svg>
-                      <p style={{ margin: "0" }}>No new notifications</p>
-                    </div>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="40"
+                          height="40"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          style={{ color: "#d5c5f7", opacity: 0.7 }}
+                        >
+                          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                          <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                        </svg>
+                        <p style={{ margin: "0" }}>No new notifications</p>{" "}
+                        {/* Keep this message, but only show when list is empty */}
+                      </div>
+                    ) : (
+                      // Display the list of notifications
+                      notificationsList.map((notif) => (
+                        <div
+                          key={notif.id} // Use a unique key if available, otherwise use index
+                          style={{
+                            padding: "12px 20px",
+                            borderBottom: "1px solid #eee",
+                            backgroundColor: notif.read ? "transparent" : "rgba(230, 230, 250, 0.1)",
+                            color: "#4a4a6a",
+                            fontSize: "14px",
+                            lineHeight: "1.4",
+                            fontWeight: notif.read ? "normal" : "bold",
+                            cursor: "pointer",
+                            transition: "background-color 0.1s ease",
+                            wordBreak: "break-word",
+                          }}
+                          // Optional: Add onClick handler for notification details/action
+                          // onClick={() => handleNotificationClick(notif)}
+                        >
+                          {notif.message}
+                          {/* Optional: Add timestamp */}
+                          {/* <p style={{ margin: "4px 0 0", color: '#9a9a9a', fontSize: '11px', fontWeight: 'normal' }}>
+                              {new Date(notif.timestamp).toLocaleString()}
+                           </p> */}
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
               )}
@@ -1104,7 +1193,7 @@ const FacultyReport = () => {
                           </button>
 
                           {/* Status buttons - only visible to faculty and only for pending reports */}
-                          {!isSCAD && (report.status === "pending" || "draft_saved") && (
+                          {!isSCAD && (report.status === "pending" || report.status === "draft_saved") && (
                             <>
                               <button
                                 onClick={() => handleStatusWithComment(report.id, "rejected")}
@@ -1169,6 +1258,7 @@ const FacultyReport = () => {
                             </>
                           )}
 
+                          {/* Add Comment button - visible if no comment yet */}
                           {!report.comment && (
                             <button
                               onClick={() => handleEditComment(report.id)}
@@ -1191,6 +1281,8 @@ const FacultyReport = () => {
                               ✏️ Add Comment
                             </button>
                           )}
+
+                          {/* Edit Comment button - always visible if there's a comment now handled above */}
                         </div>
                       </div>
                     )}
@@ -1274,7 +1366,7 @@ const FacultyReport = () => {
             >
               {editingComment
                 ? "Update your comment for this report."
-                : "Please provide a comment explaining your decision."}
+                : `Please provide a comment for ${pendingStatus.charAt(0).toLowerCase() + pendingStatus.slice(1)} this report.`}
             </p>
             <textarea
               placeholder="Enter comment/reason..."
@@ -1293,9 +1385,8 @@ const FacultyReport = () => {
                 color: "#4a4a6a",
                 resize: "vertical",
                 marginBottom: commentError ? "5px" : "20px",
-                textAlign: "center",
+                // textAlign: "center", // Removed center align for textarea, looks better left-aligned
                 boxSizing: "border-box",
-             
               }}
             />
             {commentError && (
@@ -1323,6 +1414,7 @@ const FacultyReport = () => {
                   setComment("")
                   setCommentError("")
                   setEditingComment(false)
+                  setPendingStatus("") // Reset pending status
                 }}
                 style={{
                   padding: "10px 20px",
@@ -1350,7 +1442,7 @@ const FacultyReport = () => {
                       ? "rgba(200, 255, 200, 0.8)" // Green for accept
                       : pendingStatus === "rejected"
                         ? "rgba(255, 200, 200, 0.8)" // Red for reject
-                        : "rgba(255, 230, 180, 0.8)", // Orange for flag
+                        : "rgba(255, 230, 180, 0.8)", // Orange for flag (flagged)
                   color: editingComment
                     ? "#4a6a8a"
                     : pendingStatus === "accepted"
@@ -1472,11 +1564,50 @@ const FacultyReport = () => {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
           }
-          
+
           @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
           }
+
+          /* Style for scrollbar in notification popup */
+          .notification-list::-webkit-scrollbar {
+              width: 8px;
+          }
+
+          .notification-list::-webkit-scrollbar-track {
+              background: #f1f1f1;
+              border-radius: 10px;
+          }
+
+          .notification-list::-webkit-scrollbar-thumb {
+              background: #888;
+              border-radius: 10px;
+          }
+
+          .notification-list::-webkit-scrollbar-thumb:hover {
+              background: #555;
+          }
+           /* Apply the class to the scrollable div */
+           [style*="max-height: 350px"][style*="overflow-y: auto"] {
+              max-height: 350px;
+              overflow-y: auto;
+           }
+           [style*="max-height: 350px"][style*="overflow-y: auto"].notification-list {
+              /* For applying custom scrollbar styles */
+           }
+           /* Ensure notification popup stays in viewport */
+           [style*="position: absolute"][style*="top: 45px"][style*="right: -10px"] {
+             max-height: 80vh;
+             overflow: hidden;
+           }
+
+           @media screen and (max-width: 768px) {
+             [style*="position: absolute"][style*="top: 45px"][style*="right: -10px"] {
+               right: 0;
+               max-width: 85vw;
+             }
+           }
         `}
       </style>
     </div>

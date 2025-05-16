@@ -130,7 +130,7 @@ function MyInternshipsPage() {
     location.state?.student || { email: "default@example.com", name: "Default Student" }
   const viewedNotificationsKey = student?.email ? `viewedNotifications_${student.email}` : "viewedNotifications_default"
 
-    const allUsers = JSON.parse(localStorage.getItem("allUsers")) || []
+  const allUsers = JSON.parse(localStorage.getItem("allUsers")) || []
   const s = allUsers.find((user) => user.email === student.email)
   const studentrole = s?.role // Added optional chaining for safety
 
@@ -421,13 +421,13 @@ function MyInternshipsPage() {
       showAppNotification("Report deleted successfully.", "success")
 
       // Disable the delete button for this internship
-      setDisabledButtons((prev) => ({
-        ...prev,
-        reports: {
-          ...prev.reports,
-          [`delete_${internshipId}`]: true,
-        },
-      }))
+    //   setDisabledButtons((prev) => ({
+    //     ...prev,
+    //     reports: {
+    //       ...prev.reports,
+    //       [`delete_${internshipId}`]: true,
+    //     },
+    //   }))
     }
   }
 
@@ -661,29 +661,26 @@ function MyInternshipsPage() {
 
   const unreadNotifications = notifications.filter((n) => !viewedNotifications.includes(n.id))
 
- const handleAppointmentsClick = () => {
-  
+  const handleAppointmentsClick = () => {
     setActiveSection("appointments")
     navigate("/appointments", { state: { student } })
   }
 
   const handleAssessmentsClick = () => {
-   
     setActiveSection("assessments")
     navigate("/online-assessments", { state: { student } })
   }
 
   const handleWorkshopsClick = () => {
-   
     setActiveSection("workshops")
     navigate("/studentworkshops", { state: { student } })
   }
 
-    const handleviewedprofile = () => {
+  const handleviewedprofile = () => {
     setActiveSection("jobs")
     navigate("/viewprofile", { state: { ...location.state } })
   }
- const commonItems = [
+  const commonItems = [
     { id: "dashboard", label: "Homepage", icon: "🏠", action: handleHomeClick },
     { id: "profile", label: "Profile", icon: "👤", action: handleProfileClick },
     { id: "courses", label: "All Courses", icon: "📚", action: handleCoursesClick },
@@ -696,11 +693,10 @@ function MyInternshipsPage() {
     { id: "appointments", label: "Appointments", icon: "📅", action: handleAppointmentsClick },
     { id: "assessments", label: "Online Assessments", icon: "📋", action: handleAssessmentsClick },
     { id: "workshops", label: "Workshops", icon: "🔧", action: handleWorkshopsClick },
-    { id: "Who viewed my profile", label: "Who viewed my profile", icon: "👁", action: handleviewedprofile},
+    { id: "Who viewed my profile", label: "Who viewed my profile", icon: "👁", action: handleviewedprofile },
   ]
 
- 
- const Sidebar = ({ menuOpen, toggleMenu }) => {
+  const Sidebar = ({ menuOpen, toggleMenu }) => {
     const sidebarItems = [...commonItems]
     if (student && studentrole === "pro") {
       sidebarItems.push(...proSpecificItems)
@@ -767,7 +763,9 @@ function MyInternshipsPage() {
                 {student.name ? student.name.charAt(0) : "S"}
               </div>
               <div>
-                <div style={{ fontSize: "14px", fontWeight: "bold", color: "#4a4a6a" }}>Student User{studentrole === "pro" && (
+                <div style={{ fontSize: "14px", fontWeight: "bold", color: "#4a4a6a" }}>
+                  Student User
+                  {studentrole === "pro" && (
                     <span
                       style={{
                         display: "inline-flex",
@@ -1283,26 +1281,26 @@ function MyInternshipsPage() {
                 }}
               >
                 Student User
-              {studentrole === "pro" && (
-                    <span
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        marginLeft: "8px",
-                        backgroundColor: "#ffd700",
-                        color: "#4a4a6a",
-                        fontSize: "10px",
-                        fontWeight: "bold",
-                        padding: "2px 6px",
-                        borderRadius: "10px",
-                        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-                      }}
-                    >
-                      PRO
-                    </span>
-                  )}
-                </div>
+                {studentrole === "pro" && (
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      marginLeft: "8px",
+                      backgroundColor: "#ffd700",
+                      color: "#4a4a6a",
+                      fontSize: "10px",
+                      fontWeight: "bold",
+                      padding: "2px 6px",
+                      borderRadius: "10px",
+                      boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                    }}
+                  >
+                    PRO
+                  </span>
+                )}
+              </div>
               <div style={{ fontSize: "12px", color: "#6a6a8a" }}>{student.name || student.email}</div>
             </div>
             <button
@@ -1778,48 +1776,118 @@ function MyInternshipsPage() {
                                       {report.status.replace(/_/g, " ").toUpperCase()}
                                     </span>
                                   </div>
-                                  {/* Display report status outside popup */}
-                                  {isReportFinalizedAndEvaluated && (
-                                    <div style={{ marginTop: "8px" }}>
-                                      <span
-                                        style={{
-                                          display: "inline-block",
-                                          padding: "3px 8px",
-                                          borderRadius: "4px",
-                                          fontSize: "12px",
-                                          fontWeight: "500",
-                                          ...reportStatusStyle(report.status),
-                                        }}
-                                      >
-                                        {report.status.replace(/_/g, " ").toUpperCase()}
-                                      </span>
-                                    </div>
-                                  )}
+                                  {/* Remove the duplicate report status display by replacing this code block: */}
+
                                   <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", alignItems: "center" }}>
                                     <button
                                       onClick={() => handleOpenFinalReportView(internship.uniqueInternshipId)}
-                                      style={
-                                        {
-                                          /* Style for View Report */
-                                        }
-                                      }
+                                      style={{
+                                        padding: "8px 12px",
+                                        backgroundColor: "#f0f9ff",
+                                        color: "#0284c7",
+                                        border: "1px solid #bae6fd",
+                                        borderRadius: "4px",
+                                        cursor: "pointer",
+                                        fontSize: "13px",
+                                        fontWeight: "500",
+                                        display: "inline-flex",
+                                        alignItems: "center",
+                                        gap: "6px",
+                                        transition: "all 0.2s",
+                                      }}
+                                      onMouseOver={(e) => {
+                                        e.currentTarget.style.backgroundColor = "#e0f2fe"
+                                      }}
+                                      onMouseOut={(e) => {
+                                        e.currentTarget.style.backgroundColor = "#f0f9ff"
+                                      }}
                                     >
+                                      <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        width="14"
+                                        height="14"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                      >
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                      </svg>
                                       View Submitted Report
                                     </button>
                                     <button
                                       onClick={() =>
                                         handleOpenReportForm(internship.uniqueInternshipId, "create_new_version")
                                       }
-                                      style={
-                                        {
-                                          /* Style for Create New */
-                                        }
-                                      }
+                                      style={{
+                                        padding: "8px 12px",
+                                        backgroundColor: "#ecfdf5",
+                                        color: "#059669",
+                                        border: "1px solid #a7f3d0",
+                                        borderRadius: "4px",
+                                        cursor: "pointer",
+                                        fontSize: "13px",
+                                        fontWeight: "500",
+                                        display: "inline-flex",
+                                        alignItems: "center",
+                                        gap: "6px",
+                                        transition: "all 0.2s",
+                                      }}
+                                      onMouseOver={(e) => {
+                                        e.currentTarget.style.backgroundColor = "#d1fae5"
+                                      }}
+                                      onMouseOut={(e) => {
+                                        e.currentTarget.style.backgroundColor = "#ecfdf5"
+                                      }}
                                     >
+                                      <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        width="14"
+                                        height="14"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                      >
+                                        <path d="M12 5v14M5 12h14"></path>
+                                      </svg>
                                       Create New Version
                                     </button>
                                     {["rejected", "flagged"].includes(report.status) && report.evaluatorComments && (
-                                      <button onClick={() => handleOpenCommentsPopup(report.evaluatorComments)}>
+                                      <button
+                                        onClick={() => handleOpenCommentsPopup(report.evaluatorComments)}
+                                        style={{
+                                          padding: "8px 12px",
+                                          backgroundColor: "#fef9c3",
+                                          color: "#854d0e",
+                                          border: "1px solid #fde047",
+                                          borderRadius: "4px",
+                                          cursor: "pointer",
+                                          fontSize: "13px",
+                                          fontWeight: "500",
+                                          display: "inline-flex",
+                                          alignItems: "center",
+                                          gap: "6px",
+                                        }}
+                                      >
+                                        <svg
+                                          xmlns="http://www.w3.org/2000/svg"
+                                          width="14"
+                                          height="14"
+                                          viewBox="0 0 24 24"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          strokeWidth="2"
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                        >
+                                          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                                        </svg>
                                         View Comments
                                       </button>
                                     )}
@@ -1858,7 +1926,38 @@ function MyInternshipsPage() {
                                         Appeal Report
                                       </button>
                                     )}
-                                    <button onClick={() => handleDeleteReport(internship.uniqueInternshipId)}>
+                                    <button
+                                      onClick={() => handleDeleteReport(internship.uniqueInternshipId)}
+                                      style={{
+                                        padding: "8px 12px",
+                                        backgroundColor: "#fee2e2",
+                                        color: "#dc2626",
+                                        border: "1px solid #fecaca",
+                                        borderRadius: "4px",
+                                        cursor: "pointer",
+                                        fontSize: "13px",
+                                        fontWeight: "500",
+                                        display: "inline-flex",
+                                        alignItems: "center",
+                                        gap: "6px",
+                                      }}
+                                    >
+                                      <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        width="14"
+                                        height="14"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                      >
+                                        <polyline points="3 6 5 6 21 6"></polyline>
+                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                        <line x1="10" y1="11" x2="10" y2="17"></line>
+                                        <line x1="14" y1="11" x2="14" y2="17"></line>
+                                      </svg>
                                       Delete Report
                                     </button>
                                   </div>
@@ -1943,7 +2042,7 @@ function MyInternshipsPage() {
                                       <button
                                         onClick={() => handleOpenFinalReportView(internship.uniqueInternshipId)}
                                         style={{
-                                          padding: "6px 10px",
+                                          padding: "8px 12px",
                                           backgroundColor: "#10b981",
                                           color: "white",
                                           border: "none",
@@ -1954,6 +2053,13 @@ function MyInternshipsPage() {
                                           display: "inline-flex",
                                           alignItems: "center",
                                           gap: "6px",
+                                          transition: "background-color 0.2s",
+                                        }}
+                                        onMouseOver={(e) => {
+                                          e.currentTarget.style.backgroundColor = "#059669"
+                                        }}
+                                        onMouseOut={(e) => {
+                                          e.currentTarget.style.backgroundColor = "#10b981"
                                         }}
                                       >
                                         <svg

@@ -384,6 +384,12 @@ function StudentPage() {
     showAppNotification("Navigating to applications page...", "info")
   }
 
+  const handleviewedprofile = () => {
+    setActiveSection("jobs")
+    navigate("/viewprofile", { state: { ...location.state } })
+  }
+
+
   const handleMyInternshipsClick = () => {
     resetViews()
     // setShowMyInternshipsView(true); // Keep if you want to display internships here
@@ -552,6 +558,7 @@ function StudentPage() {
     { id: "appointments", label: "Appointments", icon: "📅", action: handleAppointmentsClick },
     { id: "assessments", label: "Online Assessments", icon: "📋", action: handleAssessmentsClick },
     { id: "workshops", label: "Workshops", icon: "🔧", action: handleWorkshopsClick },
+    { id: "Who viewed my profile", label: "Who viewed my profile", icon: "👁", action: handleviewedprofile},
   ]
 
   const Sidebar = ({ menuOpen, toggleMenu }) => {

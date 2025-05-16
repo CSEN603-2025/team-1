@@ -1,7 +1,7 @@
-"use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react" // Import useCallback
 import { useNavigate, useLocation } from "react-router-dom"
+// Assuming these functions handle localStorage safely within themselves
 import { setNotification, getNotification, clearNotifications } from "./notification"
 
 const StudentJobs = () => {
@@ -30,202 +30,179 @@ const StudentJobs = () => {
   const [isPopupOpen, setIsPopupOpen] = useState(false)
   const [notifications, setNotifications] = useState([])
   const [viewedNotifications, setViewedNotifications] = useState([])
-  const [error, setError] = useState(null)
+  const [error, setError] = useState(null) // State to show loading errors
 
   // For modal
   const [showInternshipInfoModal, setShowInternshipInfoModal] = useState(false)
 
+  // Ensure student object is initialized safely
   const student = location.state?.user ||
     location.state?.studentj ||
-    location.state?.student || { email: "default@example.com" }
+    location.state?.student || { email: "default@example.com", name: "Guest", major: "Unknown" } // Provide default name and major
 
   const [appliedInternships, setAppliedInternships] = useState(() => {
     const storedApplied = localStorage.getItem("appliedInternships")
-    return storedApplied ? JSON.parse(storedApplied) : []
+    console.log(storedApplied)
+    // Safely parse, default to [] on error or null
+    if (storedApplied) {
+      try {
+        const parsed = JSON.parse(storedApplied)
+        return Array.isArray(parsed) ? parsed : [] // Ensure it's an array
+      } catch (e) {
+        console.error("Failed to parse appliedInternships from localStorage:", e)
+        // Optionally show a user notification about corrupted data
+        return [] // Default to empty array on error
+      }
+    }
+    return [] // Default to empty array if no item found
   })
 
+  // Keys for localStorage based on student email
   const profileKey = student?.email ? `studentProfile_${student.email}` : "studentProfile_default"
   const viewedNotificationsKey = student?.email ? `viewedNotifications_${student.email}` : "viewedNotifications_default"
 
+
+  const showAppNotification = useCallback((message, type = "info") => {
+    setNotificationContent({ show: true, message, type })
+    const timer = setTimeout(() => setNotificationContent({ show: false, message: "", type: "" }), 3000)
+    return () => clearTimeout(timer) // Cleanup function for the timeout
+  }, []) // Dependencies are empty as it doesn't depend on external state that changes
+
+  // Initial data loading useEffect
   useEffect(() => {
     // Load jobs from localStorage
-    const allJobsString = localStorage.getItem("allJobs")
-    if (allJobsString) {
-      const parsedJobs = JSON.parse(allJobsString)
-      setJobs(parsedJobs)
-      setFilteredJobs(parsedJobs)
+    const storedJobsString = localStorage.getItem("allJobs")
+    let loadedJobs = []
+
+    if (storedJobsString) {
+      try {
+        loadedJobs = JSON.parse(storedJobsString)
+        // Ensure the parsed data is actually an array, default if not
+        if (!Array.isArray(loadedJobs)) {
+          console.warn("Jobs data in localStorage was not an array, resetting.")
+          loadedJobs = []; // Default to empty if data is malformed type
+        }
+      } catch (err) {
+        // This catches the "Unexpected end of JSON input" error
+        console.error("Error parsing jobs from localStorage:", err)
+        setError("Failed to load jobs from storage. Data may be corrupted.")
+        loadedJobs = [] // Default to empty on error
+      }
     } else {
-      // Mock data for jobs if none exist
+      // If no jobs found in localStorage, you could initialize mock data here
+      // Example (uncomment if needed):
+      /*
       const mockJobs = [
-        {
-          id: 1,
-          title: "Software Engineer Intern",
-          companyName: "Tech Innovations Inc.",
-          companyEmail: "info@techinnovations.com",
-          duration: "3 months",
-          isPaid: true,
-          industry: "Technology",
-          description: "Join our engineering team to develop cutting-edge web applications using React and Node.js.",
-          skills: "JavaScript, React, Node.js",
-          location: "San Francisco, CA",
-          internRecommendations: 24,
-          applicants: [],
-        },
-        {
-          id: 2,
-          title: "Data Science Intern",
-          companyName: "Tech Innovations Inc.",
-          companyEmail: "info@techinnovations.com",
-          duration: "6 months",
-          isPaid: true,
-          industry: "Technology",
-          description: "Work with our data science team on machine learning models and data analysis projects.",
-          skills: "Python, Machine Learning, SQL",
-          location: "San Francisco, CA",
-          internRecommendations: 18,
-          applicants: [],
-        },
-        {
-          id: 3,
-          title: "Environmental Consultant Intern",
-          companyName: "Green Solutions Ltd.",
-          companyEmail: "contact@greensolutions.com",
-          duration: "3 months",
-          isPaid: true,
-          industry: "Environmental",
-          description: "Assist in environmental impact assessments and sustainability projects.",
-          skills: "Environmental Science, Research, Analysis",
-          location: "Portland, OR",
-          internRecommendations: 15,
-          applicants: [],
-        },
-        {
-          id: 4,
-          title: "Medical Research Intern",
-          companyName: "HealthFirst Corp",
-          companyEmail: "hr@healthfirst.com",
-          duration: "4 months",
-          isPaid: true,
-          industry: "Healthcare",
-          description: "Support our research team in conducting medical studies and analyzing results.",
-          skills: "Biology, Chemistry, Research Methods",
-          location: "Boston, MA",
-          internRecommendations: 32,
-          applicants: [],
-        },
-        {
-          id: 5,
-          title: "Healthcare Data Analyst Intern",
-          companyName: "HealthFirst Corp",
-          companyEmail: "hr@healthfirst.com",
-          duration: "3 months",
-          isPaid: true,
-          industry: "Healthcare",
-          description: "Analyze healthcare data to identify trends and improve patient outcomes.",
-          skills: "Data Analysis, SQL, Statistics",
-          location: "Boston, MA",
-          internRecommendations: 27,
-          applicants: [],
-        },
-        {
-          id: 6,
-          title: "Curriculum Developer Intern",
-          companyName: "EduGlobal Services",
-          companyEmail: "info@eduglobal.com",
-          duration: "2 months",
-          isPaid: false,
-          industry: "Education",
-          description: "Develop educational content and curriculum for K-12 students.",
-          skills: "Education, Content Creation, Research",
-          location: "Chicago, IL",
-          internRecommendations: 8,
-          applicants: [],
-        },
-        {
-          id: 7,
-          title: "Financial Analyst Intern",
-          companyName: "FinancePlus Group",
-          companyEmail: "careers@financeplus.com",
-          duration: "6 months",
-          isPaid: true,
-          industry: "Finance",
-          description: "Assist in financial analysis, reporting, and investment research.",
-          skills: "Finance, Economics, Excel",
-          location: "New York, NY",
-          internRecommendations: 19,
-          applicants: [],
-        },
-        {
-          id: 8,
-          title: "Marketing Intern",
-          companyName: "CreativeMinds Agency",
-          companyEmail: "jobs@creativeminds.com",
-          duration: "3 months",
-          isPaid: false,
-          industry: "Marketing",
-          description: "Support our marketing team in campaign development and social media management.",
-          skills: "Marketing, Social Media, Communication",
-          location: "Los Angeles, CA",
-          internRecommendations: 11,
-          applicants: [],
-        },
-      ]
-      setJobs(mockJobs)
-      setFilteredJobs(mockJobs)
-      localStorage.setItem("allJobs", JSON.stringify(mockJobs))
+        { id: 1, title: "Software Engineer Intern", companyName: "Tech Innovations Inc.", companyEmail: "info@techinnovations.com", duration: "3 months", isPaid: true, industry: "Technology", description: "...", skills: "...", location: "...", internRecommendations: 24, applicants: [] },
+         // ... other mock jobs
+      ];
+      loadedJobs = mockJobs;
+      // Optional: Save mock data to localStorage initially
+      try {
+         localStorage.setItem("allJobs", JSON.stringify(mockJobs));
+      } catch (err) {
+         console.error("Failed to save mock jobs to localStorage:", err);
+      }
+      */
+       loadedJobs = []; // Default to empty array if no data and no mock data used
     }
 
-    // Load profile from localStorage
+    setJobs(loadedJobs)
+    setFilteredJobs(loadedJobs) // Initialize filtered jobs with all jobs
+
+    // Load profile from localStorage - Add similar safe parsing
     try {
       const savedProfile = localStorage.getItem(profileKey)
       if (savedProfile) {
-        setProfile(JSON.parse(savedProfile))
+        const parsedProfile = JSON.parse(savedProfile)
+        // Ensure parsed data is an object, default if not
+         if (typeof parsedProfile === 'object' && parsedProfile !== null) {
+            setProfile(parsedProfile)
+         } else {
+             console.warn("Profile data in localStorage was not an object, resetting.");
+             setProfile({ jobInterests: "", industry: "" }); // Default structure
+         }
       }
     } catch (err) {
       console.error("Error loading profile:", err)
+       setError("Failed to load profile from storage. Data may be corrupted.");
+       setProfile({ jobInterests: "", industry: "" }); // Default on error
     }
 
-    setTimeout(() => {
-      setLoading(false)
-      showAppNotification("Welcome to Jobs Portal", "info")
-    }, 800)
-  }, [profileKey])
-
-  useEffect(() => {
-    localStorage.setItem("appliedInternships", JSON.stringify(appliedInternships))
-  }, [appliedInternships])
-
-  useEffect(() => {
+    // Load viewed notifications from localStorage - Add similar safe parsing
     try {
       const savedViewedNotifications = localStorage.getItem(viewedNotificationsKey)
       if (savedViewedNotifications) {
-        setViewedNotifications(JSON.parse(savedViewedNotifications))
+        const parsedViewed = JSON.parse(savedViewedNotifications)
+         // Ensure parsed data is an array, default if not
+         if (Array.isArray(parsedViewed)) {
+            setViewedNotifications(parsedViewed)
+         } else {
+             console.warn("Viewed notifications data in localStorage was not an array, resetting.");
+             setViewedNotifications([]); // Default to empty
+         }
       }
     } catch (err) {
       console.error("Error loading viewed notifications:", err)
+      setError("Failed to load notification history from storage. Data may be corrupted.");
+      setViewedNotifications([]); // Default to empty on error
     }
-  }, [viewedNotificationsKey])
 
+    // Simulate loading delay if needed, then set loading to false
+    setTimeout(() => {
+      setLoading(false)
+      // Show welcome notification only if no critical loading error occurred
+      if (!error) {
+         showAppNotification("Welcome to Jobs Portal", "info")
+      }
+    }, 800) // Adjusted timeout
+
+  }, [profileKey, viewedNotificationsKey, showAppNotification, error]) // Include dependencies used inside useEffect
+
+  // Effect to save appliedInternships when it changes
+  useEffect(() => {
+     try {
+        localStorage.setItem("appliedInternships", JSON.stringify(appliedInternships))
+        console.log(appliedInternships)
+     } catch (err) {
+         console.error("Error saving applied internships to localStorage:", err);
+         showAppNotification("Failed to save application status.", "error");
+     }
+  }, [appliedInternships, showAppNotification]) // Add showAppNotification as dependency
+
+  // Effect to save viewedNotifications when it changes
+  useEffect(() => {
+      try {
+        localStorage.setItem(viewedNotificationsKey, JSON.stringify(viewedNotifications))
+      } catch (err) {
+        console.error("Error saving viewed notifications:", err)
+        showAppNotification("Failed to save notification history.", "error");
+      }
+  }, [viewedNotifications, viewedNotificationsKey, showAppNotification]) // Add showAppNotification as dependency
+
+  // Effect to fetch notifications periodically
   useEffect(() => {
     if (student?.email) {
       const interval = setInterval(() => {
         try {
-          const newNotifications = getNotification(student.email) || []
-          console.log(student.email)
-          console.log(newNotifications)
+          // getNotification must be implemented safely, handling its own storage reads
+          const newNotifications = getNotification(student.email) || [] // Assuming it returns array or null/undefined
+          // Check if notifications actually changed to avoid infinite loops if state update is expensive
           if (JSON.stringify(newNotifications) !== JSON.stringify(notifications)) {
             setNotifications(newNotifications)
           }
         } catch (err) {
           console.error("Error fetching notifications:", err)
+          // Consider setting an error state or showing a temporary notification for fetching issues
         }
       }, 3000)
       return () => clearInterval(interval)
     }
-  }, [student?.email, notifications])
+  }, [student?.email, notifications]) // Depend on student email and notifications state
 
   // Filter jobs based on search and filters
   useEffect(() => {
+    // Only apply filtering if showFiltered is false, otherwise use the jobs determined by handleFilterByProfile/handleRecommendations
     if (!showFiltered) {
       let results = jobs
 
@@ -233,8 +210,8 @@ const StudentJobs = () => {
         const lowerSearchTerm = searchTerm.toLowerCase()
         results = results.filter(
           (job) =>
-            job.title.toLowerCase().includes(lowerSearchTerm) ||
-            job.companyName.toLowerCase().includes(lowerSearchTerm) ||
+            (job.title && job.title.toLowerCase().includes(lowerSearchTerm)) ||
+            (job.companyName && job.companyName.toLowerCase().includes(lowerSearchTerm)) ||
             (job.description && job.description.toLowerCase().includes(lowerSearchTerm)),
         )
       }
@@ -257,37 +234,12 @@ const StudentJobs = () => {
 
       setFilteredJobs(results)
     }
+    // This effect should run when filter criteria (searchTerm, industryFilter, etc.) or the base 'jobs' list changes
+    // It should NOT run when 'filteredJobs' changes or when 'showFiltered' becomes true (as it handles the !showFiltered case)
   }, [jobs, searchTerm, industryFilter, durationFilter, paidFilter, showFiltered])
 
-  const unreadNotifications = notifications.filter((n) => !viewedNotifications.includes(n.id))
 
-  // Dashboard cards data
-//   const dashboardCards = [
-//     {
-//       title: "Available Internships",
-//       count: jobs.length,
-//       icon: "💼",
-//       color: "#c5d5f7",
-//       action: () => {
-//         setShowFiltered(false)
-//         setFilteredJobs(jobs)
-//       },
-//     },
-//     {
-//       title: "Applied Internships",
-//       count: appliedInternships.length,
-//       icon: "📝",
-//       color: "#d5c5f7",
-//       action: () => handleGoToMyApplications(),
-//     },
-//     {
-//       title: "Recommended Internships",
-//       count: jobs.filter((job) => job.internRecommendations > 20).length,
-//       icon: "👍",
-//       color: "#c5e8f7",
-//       action: () => handleRecommendations(),
-//     },
-//   ]
+  const unreadNotifications = notifications.filter((n) => !viewedNotifications.includes(n.id))
 
   const handleLogout = () => setConfirmLogout(true)
 
@@ -296,60 +248,80 @@ const StudentJobs = () => {
     if (confirm) {
       setLoading(true)
       showAppNotification("Logging out...", "info")
+      // Clear sensitive data from localStorage on logout if necessary
+       try {
+           // Example: localStorage.removeItem(profileKey);
+           // localStorage.removeItem(viewedNotificationsKey);
+           // Consider what data needs to persist and what needs clearing per user session
+       } catch(e) {
+           console.error("Error clearing storage on logout:", e);
+       }
+
       setTimeout(() => navigate("/"), 1000)
     }
   }
 
   const toggleMenu = () => setMenuOpen(!menuOpen)
 
-  const showAppNotification = (message, type = "info") => {
-    setNotificationContent({ show: true, message, type })
-    setTimeout(() => setNotificationContent({ show: false, message: "", type: "" }), 3000)
-  }
-
   const resetViews = () => {
-    // Reset any specific views if needed
+    // Reset any specific views/filters if needed when navigating via sidebar
+    setShowFiltered(false);
+    setSearchTerm("");
+    setIndustryFilter("");
+    setDurationFilter("");
+    setPaidFilter("");
+    // Note: setFilteredJobs will be updated by the filtering useEffect when these states change
   }
 
   const handleHomeClick = () => {
     resetViews()
-    navigate("/studentpage", { state: { student } })
+    // Navigate to dashboard, passing student state
+    navigate("/studentpage", { state: { student: student } })
     showAppNotification("Navigating to dashboard...", "info")
   }
 
   const handleProfileClick = () => {
     resetViews()
-    navigate("/studentprofile", { state: { student } })
+    // Navigate to profile, passing student state
+    navigate("/studentprofile", { state: { student: student } })
     showAppNotification("Navigating to profile page...", "info")
   }
 
   const handleCoursesClick = () => {
     resetViews()
-    navigate("/studentpage", { state: { student } })
+     // Assuming /studentpage handles rendering courses
+    navigate("/studentpage", { state: { student: student } })
     showAppNotification("Navigating to courses...", "info")
   }
 
   const handleBrowseJobsClick = () => {
     resetViews()
     setActiveSection("jobs")
+    // Reset filters to show all jobs when explicitly clicking browse jobs
+    setShowFiltered(false);
+    setSearchTerm("");
+    setIndustryFilter("");
+    setDurationFilter("");
+    setPaidFilter("");
+    // filteredJobs will update via useEffect
     showAppNotification("Browsing jobs...", "info")
   }
 
   const handleMyApplicationsClick = () => {
     resetViews()
-    navigate("/studentapplications", { state: { student } })
+    navigate("/studentapplications", { state: { student: student } })
     showAppNotification("Navigating to applications page...", "info")
   }
 
   const handleMyInternshipsClick = () => {
     resetViews()
-    navigate("/myinternships", { state: { student } })
+    navigate("/myinternships", { state: { student: student } })
     showAppNotification("Navigating to internships page...", "info")
   }
 
   const handleCompaniesClick = () => {
     resetViews()
-    navigate("/companiesforstudents", { state: { student } })
+    navigate("/companiesforstudents", { state: { student: student } })
     showAppNotification("Navigating to companies page...", "info")
   }
 
@@ -360,34 +332,45 @@ const StudentJobs = () => {
 
   const handleBellClick = () => {
     if (student?.email) {
+      // getNotification should safely handle reading from localStorage
       const fetchedNotifications = getNotification(student.email) || []
       setNotifications(fetchedNotifications)
       setIsPopupOpen((prev) => !prev)
+
+      // Mark notifications as viewed when the popup is opened
       if (!isPopupOpen) {
-        setNotificationContent({ show: false, message: "", type: "" })
-        const notificationIds = fetchedNotifications.map((n) => n.id)
-        const updatedViewedNotifications = [...new Set([...viewedNotifications, ...notificationIds])]
-        setViewedNotifications(updatedViewedNotifications)
-        try {
-          localStorage.setItem(viewedNotificationsKey, JSON.stringify(updatedViewedNotifications))
-        } catch (err) {
-          console.error("Error saving viewed notifications:", err)
+        setNotificationContent({ show: false, message: "", type: "" }) // Hide any transient notification
+        const notificationIds = fetchedNotifications.map((n) => n.id).filter(Boolean) // Ensure IDs are valid
+        if (notificationIds.length > 0) {
+            const updatedViewedNotifications = [...new Set([...viewedNotifications, ...notificationIds])]
+            setViewedNotifications(updatedViewedNotifications)
+             // Saving to localStorage is handled by the useEffect
         }
       }
     } else {
       console.warn("Student email not available for fetching notifications.")
+      showAppNotification("Student email not found for notifications.", "error");
     }
   }
 
   const handleClosePopup = () => {
-    if (student?.email) clearNotifications(student.email)
-    setNotifications([])
+     // Clear from storage via utility function if desired
+    if (student?.email) {
+        try {
+            clearNotifications(student.email); // clearNotifications should safely handle deleting from storage
+        } catch (err) {
+            console.error("Error clearing notifications from storage:", err);
+            showAppNotification("Failed to clear notifications.", "error");
+        }
+    }
+    setNotifications([]) // Clear state regardless of storage success
     setIsPopupOpen(false)
   }
 
   const handleShowAll = () => {
     setFilteredJobs(jobs)
-    setShowFiltered(false)
+    setShowFiltered(false) // Important: Reset showFiltered to false
+    // Also reset filter inputs
     setSearchTerm("")
     setIndustryFilter("")
     setDurationFilter("")
@@ -423,22 +406,21 @@ const StudentJobs = () => {
                 (interest) =>
                   jobTitle.includes(interest) || jobSkills.includes(interest) || jobDescription.includes(interest),
               )
-            : true
+            : true // If no job interests are specified, this part matches everything
 
         // Check for industry match
         const isIndustryMatch = studentIndustry
           ? jobIndustry.includes(studentIndustry) || (jobDescription && jobDescription.includes(studentIndustry))
-          : true
+          : true // If no industry is specified, this part matches everything
 
-        // Return jobs that match either job interests OR industry
-        return hasJobMatch || isIndustryMatch
+         // Return jobs that match either job interests OR industry OR both
+        return hasJobMatch || isIndustryMatch;
       })
 
       setFilteredJobs(filtered)
-      setShowFiltered(true)
+      setShowFiltered(true) // Important: Set showFiltered to true
       setLoadingProfile(false)
 
-      // Show a notification about the filter results
       if (filtered.length === 0) {
         showAppNotification("No internships match your profile. Try updating your interests.", "info")
       } else {
@@ -451,10 +433,10 @@ const StudentJobs = () => {
     setLoadingProfile(true)
 
     setTimeout(() => {
-      // Filter jobs with high recommendations
+      // Filter jobs with high recommendations (e.g., > 15)
       const recommendedJobs = jobs.filter((job) => job.internRecommendations > 15)
       setFilteredJobs(recommendedJobs)
-      setShowFiltered(true)
+      setShowFiltered(true) // Important: Set showFiltered to true
       setLoadingProfile(false)
       showAppNotification("Showing internships recommended by other interns", "success")
     }, 1000) // Simulate loading delay
@@ -470,70 +452,165 @@ const StudentJobs = () => {
   }
 
  const handleApply = () => {
-     if (selectedJob && selectedJob.companyEmail && student) {
-       const alreadyApplied = appliedInternships.some(
-         (applied) => applied.title === selectedJob.title && applied.companyName === selectedJob.companyName
-       );
-       if (!alreadyApplied) {
-         const message = `${student.email} has applied to ${selectedJob.title}.`;
-         setNotification(message, selectedJob.companyEmail);
-         const newApplication = {
-           ...selectedJob,
-           status: 'pending',
-           documents: extraDocuments.map(file => file.name),
-           studentProfile: student, 
-         };
-         setAppliedInternships([...appliedInternships, newApplication]);
-         alert(`Applied to ${selectedJob.title} at ${selectedJob.companyName}! Status: Pending. Documents uploaded: ${extraDocuments.map(file => file.name).join(', ')}`);
-         setSelectedJob(null);
-         setExtraDocuments([]);
- 
-         const updatedAllJobs = jobs.map(job => {
-           if (job.title === selectedJob.title && job.companyName === selectedJob.companyName) {
-             return { ...job, applicants: [...(job.applicants || []), student] };
-               
- 
-           }
-           return job;
-         });
-         localStorage.setItem('allJobs', JSON.stringify(updatedAllJobs));
-         setJobs(updatedAllJobs);
-         console.log(updatedAllJobs)
-         console.log("aloo")
-         
-         const companyJobsKey = `companyJobs_${selectedJob.companyEmail}`;
-         const companyJobsString = localStorage.getItem(companyJobsKey);
-         if (companyJobsString) {
-           const companyJobs = JSON.parse(companyJobsString);
-           const updatedCompanyJobs = companyJobs.map(job => {
-             if (job.title === selectedJob.title) {
-               return { ...job, applicants: [...(job.applicants || []), student] };
-             }
-             return job;
-           });
-           localStorage.setItem(companyJobsKey, JSON.stringify(updatedCompanyJobs));
-           console.log(updatedCompanyJobs)
-         } else {
-           console.warn(`Company jobs not found in localStorage for key: ${companyJobsKey}`);
-         }
-       } 
-       else {
-         alert('You have already applied to this internship.');
-       }
-     } else if (!selectedJob) {
+     // Basic validation
+     if (!selectedJob) {
        alert('Please select an internship to apply.');
-     } else if (!selectedJob.companyEmail) {
-       alert('Error applying: Internship details missing company information.');
-     } else if (!student) {
-       alert('Student information not found. Please log in again.');
+       return;
      }
-   };
+     if (!selectedJob.companyEmail) {
+       alert('Error applying: Internship details missing company information.');
+       return;
+     }
+      if (!student?.email) { // Check for necessary student info
+       alert('Student information not found. Please log in again.');
+       return;
+     }
+
+
+       const alreadyApplied = appliedInternships.some(
+         // Use a more robust check if possible, maybe a unique job ID + student email
+         (applied) => applied.id === selectedJob.id // Assuming jobs have unique IDs
+         // Fallback if no IDs: applied.title === selectedJob.title && applied.companyName === selectedJob.companyName
+       );
+
+       if (alreadyApplied) {
+         alert('You have already applied to this internship.');
+         return;
+       }
+
+       // Proceed with application
+       const message = `${student.email} has applied to ${selectedJob.title}.`;
+       // setNotification should handle writing to the company's storage safely
+       try {
+          setNotification(message, selectedJob.companyEmail);
+       } catch(err) {
+           console.error("Failed to send application notification:", err);
+           showAppNotification("Failed to notify company about application.", "error");
+       }
+
+
+       const newApplication = {
+         // Copy necessary job details
+         id: selectedJob.id, // Include ID if available
+         title: selectedJob.title,
+         companyName: selectedJob.companyName,
+         companyEmail: selectedJob.companyEmail, // Include company email
+         duration: selectedJob.duration,
+         isPaid: selectedJob.isPaid,
+         industry: selectedJob.industry,
+         location: selectedJob.location,
+         status: 'pending',
+         // Store only file names or relevant info, not file objects directly
+         documents: extraDocuments.map(file => file.name),
+         // Store minimal, non-sensitive student info needed for the application record
+         student: {
+             email: student.email,
+             name: student.name || 'N/A',
+             major: student.major || 'N/A',
+             // Add other relevant student profile info needed for applications, but be mindful of privacy
+         },
+         applicationDate: new Date().toISOString(), // Record application date
+       };
+
+       // Update appliedInternships state (localStorage save is handled by useEffect)
+       setAppliedInternships([...appliedInternships, newApplication]);
+
+        // Show confirmation message
+       alert(`Applied to ${selectedJob.title} at ${selectedJob.companyName}! Status: Pending. Documents uploaded: ${extraDocuments.map(file => file.name).join(', ')}`);
+
+       // Clear modal state
+       setSelectedJob(null);
+       setExtraDocuments([]);
+
+       // --- Update the 'allJobs' list in localStorage (Optional but good for tracking applicants per job) ---
+       // This part updates the 'applicants' array *within* the job listing itself
+       const updatedAllJobs = jobs.map(job => {
+         if (job.id === selectedJob.id) { // Match by ID for robustness
+            // Ensure applicants array exists and add student info (minimal)
+           const currentApplicants = Array.isArray(job.applicants) ? job.applicants : [];
+           // Avoid adding the same student multiple times to the job's applicant list
+           const isStudentAlreadyListed = currentApplicants.some(applicant => applicant.email === student.email);
+           if (!isStudentAlreadyListed) {
+              return {
+                 ...job,
+                 applicants: [...currentApplicants, { email: student.email, name: student.name || 'N/A' }]
+                 };
+           }
+         }
+         return job; // Return unchanged job if it's not the selected one
+       });
+
+        // Update state and localStorage for 'allJobs' safely
+       try {
+         localStorage.setItem('allJobs', JSON.stringify(updatedAllJobs));
+         setJobs(updatedAllJobs); // Update component state
+         // Note: filteredJobs will update automatically via its useEffect dependency on 'jobs'
+       } catch (err) {
+          console.error("Error saving updated jobs (with applicants) to localStorage:", err);
+          showAppNotification("Failed to update job listing applicant data.", "error");
+       }
+
+
+       // --- Update the company-specific jobs list in localStorage (Critical for companies) ---
+       // This part updates the job listing within the company's own storage key
+       const companyJobsKey = `companyJobs_${selectedJob.companyEmail}`;
+       const companyJobsString = localStorage.getItem(companyJobsKey);
+       let companyJobs = []; // Default to empty array if nothing found
+
+       if (companyJobsString) {
+         try {
+           companyJobs = JSON.parse(companyJobsString);
+           // Ensure parsed data is an array, default if not
+           if (!Array.isArray(companyJobs)) {
+              console.warn(`Company jobs data for ${selectedJob.companyEmail} was not an array, resetting.`);
+              companyJobs = [];
+           }
+         } catch (err) {
+           // This catches parsing errors for company-specific data
+           console.error(`Failed to parse company jobs for ${selectedJob.companyEmail}:`, err);
+           showAppNotification("Failed to read company's job list for update.", "error");
+           companyJobs = []; // Default to empty array on parse error
+         }
+       }
+
+       const updatedCompanyJobs = companyJobs.map(job => {
+          // Match by job ID if available, or title+companyName as a fallback
+         if (job.id === selectedJob.id) { // Or if (!job.id && job.title === selectedJob.title && job.companyName === selectedJob.companyName)
+             // Ensure applicants array exists within the company's job object
+            const currentApplicants = Array.isArray(job.applicants) ? job.applicants : [];
+            // Avoid adding the same student multiple times
+            const isStudentAlreadyListed = currentApplicants.some(applicant => applicant.email === student.email);
+            if (!isStudentAlreadyListed) {
+                // Add minimal student info to the company's applicant list for this specific job
+               return {
+                  ...job,
+                  applicants: [...currentApplicants, { email: student.email, name: student.name || 'N/A' }]
+               };
+            }
+         }
+         return job; // Return unchanged job if it's not the selected one
+       });
+
+       // Save updated company jobs to localStorage safely
+       try {
+          localStorage.setItem(companyJobsKey, JSON.stringify(updatedCompanyJobs));
+          console.log(`Updated company jobs for ${selectedJob.companyEmail}:`, updatedCompanyJobs);
+       } catch (err) {
+          console.error(`Error saving updated company jobs for ${selectedJob.companyEmail}:`, err);
+          showAppNotification("Failed to save updated company's job list.", "error");
+       }
+     };
+
 
   const handleGoToMyApplications = () => {
-    navigate("/studentapplications", { state: { student } })
+    navigate("/studentapplications", { state: { student: student } })
   }
 
   const isAlreadyApplied = (job) => {
+     // Use ID for reliable checking if available, otherwise fallback
+     if (job?.id) {
+         return appliedInternships.some((applied) => applied.id === job.id);
+     }
     return appliedInternships.some((applied) => applied.title === job.title && applied.companyName === job.companyName)
   }
 
@@ -545,26 +622,58 @@ const StudentJobs = () => {
         "This video provides general tips for finding and succeeding in internships. For specific requirements related to your major, please consult your academic advisor.",
     }
 
+    // Use optional chaining and check if student.major exists before accessing it
     if (student?.major) {
       switch (student.major.toLowerCase()) {
         case "computer science":
+        case "software engineering": // Add related majors
           return {
-            title: "Internship Insights for Computer Science Majors",
-            embedHtml: `<iframe width="560" height="315" src="https://www.youtube.com/embed/VSkvwzqo-Pk?si=ngv6R1pNMKALFV_-" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`,
+            title: "Internship Insights for Computer Science/Software Engineering Majors",
+            embedHtml: `<iframe width="560" height="315" src="https://www.youtube.com/embed/VSkvwzqo-Pk?si=ngv6R1pNMKALFV_-" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`, // Replace with a relevant CS video if you have one
             description: "Learn about typical internships for CS students and how to make the most of them.",
           }
         case "electrical engineering":
           return {
             title: "Electrical Engineering Internship Opportunities",
-            embedHtml: `<iframe width="560" height="315" src="https://www.youtube.com/embed/VSkvwzqo-Pk?si=ngv6R1pNMKALFV_-" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`,
+            embedHtml: `<iframe width="560" height="315" src="https://www.youtube.com/embed/VSkvwzqo-Pk?si=ngv6R1pNMKALFV_-" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`,// Replace with a relevant EE video if you have one
             description: "Explore internships in the field of Electrical Engineering.",
           }
         case "business administration":
+        case "marketing": // Add related majors
           return {
-            title: "Business Administration Internship Pathways",
-            embedHtml: `<iframe width="560" height="315" src="https://www.youtube.com/embed/VSkvwzqo-Pk?si=ngv6R1pNMKALFV_-" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`,
-            description: "Discover various internship roles for Business Administration students.",
+            title: "Business/Marketing Administration Internship Pathways",
+            embedHtml: `<iframe width="560" height="315" src="https://www.youtube.com/embed/VSkvwzqo-Pk?si=ngv6R1pNMKALFV_-" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`,// Replace with a relevant Business video if you have one
+            description: "Discover various internship roles for Business and Marketing students.",
           }
+           case "environmental science":
+           case "environmental studies":
+               return {
+                title: "Environmental Internship Pathways",
+                embedHtml: `<iframe width="560" height="315" src="https://www.youtube.com/embed/VSkvwzqo-Pk?si=ngv6R1pNMKALFV_-" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`, // Replace with a relevant Environmental video if you have one
+                 description: "Explore internships in environmental fields.",
+               }
+            case "healthcare":
+            case "medicine":
+            case "biology":
+            case "chemistry":
+                return {
+                 title: "Healthcare & Science Internship Pathways",
+                 embedHtml: `<iframe width="560" height="315" src="https://www.youtube.com/embed/VSkvwzqo-Pk?si=ngv6R1pNMKALFV_-" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`, // Replace with a relevant Healthcare/Science video if you have one
+                 description: "Discover internship opportunities in healthcare and related sciences.",
+                }
+             case "education":
+                 return {
+                  title: "Education Internship Pathways",
+                  embedHtml: `<iframe width="560" height="315" src="https://www.youtube.com/embed/VSkvwzqo-Pk?si=ngv6R1pNMKALFV_-" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`, // Replace with a relevant Education video if you have one
+                  description: "Explore internships in education and curriculum development.",
+                 }
+             case "finance":
+             case "economics":
+                  return {
+                   title: "Finance & Economics Internship Pathways",
+                   embedHtml: `<iframe width="560" height="315" src="https://www.youtube.com/embed/VSkvwzqo-Pk?si=ngv6R1pNMKALFV_-" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`, // Replace with a relevant Finance video if you have one
+                   description: "Discover internships in finance, economics, and related fields.",
+                  }
         default:
           return {
             title: `Internship Guidance for ${student.major} Majors`,
@@ -573,7 +682,7 @@ const StudentJobs = () => {
           }
       }
     }
-    return defaultVideo
+    return defaultVideo // Return default if student or major is not available
   }
 
   const commonItems = [
@@ -712,6 +821,7 @@ const StudentJobs = () => {
     )
   }
 
+  // Show global error message if loading failed
   if (error) {
     return (
       <div
@@ -743,10 +853,10 @@ const StudentJobs = () => {
         >
           !
         </div>
-        <h2 style={{ color: "#4a4a6a" }}>Error Loading Jobs</h2>
+        <h2 style={{ color: "#4a4a6a" }}>Error Loading Data</h2>
         <p style={{ color: "#6a6a8a" }}>{error}</p>
         <button
-          onClick={() => window.location.reload()}
+          onClick={() => window.location.reload()} // Allow user to try reloading
           style={{
             padding: "10px 20px",
             backgroundColor: "#6c757d",
@@ -760,10 +870,27 @@ const StudentJobs = () => {
         >
           Try Again
         </button>
+        <button
+           onClick={() => navigate('/')} // Option to go back to login/homepage
+           style={{
+             padding: "10px 20px",
+             backgroundColor: "#b5c7f8",
+             color: "#4a4a6a",
+             border: "none",
+             borderRadius: "6px",
+             cursor: "pointer",
+             fontSize: "14px",
+             fontWeight: "bold",
+           }}
+         >
+           Go to Login Page
+         </button>
       </div>
     )
   }
 
+
+  // Main content render
   return (
     <div
       style={{
@@ -1011,13 +1138,13 @@ const StudentJobs = () => {
                       <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
                         {notifications.map((n, index) => (
                           <li
-                            key={n.id || index}
+                            key={n.id || index} // Use ID if available, fallback to index
                             style={{
                               padding: "12px 20px",
                               borderBottom:
                                 index < notifications.length - 1 ? "1px solid rgba(230, 230, 250, 0.4)" : "none",
                               transition: "background-color 0.2s",
-                              cursor: "default",
+                              cursor: "default", // Make it clear it's not clickable
                             }}
                             onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "rgba(230, 230, 250, 0.2)")}
                             onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
@@ -1063,36 +1190,36 @@ const StudentJobs = () => {
                       </ul>
                     )}
                   </div>
-                  {notifications.length > 0 && (
-                    <div
-                      style={{
-                        padding: "12px 20px",
-                        borderTop: "1px solid rgba(230, 230, 250, 0.7)",
-                        backgroundColor: "rgba(230, 230, 250, 0.2)",
-                        textAlign: "center",
-                      }}
-                    >
-                      <button
-                        onClick={handleClosePopup}
-                        style={{
-                          backgroundColor: "#d5c5f7",
-                          color: "#4a4a6a",
-                          border: "none",
-                          borderRadius: "6px",
-                          padding: "8px 16px",
-                          fontSize: "13px",
-                          fontWeight: "500",
-                          cursor: "pointer",
-                          transition: "background-color 0.2s",
-                          width: "100%",
-                        }}
-                        onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#c5b5e7")}
-                        onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#d5c5f7")}
-                      >
-                        Clear all notifications
-                      </button>
-                    </div>
-                  )}
+                   {notifications.length > 0 && (
+                       <div
+                         style={{
+                           padding: "12px 20px",
+                           borderTop: "1px solid rgba(230, 230, 250, 0.7)",
+                           backgroundColor: "rgba(230, 230, 250, 0.2)",
+                           textAlign: "center",
+                         }}
+                       >
+                         <button
+                           onClick={handleClosePopup}
+                           style={{
+                             backgroundColor: "#d5c5f7",
+                             color: "#4a4a6a",
+                             border: "none",
+                             borderRadius: "6px",
+                             padding: "8px 16px",
+                             fontSize: "13px",
+                             fontWeight: "500",
+                             cursor: "pointer",
+                             transition: "background-color 0.2s",
+                             width: "100%",
+                           }}
+                           onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#c5b5e7")}
+                           onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#d5c5f7")}
+                         >
+                           Clear all notifications
+                         </button>
+                       </div>
+                     )}
                 </div>
               )}
             </div>
@@ -1111,7 +1238,7 @@ const StudentJobs = () => {
                 marginRight: "10px",
               }}
             >
-              {student.name ? student.name.charAt(0).toUpperCase() : "S"}
+              {student?.name ? student.name.charAt(0).toUpperCase() : "S"}
             </div>
             <div style={{ marginRight: "20px" }}>
               <div
@@ -1125,7 +1252,7 @@ const StudentJobs = () => {
               >
                 Student User
               </div>
-              <div style={{ fontSize: "12px", color: "#6a6a8a" }}>{student.name || student.email}</div>
+              <div style={{ fontSize: "12px", color: "#6a6a8a" }}>{student?.name || student?.email || "Unknown"}</div>
             </div>
             <button
               onClick={handleLogout}
@@ -1144,7 +1271,7 @@ const StudentJobs = () => {
               }}
               onMouseOver={(e) => (e.target.style.backgroundColor = "rgba(255, 200, 200, 0.7)")}
               onMouseOut={(e) => (e.target.style.backgroundColor = "rgba(255, 200, 200, 0.5)")}
-              disabled={loading}
+              disabled={loading} // Disable during overall loading
               aria-label="Logout"
             >
               {loading ? "Please wait..." : "Logout"}
@@ -1153,7 +1280,7 @@ const StudentJobs = () => {
         </div>
 
         <div style={{ flex: 1, padding: "20px", overflowY: "auto" }}>
-          {loading ? (
+          {loading && !error ? ( // Only show loading spinner if overall loading is true AND no error occurred
             <div
               style={{
                 position: "absolute",
@@ -1260,6 +1387,7 @@ const StudentJobs = () => {
                     }}
                   >
                     <option value="">All Industries</option>
+                    {/* Ensure job.industry is not null or undefined before using it */}
                     {Array.from(new Set(jobs.map((job) => job.industry).filter(Boolean))).map((industry) => (
                       <option key={industry} value={industry}>
                         {industry}
@@ -1277,10 +1405,15 @@ const StudentJobs = () => {
                     }}
                   >
                     <option value="">Any Duration</option>
-                    <option value="1 month">1 Month</option>
+                     {/* Filter durations from available jobs */}
+                     {Array.from(new Set(jobs.map(job => job.duration).filter(Boolean))).map(duration => (
+                        <option key={duration} value={duration}>{duration}</option>
+                     ))}
+                    {/* Static options if preferred: */}
+                    {/* <option value="1 month">1 Month</option>
                     <option value="2 months">2 Months</option>
                     <option value="3 months">3 Months</option>
-                    <option value="6 months">6 Months</option>
+                    <option value="6 months">6 Months</option> */}
                   </select>
                   <select
                     value={paidFilter}
@@ -1478,7 +1611,7 @@ const StudentJobs = () => {
                       onMouseOut={(e) => {
                         e.currentTarget.style.backgroundColor = "white"
                       }}
-                      disabled={loadingProfile}
+                      disabled={loadingProfile} // Disable during filtering
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -1504,7 +1637,7 @@ const StudentJobs = () => {
                 </div>
               </div>
 
-              {loadingProfile ? (
+              {loadingProfile ? ( // Show loading spinner specifically for profile/recommendation filter
                 <div style={{ textAlign: "center", padding: "40px 0" }}>
                   <div
                     style={{
@@ -1538,11 +1671,12 @@ const StudentJobs = () => {
                       }}
                     >
                       <tr>
-                        <th
+                         <th
                           style={{
                             padding: "12px 15px",
                             textAlign: "left",
                             borderBottom: "1px solid #ddd",
+                             width: "20%", // Give columns approximate widths
                           }}
                         >
                           Company
@@ -1552,6 +1686,7 @@ const StudentJobs = () => {
                             padding: "12px 15px",
                             textAlign: "left",
                             borderBottom: "1px solid #ddd",
+                            width: "30%",
                           }}
                         >
                           Title
@@ -1561,6 +1696,7 @@ const StudentJobs = () => {
                             padding: "12px 15px",
                             textAlign: "left",
                             borderBottom: "1px solid #ddd",
+                            width: "10%",
                           }}
                         >
                           Duration
@@ -1570,15 +1706,27 @@ const StudentJobs = () => {
                             padding: "12px 15px",
                             textAlign: "left",
                             borderBottom: "1px solid #ddd",
+                             width: "5%",
                           }}
                         >
                           Paid
+                        </th>
+                         <th
+                          style={{
+                            padding: "12px 15px",
+                            textAlign: "left", // Align left for better readability
+                            borderBottom: "1px solid #ddd",
+                             width: "10%",
+                          }}
+                        >
+                          Industry
                         </th>
                         <th
                           style={{
                             padding: "12px 15px",
                             textAlign: "center",
                             borderBottom: "1px solid #ddd",
+                            width: "10%",
                           }}
                         >
                           Recommendations
@@ -1588,6 +1736,7 @@ const StudentJobs = () => {
                             padding: "12px 15px",
                             textAlign: "center",
                             borderBottom: "1px solid #ddd",
+                             width: "15%",
                           }}
                         >
                           Action
@@ -1598,7 +1747,7 @@ const StudentJobs = () => {
                       {filteredJobs.length > 0 ? (
                         filteredJobs.map((job, index) => (
                           <tr
-                            key={job.id || `${job.title}-${job.companyName}-${index}`}
+                            key={job.id || `${job.title}-${job.companyName}-${index}`} // Use job.id if available
                             style={{
                               borderBottom: "1px solid #ddd",
                               backgroundColor: index % 2 === 0 ? "#fff" : "#f9f9f9",
@@ -1609,11 +1758,12 @@ const StudentJobs = () => {
                               (e.currentTarget.style.backgroundColor = index % 2 === 0 ? "#fff" : "#f9f9f9")
                             }
                           >
-                            <td style={{ padding: "12px 15px" }}>{job.companyName}</td>
-                            <td style={{ padding: "12px 15px" }}>{job.title}</td>
-                            <td style={{ padding: "12px 15px" }}>{job.duration}</td>
+                            <td style={{ padding: "12px 15px" }}>{job.companyName || 'N/A'}</td> {/* Add fallback */}
+                            <td style={{ padding: "12px 15px" }}>{job.title || 'N/A'}</td> {/* Add fallback */}
+                            <td style={{ padding: "12px 15px" }}>{job.duration || 'N/A'}</td> {/* Add fallback */}
                             <td style={{ padding: "12px 15px" }}>
-                              {job.isPaid ? (
+                              {/* Ensure job.isPaid is boolean or handle non-boolean */}
+                              {job.isPaid === true ? (
                                 <span
                                   style={{
                                     backgroundColor: "#dcfce7",
@@ -1626,7 +1776,7 @@ const StudentJobs = () => {
                                 >
                                   Yes
                                 </span>
-                              ) : (
+                              ) : ( // Treat everything else (false, undefined, null) as Unpaid
                                 <span
                                   style={{
                                     backgroundColor: "#fee2e2",
@@ -1641,18 +1791,20 @@ const StudentJobs = () => {
                                 </span>
                               )}
                             </td>
+                            <td style={{ padding: "12px 15px" }}>{job.industry || 'N/A'}</td> {/* Add fallback */}
                             <td style={{ padding: "12px 15px", textAlign: "center" }}>
                               <span
                                 style={{
-                                  backgroundColor: job.internRecommendations > 20 ? "#e9d8fd" : "#f1f5f9",
-                                  color: job.internRecommendations > 20 ? "#6b46c1" : "#64748b",
+                                   // Ensure job.internRecommendations is a number before comparison
+                                  backgroundColor: (job.internRecommendations || 0) > 15 ? "#e9d8fd" : "#f1f5f9",
+                                  color: (job.internRecommendations || 0) > 15 ? "#6b46c1" : "#64748b",
                                   padding: "2px 8px",
                                   borderRadius: "4px",
                                   fontSize: "12px",
                                   fontWeight: "500",
                                 }}
                               >
-                                {job.internRecommendations}
+                                {job.internRecommendations || 0} {/* Add fallback */}
                               </span>
                             </td>
                             <td style={{ padding: "12px 15px", textAlign: "center" }}>
@@ -1679,7 +1831,7 @@ const StudentJobs = () => {
                       ) : (
                         <tr>
                           <td
-                            colSpan="6"
+                            colSpan="7" // Adjust colspan to match the number of columns
                             style={{
                               padding: "30px 15px",
                               textAlign: "center",
@@ -1726,12 +1878,12 @@ const StudentJobs = () => {
                   >
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                       <h2 style={{ color: "#6b46c1", marginBottom: "15px", marginTop: 0 }}>
-                        Apply for: {selectedJob.title}
+                        Apply for: {selectedJob.title || 'N/A'}
                       </h2>
                       <span
                         style={{
-                          backgroundColor: selectedJob.internRecommendations > 20 ? "#e9d8fd" : "#f1f5f9",
-                          color: selectedJob.internRecommendations > 20 ? "#6b46c1" : "#64748b",
+                          backgroundColor: (selectedJob.internRecommendations || 0) > 15 ? "#e9d8fd" : "#f1f5f9",
+                          color: (selectedJob.internRecommendations || 0) > 15 ? "#6b46c1" : "#64748b",
                           padding: "4px 10px",
                           borderRadius: "20px",
                           fontSize: "13px",
@@ -1754,7 +1906,7 @@ const StudentJobs = () => {
                         >
                           <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
                         </svg>
-                        {selectedJob.internRecommendations} Recommendations
+                        {selectedJob.internRecommendations || 0} Recommendations
                       </span>
                     </div>
 
@@ -1768,11 +1920,11 @@ const StudentJobs = () => {
                     >
                       <div>
                         <p style={{ margin: "0 0 5px 0", color: "#64748b", fontSize: "14px" }}>Company</p>
-                        <p style={{ margin: 0, fontWeight: "500", color: "#334155" }}>{selectedJob.companyName}</p>
+                        <p style={{ margin: 0, fontWeight: "500", color: "#334155" }}>{selectedJob.companyName || 'N/A'}</p>
                       </div>
                       <div>
                         <p style={{ margin: "0 0 5px 0", color: "#64748b", fontSize: "14px" }}>Duration</p>
-                        <p style={{ margin: 0, fontWeight: "500", color: "#334155" }}>{selectedJob.duration}</p>
+                        <p style={{ margin: 0, fontWeight: "500", color: "#334155" }}>{selectedJob.duration || 'N/A'}</p>
                       </div>
                       <div>
                         <p style={{ margin: "0 0 5px 0", color: "#64748b", fontSize: "14px" }}>Paid</p>
@@ -1804,8 +1956,9 @@ const StudentJobs = () => {
                     {selectedJob.skills && (
                       <div style={{ marginBottom: "20px" }}>
                         <p style={{ margin: "0 0 5px 0", color: "#64748b", fontSize: "14px" }}>Required Skills</p>
+                         {/* Ensure job.skills is a string before splitting */}
                         <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-                          {selectedJob.skills.split(",").map((skill, index) => (
+                          {(typeof selectedJob.skills === 'string' ? selectedJob.skills.split(",") : []).map((skill, index) => (
                             <span
                               key={index}
                               style={{
@@ -1888,14 +2041,14 @@ const StudentJobs = () => {
                       <div style={{ display: "flex", gap: "10px", marginTop: "20px" }}>
                         <button
                           onClick={handleApply}
-                          disabled={isAlreadyApplied(selectedJob)}
+                          disabled={isAlreadyApplied(selectedJob) || !student?.email} // Disable if already applied or no student email
                           style={{
                             padding: "12px 20px",
-                            backgroundColor: isAlreadyApplied(selectedJob) ? "#cbd5e1" : "#10b981",
-                            color: isAlreadyApplied(selectedJob) ? "#64748b" : "white",
+                            backgroundColor: (isAlreadyApplied(selectedJob) || !student?.email) ? "#cbd5e1" : "#10b981",
+                            color: (isAlreadyApplied(selectedJob) || !student?.email) ? "#64748b" : "white",
                             border: "none",
                             borderRadius: "6px",
-                            cursor: isAlreadyApplied(selectedJob) ? "not-allowed" : "pointer",
+                            cursor: (isAlreadyApplied(selectedJob) || !student?.email) ? "not-allowed" : "pointer",
                             fontSize: "16px",
                             fontWeight: "500",
                             transition: "background-color 0.2s",
@@ -1904,10 +2057,10 @@ const StudentJobs = () => {
                             gap: "8px",
                           }}
                           onMouseOver={(e) => {
-                            if (!isAlreadyApplied(selectedJob)) e.currentTarget.style.backgroundColor = "#0d9488"
+                            if (!(isAlreadyApplied(selectedJob) || !student?.email)) e.currentTarget.style.backgroundColor = "#0d9488"
                           }}
                           onMouseOut={(e) => {
-                            if (!isAlreadyApplied(selectedJob)) e.currentTarget.style.backgroundColor = "#10b981"
+                            if (!(isAlreadyApplied(selectedJob) || !student?.email)) e.currentTarget.style.backgroundColor = "#10b981"
                           }}
                         >
                           {isAlreadyApplied(selectedJob) ? (
@@ -1927,6 +2080,11 @@ const StudentJobs = () => {
                               </svg>
                               Already Applied
                             </>
+                          ) : !student?.email ? (
+                               <>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                                 Login Required
+                               </>
                           ) : (
                             <>
                               <svg

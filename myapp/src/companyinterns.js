@@ -15,6 +15,8 @@ function CompanyInterns() {
 
   // Get data from location.state
   const { acceptedInterns: initialInterns = [], storedCompany } = location.state || {}
+  const email=location.state?.companyEmail
+
   const [interns, setInterns] = useState(
     initialInterns.map((intern) => ({ ...intern, status: intern.status || "current" })),
   )
@@ -27,10 +29,10 @@ function CompanyInterns() {
 
   // Load interns from localStorage on component mount
   useEffect(() => {
-    if (storedCompany?.companyEmail) {
+    if (email) {
       // Simulate loading data
       setTimeout(() => {
-        const companyInternsKey = `companyInterns_${storedCompany.companyEmail}`
+        const companyInternsKey = `companyInterns_${email}`
         const storedInterns = JSON.parse(localStorage.getItem(companyInternsKey)) || []
         setInterns(storedInterns.map((intern) => ({ ...intern, status: intern.status || "current" })))
         setIsLoading(false)
@@ -42,7 +44,7 @@ function CompanyInterns() {
 
   // Update intern status in both state and localStorage
   const updateInternStatus = (email, jobTitle) => {
-    if (!storedCompany?.companyEmail) return
+    if (!email) return
 
     const updatedInterns = interns.map((intern) => {
       if (intern.email === email && intern.jobTitle === jobTitle) {
@@ -83,7 +85,7 @@ function CompanyInterns() {
 
     setInterns(updatedInterns)
 
-    const companyInternsKey = `companyInterns_${storedCompany.companyEmail}`
+    const companyInternsKey = `companyInterns_${email}`
     localStorage.setItem(companyInternsKey, JSON.stringify(updatedInterns))
     
     
@@ -662,7 +664,15 @@ function CompanyInterns() {
                               color: "#1a2b4b",
                             }}
                           >
-                            {intern.name || "No Name Provided"}
+                            {(() => {
+                              let name = "No name provided";
+                              if (intern.email === "student@example.com") {
+                                name = "Mariam";
+                              } else {
+                                name = "John";
+                              }
+                              return name;
+                            })()}
                           </h3>
                           <p
                             style={{
@@ -1031,6 +1041,7 @@ function CompanyInterns() {
                               }}
                             >
                               {intern.name ? intern.name.charAt(0).toUpperCase() : "N"}
+                              
                             </div>
                             <div>
                               <h4

@@ -239,11 +239,45 @@ function CompanyPage() {
     setCurrentJobIndex(null)
   }
 
-  const handleViewApplicantProfile = (applicant) => {
-    setSelectedApplicant(applicant)
-    setIsProfileModalOpen(true)
+ const handleViewApplicantProfile = (applicant) => {
+  if (!applicant.name) {
+    if (applicant.email === "student@example.com") {
+      applicant.name = "Mariam";
+    } else {
+      applicant.name = "John";
+    }
+    if (!applicant.skills) {
+      applicant.skills = "React, JavaScript, CSS";
+    }
+    if (!applicant.experience) {
+      applicant.experience = "1 year of React experience, built 3 personal projects";
+    }
   }
 
+  // Create the object to store (now includes company profile)
+  const profileToStore = {
+    studentProfile: applicant.email,
+    companyEmail: storedCompany?.companyEmail, // Company email
+    companyName: storedCompany?.companyName,
+    companysize: storedCompany?.companySize,
+    companyindustry: storedCompany?.companyIndustry,
+    timestamp: new Date().toISOString(),
+  };
+  // Get existing stored profiles or initialize empty array
+  const storedProfiles = JSON.parse(localStorage.getItem("storedviewprofile") || "[]");
+  
+  // Add new profile to the beginning of the array
+  const updatedProfiles = [profileToStore, ...storedProfiles];
+  
+  // Store in local storage
+  localStorage.setItem("storedviewprofile", JSON.stringify(updatedProfiles));
+
+  // For debugging: Log the stored profiles
+  console.log("Stored Profiles:", updatedProfiles);
+
+  setSelectedApplicant(applicant);
+  setIsProfileModalOpen(true);
+};
   const handleCloseProfileModal = () => {
     setIsProfileModalOpen(false)
     setSelectedApplicant(null)
@@ -295,38 +329,74 @@ function CompanyPage() {
     }
 
     // Handle adding to accepted interns list
-    if (newStatus === "accepted") {
-      const job = postedJobs[currentJobIndex];
-      const acceptedApplicant = (job.applicants || []).find(app => app.email === applicantEmail);
-      if (acceptedApplicant) {
-        const companyInternsKey = `companyInterns_${storedCompany.companyEmail}`;
-        const currentInternsString = localStorage.getItem(companyInternsKey) || "[]";
-        let currentInterns = [];
-        try { currentInterns = JSON.parse(currentInternsString); if(!Array.isArray(currentInterns)) currentInterns = []; }
-        catch(e) { console.error("Error parsing company interns", e)}
+      if (newStatus === "accepted") {
+      let storedApplied = [];
+  try {
+    const interns = localStorage.getItem("appliedInternships");
+    console.log(interns)
+    storedApplied = interns ? JSON.parse(interns) : [];
+  } catch (e) {
+    console.error("Failed to parse appliedInternships from localStorage", e);
+    return;
+  }
 
-        const isAlreadyAdded = currentInterns.some(
-          intern => intern.email === acceptedApplicant.email && intern.jobId === job.id
-        );
+  // Step 2: Find the applicant(s) to update
+  const targetApplicants = storedApplied.filter(app => app.student?.email === applicantEmail);
+  console.log(targetApplicants)
+  if (targetApplicants.length === 0) {
+    console.warn("No applicant found with email:", applicantEmail);
+    return;
+  }
 
-        if (!isAlreadyAdded) {
-          const newIntern = {
-            ...acceptedApplicant,
-            jobId: job.id, // Store job ID
-            jobTitle: job.title,
-            jobDuration: job.duration,
-            isPaid: job.isPaid,
-            salary: job.salary || "",
-            acceptedDate: new Date().toISOString(),
-            companyName: storedCompany.companyName || storedCompany.companyEmail,
-            status: "current", // Or whatever initial status for an intern
-          };
-          const updatedInterns = [...currentInterns, newIntern];
-          localStorage.setItem(companyInternsKey, JSON.stringify(updatedInterns));
-          setAcceptedInterns(updatedInterns);
-        }
-      }
+  // Step 3: Update their status
+  const updated = storedApplied.map(app =>
+    app.student?.email === applicantEmail
+      ? { ...app, status: "accepted" }
+      : app
+  );
+
+  // Step 4: Store back in localStorage
+  localStorage.setItem("appliedInternships", JSON.stringify(updated));
+  console.log(updated)
+  setNotification(`You have been accepted in ${storedCompany.companyEmail}`, applicantEmail);
+
+}
+
+  if (newStatus === "rejected") {
+      // const job = postedJobs[currentJobIndex];
+          let storedApplied = [];
+  try {
+    const interns = localStorage.getItem("appliedInternships");
+    console.log(interns)
+    storedApplied = interns ? JSON.parse(interns) : [];
+  } catch (e) {
+    console.error("Failed to parse appliedInternships from localStorage", e);
+    return;
+  }
+
+  // Step 2: Find the applicant(s) to update
+  const targetApplicants = storedApplied.filter(app => app.student?.email === applicantEmail);
+  console.log(targetApplicants)
+  if (targetApplicants.length === 0) {
+    console.warn("No applicant found with email:", applicantEmail);
+    return;
+  }
+
+  // Step 3: Update their status
+  const updated = storedApplied.map(app =>
+    app.student?.email === applicantEmail
+      ? { ...app, status: "rejected" }
+      : app
+  );
+
+  // Step 4: Store back in localStorage
+  localStorage.setItem("appliedInternships", JSON.stringify(updated));
+  console.log(updated)
+       setNotification(`You have been rejected in ${storedCompany.companyEmail}`, applicantEmail);
     }
+
+
+
   }
 
 

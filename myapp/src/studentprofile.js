@@ -227,7 +227,7 @@ function StudentProfilePage() {
   }
 
   const handleBrowseJobsClick = () => {
-    navigate("/jobspage", { state: { student } })
+    navigate("/studentjobs", { state: { student } })
   }
 
   const handleMyApplicationsClick = () => {

@@ -1,50 +1,9 @@
+"use client"
+
 import { useState, useEffect } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
 import SidebarFac from "./sidebarfaculty"
 import Sidebar from "./sidebarscad"
-
-// Mock data for initial reports
-const initialReports = [
-  {
-    id: 1,
-    studentname: "John Doe",
-    studentemail: "john.doe@example.com",
-    title: "Software Development Internship at Tech Co",
-    major: "Computer Science",
-    introduction: "During my internship at Tech Co, I had the opportunity to work on various projects...",
-    body: "Throughout the internship, I applied concepts from my coursework in data structures and algorithms...",
-    courses: ["Data Structures", "Algorithms", "Software Engineering"],
-    pdfFilename: "john_doe_report.pdf",
-    status: "pending",
-    comment: "",
-  },
-  {
-    id: 2,
-    studentname: "Jane Smith",
-    studentemail: "jane.smith@example.com",
-    title: "Financial Analysis Internship at Finance Corp",
-    major: "Finance",
-    introduction: "My internship at Finance Corp allowed me to gain practical experience in financial analysis...",
-    body: "I was able to apply theoretical knowledge from my finance courses to real-world scenarios...",
-    courses: ["Financial Management", "Investment Analysis", "Corporate Finance"],
-    pdfFilename: "jane_smith_report.pdf",
-    status: "accepted",
-    comment: "Excellent work! Your analysis shows deep understanding of the concepts.",
-  },
-  {
-    id: 3,
-    studentname: "Alex Johnson",
-    studentemail: "alex.johnson@example.com",
-    title: "Web Development Internship at Digital Solutions",
-    major: "Computer Science",
-    introduction: "At Digital Solutions, I worked on developing responsive web applications...",
-    body: "I utilized modern frameworks and libraries to build efficient and user-friendly interfaces...",
-    courses: ["Web Development", "UI/UX Design", "JavaScript Frameworks"],
-    pdfFilename: "alex_johnson_report.pdf",
-    status: "flagged",
-    comment: "Please provide more details about the specific technologies used.",
-  },
-]
 
 // Helper function to simulate notification service
 const setNotification = (message, email) => {
@@ -80,17 +39,78 @@ const FacultyReport = () => {
   // Load reports on component mount
   useEffect(() => {
     setLoading(true)
-    // Simulate API call
+
+    // Get all internship reports from localStorage
     setTimeout(() => {
+      // Get all reports from localStorage
+      const allReports = []
+      const uniqueIds = new Set()
+
+      // First, check if there are any reports in the "reports" key
       const savedReports = localStorage.getItem("reports")
       if (savedReports) {
-        setReports(JSON.parse(savedReports))
-      } else {
-        setReports(initialReports)
-        localStorage.setItem("reports", JSON.stringify(initialReports))
+        const parsedReports = JSON.parse(savedReports)
+        parsedReports.forEach((report) => {
+          allReports.push(report)
+          uniqueIds.add(report.id)
+        })
       }
+
+      // Then, check for reports in individual internship records
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i)
+        if (key && key.startsWith("report_")) {
+          const reportData = JSON.parse(localStorage.getItem(key))
+          if (reportData && reportData.submitted) {
+            const internshipId = key.split("report_")[1]
+
+            // Try to find the internship details
+            let internshipDetails = null
+            for (let j = 0; j < localStorage.length; j++) {
+              const internKey = localStorage.key(j)
+              if (internKey && internKey.startsWith("companyInterns_")) {
+                const internsData = JSON.parse(localStorage.getItem(internKey))
+                if (internsData) {
+                  for (const intern of internsData) {
+                    const uniqueId =
+                      `${intern.email}_${intern.jobTitle}_${internKey.split("companyInterns_")[1]}_${intern.startDate}`.replace(
+                        /\s+/g,
+                        "_",
+                      )
+                    if (uniqueId === internshipId) {
+                      internshipDetails = intern
+                      break
+                    }
+                  }
+                }
+                if (internshipDetails) break
+              }
+            }
+
+            if (internshipDetails && !uniqueIds.has(internshipId)) {
+              const report = {
+                id: internshipId,
+                studentname: internshipDetails.name || "Student",
+                studentemail: internshipDetails.email,
+                title: reportData.title || internshipDetails.jobTitle,
+                major: reportData.major || "Not specified",
+                introduction: reportData.introduction || "No introduction provided",
+                body: reportData.body || "No content provided",
+                courses: reportData.courses || [],
+                pdfFilename: reportData.pdfFileName || "report.pdf",
+                status: reportData.status || "pending" || "draft_saved",
+                comment: reportData.evaluatorComments || "",
+              }
+              allReports.push(report)
+              uniqueIds.add(internshipId)
+            }
+          }
+        }
+      }
+
+      setReports(allReports)
       setLoading(false)
-      showNotification("Reports loaded successfully", "info")
+      showNotification("Reports loaded successfully", "success")
     }, 800)
   }, [])
 
@@ -139,7 +159,7 @@ const FacultyReport = () => {
     // Find the current comment for this report
     const report = reports.find((r) => r.id === id)
     setComment(report?.comment || "")
-    setPendingStatus(report?.status || "pending") // Preserve current status
+    setPendingStatus(report?.status || "pending"|| "draft_saved") // Preserve current status
 
     setCommentError("")
     setShowCommentModal(true)
@@ -156,7 +176,30 @@ const FacultyReport = () => {
       report.id === commentingReportId ? { ...report, status: pendingStatus, comment } : report,
     )
     setReports(updatedReports)
-    localStorage.setItem("reports", JSON.stringify(updatedReports))
+
+    // Update the report in localStorage
+    const reportKey = `report_${commentingReportId}`
+    const reportData = localStorage.getItem(reportKey)
+
+    if (reportData) {
+      const parsedReport = JSON.parse(reportData)
+      const updatedReport = {
+        ...parsedReport,
+        status: pendingStatus,
+        evaluatorComments: comment,
+      }
+      localStorage.setItem(reportKey, JSON.stringify(updatedReport))
+    }
+
+    // Also update in the reports collection if it exists
+    const savedReports = localStorage.getItem("reports")
+    if (savedReports) {
+      const parsedReports = JSON.parse(savedReports)
+      const updatedSavedReports = parsedReports.map((report) =>
+        report.id === commentingReportId ? { ...report, status: pendingStatus, comment } : report,
+      )
+      localStorage.setItem("reports", JSON.stringify(updatedSavedReports))
+    }
 
     const report = reports.find((r) => r.id === commentingReportId)
     if (report) {
@@ -232,6 +275,9 @@ const FacultyReport = () => {
         return "#6c757d"
     }
   }
+
+  // Get unique majors for the filter dropdown
+  const uniqueMajors = [...new Set(reports.map((report) => report.major))].filter(Boolean)
 
   return (
     <div
@@ -379,9 +425,7 @@ const FacultyReport = () => {
               <div style={{ fontSize: "14px", fontWeight: "bold", color: "#4a4a6a" }}>
                 {isSCAD ? "SCAD Admin" : "Faculty User"}
               </div>
-              <div style={{ fontSize: "12px", color: "#6a6a8a" }}>
-                {isSCAD ? "Administrator" : "Mariam"}
-              </div>
+              <div style={{ fontSize: "12px", color: "#6a6a8a" }}>{isSCAD ? "Administrator" : "Mariam"}</div>
             </div>
             <button
               onClick={handleLogout}
@@ -528,8 +572,11 @@ const FacultyReport = () => {
                       }}
                     >
                       <option value="">All Majors</option>
-                      <option value="Computer Science">Computer Science</option>
-                      <option value="Finance">Finance</option>
+                      {uniqueMajors.map((major, index) => (
+                        <option key={index} value={major}>
+                          {major}
+                        </option>
+                      ))}
                     </select>
                   </div>
                   <div>
@@ -722,21 +769,25 @@ const FacultyReport = () => {
                               gap: "5px",
                             }}
                           >
-                            {report.courses.map((course, index) => (
-                              <span
-                                key={index}
-                                style={{
-                                  display: "inline-block",
-                                  padding: "4px 8px",
-                                  borderRadius: "4px",
-                                  fontSize: "12px",
-                                  backgroundColor: "#f0f0f0",
-                                  color: "#6a6a8a",
-                                }}
-                              >
-                                {course}
-                              </span>
-                            ))}
+                            {report.courses.length > 0 ? (
+                              report.courses.map((course, index) => (
+                                <span
+                                  key={index}
+                                  style={{
+                                    display: "inline-block",
+                                    padding: "4px 8px",
+                                    borderRadius: "4px",
+                                    fontSize: "12px",
+                                    backgroundColor: "#f0f0f0",
+                                    color: "#6a6a8a",
+                                  }}
+                                >
+                                  {course}
+                                </span>
+                              ))
+                            ) : (
+                              <span style={{ color: "#6a6a8a", fontStyle: "italic" }}>No courses specified</span>
+                            )}
                           </div>
                         </div>
 
@@ -765,11 +816,9 @@ const FacultyReport = () => {
                                   color: "#4a4a6a",
                                 }}
                               >
-                                Comment {/* MODIFIED: Label changed from "Faculty Comment" */}
+                                Comment
                               </h4>
 
-                              {/* MODIFIED: Edit comment button - visible if a comment exists (faculty and SCAD) */}
-                              {/* Removed !isSCAD condition */}
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation()
@@ -854,7 +903,7 @@ const FacultyReport = () => {
                           </button>
 
                           {/* Status buttons - only visible to faculty and only for pending reports */}
-                          {!isSCAD && report.status === "pending" && (
+                          {!isSCAD && (report.status === "pending"|| "draft_saved") && (
                             <>
                               <button
                                 onClick={() => handleStatusWithComment(report.id, "rejected")}
@@ -919,8 +968,6 @@ const FacultyReport = () => {
                             </>
                           )}
 
-                          {/* MODIFIED: Add comment button if no comment exists yet (faculty and SCAD) */}
-                          {/* Removed !isSCAD condition */}
                           {!report.comment && (
                             <button
                               onClick={() => handleEditComment(report.id)}

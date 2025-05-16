@@ -25,6 +25,7 @@ import AllJobsPosted from './companyallpostedjobs';
 import AssessmentPage from './online-assessments';
 import StudentWorkshops from './studentworkshops';
 import AppointmentPage from './appointments';
+import StudentJobs from './studentjobs';
 function App() {
   // Manage notification state
  const [notification, setNotification] = useState({ message: '', email: '' });
@@ -37,11 +38,13 @@ function App() {
       role: 'student',
       email: 'student@example.com',
       password: 'student123',
+      duration:0,
     },
     {
       role: 'pro',
       email: 'student2@example.com',
       password: 'student123',
+      duration:3,
     },
     {
       role: 'scad',
@@ -61,6 +64,7 @@ if (users.length === 0) {
   users.push(...dummyUsers); // Use spread syntax to add all dummy users individually
   localStorage.setItem('allUsers', JSON.stringify(users));
 }
+// console.log(users)
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -281,6 +285,7 @@ const isInitialLoad = useState(true);
         <Route path="/appointments" element={<AppointmentPage />} />
 
         <Route path="/companyallpostedjobs" element={<AllJobsPosted />} />
+        <Route path="/studentjobs" element={<StudentJobs />} />
         
         {/* Add more routes as needed */}
       </Routes>

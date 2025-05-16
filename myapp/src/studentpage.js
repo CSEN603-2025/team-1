@@ -133,9 +133,11 @@ function StudentPage() {
   const [loading, setLoading] = useState(true)
   const [notificationContent, setNotificationContent] = useState({ show: false, message: "", type: "" }) // Renamed to avoid conflict
   const [confirmLogout, setConfirmLogout] = useState(false)
+  const [notification, setNotification] = useState({ show: false, message: "", type: "" })
 
   // Student specific states
   const [selectedMajorForCourses, setSelectedMajorForCourses] = useState("") // Renamed for clarity
+  console.log(selectedMajorForCourses)
   const [selectedSemesterForCourses, setSelectedSemesterForCourses] = useState("") // Renamed for clarity
   // No need for showProfile, isEditingProfile here if StudentProfilePage handles it
   const [showCompaniesView, setShowCompaniesView] = useState(false) // To show companies section
@@ -170,7 +172,13 @@ function StudentPage() {
   //online assessments scores
   const [showScoresPopup, setShowScoresPopup] = useState(false);
   const [assessmentScores, setAssessmentScores] = useState([]);
-
+  const showNotification = (message, type = "info") => {
+      setNotification({ show: true, message, type })
+      console.log(notification)
+      setTimeout(() => {
+        setNotification({ show: false, message: "", type: "" })
+      }, 3000)
+    }
   useEffect(() => {
     // Load completed assessments from localStorage
     const savedScores = localStorage.getItem('completedAssessments');
@@ -181,7 +189,7 @@ function StudentPage() {
 
   const showAssessmentScores = () => {
     if (assessmentScores.length === 0) {
-      // showNotification("You haven't completed any assessments yet!", "info");
+      showNotification("You haven't completed any assessments yet!", "info");
     } else {
       setShowScoresPopup(true);
     }

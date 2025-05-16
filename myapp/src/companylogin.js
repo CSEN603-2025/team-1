@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+// --- 1. IMPORT YOUR NOTIFICATION FUNCTIONS ---
+import { getNotification, clearNotifications } from './notification.js'; 
 
 function CompanyLogin() {
   // State management
@@ -7,9 +9,9 @@ function CompanyLogin() {
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState({});
   const [showPopup, setShowPopup] = useState(false);
-  const [notificationMessage, setNotificationMessage] = useState('You have no notifications!');
+  const [notificationMessage, setNotificationMessage] = useState('You have no new notifications!');
   const [hasNotification, setHasNotification] = useState(false);
-  const [canLogin, setCanLogin] = useState(false);
+  const [canLogin, setCanLogin] = useState(true); // Default to true, actual check will happen
   const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
@@ -17,86 +19,111 @@ function CompanyLogin() {
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  // Color palette
   const colors = {
-    primary: {
-      main: '#6366f1',
-      dark: '#4f46e5',
-      light: '#818cf8',
-      lighter: '#e0e7ff',
-      contrast: '#ffffff'
-    },
-    neutral: {
-      50: '#f8fafc',
-      100: '#f1f5f9',
-      200: '#e2e8f0',
-      300: '#cbd5e1',
-      400: '#94a3b8',
-      500: '#64748b',
-      600: '#475569',
-      700: '#334155',
-      800: '#1e293b',
-      900: '#0f172a'
-    },
-    error: '#ef4444',
-    success: '#10b981',
-    background: '#f8fafc'
+    primary: { main: '#6366f1', dark: '#4f46e5', light: '#818cf8', lighter: '#e0e7ff', contrast: '#ffffff' },
+    neutral: { 50: '#f8fafc', 100: '#f1f5f9', 200: '#e2e8f0', 300: '#cbd5e1', 400: '#94a3b8', 500: '#64748b', 600: '#475569', 700: '#334155', 800: '#1e293b', 900: '#0f172a' },
+    error: '#ef4444', success: '#10b981', background: '#f8fafc'
   };
 
-  // Initialize state from location or localStorage
-  useEffect(() => {
-    const stateCompany = location.state?.company;
-    if (stateCompany) {
-      setEmail(stateCompany.companyEmail);
-      setCanLogin(stateCompany.isAccepted);
-      if (stateCompany.hasNotification) {
-        setHasNotification(true);
-        setNotificationMessage('Your registration has been accepted!');
-      }
-      localStorage.setItem('currentCompany', JSON.stringify(stateCompany));
-      sessionStorage.setItem('currentCompany', JSON.stringify(stateCompany));
-    } else {
-      const stored = JSON.parse(localStorage.getItem('currentCompany')) || {};
-      if (stored) {
-        setEmail(stored.companyEmail);
-        setCanLogin(stored.isAccepted);
-        if (stored.hasNotification) {
-          setHasNotification(true);
-          setNotificationMessage('Your registration has been accepted!');
-        }
-      }
-    }
-  }, [location.state]);
-
-  // Refresh state when localStorage changes
-  const refreshState = useCallback(() => {
-    const companies = JSON.parse(localStorage.getItem('companies')) || [];
-    const user = companies.find(c => c.companyEmail === email);
-
-    if (user) {
-      setCanLogin(user.isAccepted);
-      if (user.hasNotification) {
-        setHasNotification(true);
-        setNotificationMessage('Your registration has been accepted!');
-      }
-    } else {
-      setCanLogin(false);
+  // Fetches notifications and updates UI state
+  const fetchAndDisplayNotifications = useCallback(() => {
+    if (!email) { 
       setHasNotification(false);
+      setNotificationMessage('You have no new notifications!');
+      return;
+    }
+    // --- 2. USE getNotification ---
+    // This will get notifications that were set with clearAfterRead: false by admin
+    // or any other notifications for this email based on your notification.js logic.
+    const userNotifications = getNotification(email); 
+
+    if (userNotifications.length > 0) {
+      setNotificationMessage(userNotifications[userNotifications.length - 1].message);
+      setHasNotification(true); 
+    } else {
+      setHasNotification(false);
+      setNotificationMessage('You have no new notifications!');
     }
   }, [email]);
 
-  useEffect(() => {
-    refreshState();
-    window.addEventListener('storage', refreshState);
-    return () => window.removeEventListener('storage', refreshState);
-  }, [email, refreshState]);
+  // Checks company status (isAccepted) and then fetches notifications
+  const refreshCompanyStatusAndNotifications = useCallback(() => {
+    if (!email) {
+      setCanLogin(false); 
+      fetchAndDisplayNotifications(); 
+      return;
+    }
 
-  // Handle login form submission
+    const companies = JSON.parse(localStorage.getItem('companies')) || [];
+    const companyData = companies.find(c => c.companyEmail === email);
+
+    if (companyData) {
+      setCanLogin(companyData.isAccepted);
+    } else {
+      setCanLogin(false); 
+    }
+    fetchAndDisplayNotifications(); // This will call getNotification
+  }, [email, fetchAndDisplayNotifications]);
+  
+
+  // Initialize email from location.state or localStorage
+  useEffect(() => {
+    const stateCompanyEmail = location.state?.company?.companyEmail;
+    const storedCompany = JSON.parse(localStorage.getItem('currentCompany'));
+    const storedCompanyEmail = storedCompany?.companyEmail;
+
+    if (stateCompanyEmail) {
+      setEmail(stateCompanyEmail);
+      // Check for notifications potentially passed in location state (e.g., after registration)
+      // This is separate from the global notification system but can coexist.
+      if (location.state?.notificationMessage) {
+        setNotificationMessage(location.state.notificationMessage);
+        setHasNotification(true);
+      }
+    } else if (storedCompanyEmail) {
+      setEmail(storedCompanyEmail);
+    }
+  }, [location.state]);
+
+
+  // Main effect for refreshing data when email changes or storage is updated
+  useEffect(() => {
+    if (email) { 
+        refreshCompanyStatusAndNotifications();
+    }
+
+    const handleStorageChange = (event) => {
+      if (event.key === 'companies' || event.key === 'notifications' || event.key === null) {
+        if (email) refreshCompanyStatusAndNotifications();
+      }
+    };
+    
+    // If your global setNotification dispatches an event, listen for it
+    const handleGlobalNotification = (event) => {
+        if(event.detail && event.detail.email === email){ // If notification is for current company
+            refreshCompanyStatusAndNotifications();
+        } else if (event.detail && !email && event.detail.email) { // If email not set, but notification has one
+             // Potentially set email from notification and refresh, or just refresh generally
+            refreshCompanyStatusAndNotifications();
+        }
+    }
+
+    window.addEventListener('storage', handleStorageChange);
+    // Make sure the event name matches what your setNotification might dispatch
+    window.addEventListener('globalNotificationUpdate', handleGlobalNotification); 
+
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('globalNotificationUpdate', handleGlobalNotification);
+    };
+  }, [email, refreshCompanyStatusAndNotifications]);
+
+
   const handleLogin = async (e) => {
     e.preventDefault();
     const newErrors = {};
 
-    // Form validation
     if (!email) newErrors.email = 'Email is required';
     else if (!emailRegex.test(email)) newErrors.email = 'Invalid email format';
     if (!password) newErrors.password = 'Password is required';
@@ -105,48 +132,53 @@ function CompanyLogin() {
     if (Object.keys(newErrors).length) return;
 
     setIsLoading(true);
-
-    // Simulate network delay for a more realistic experience
     await new Promise(resolve => setTimeout(resolve, 800));
 
     const companies = JSON.parse(localStorage.getItem('companies')) || [];
     const user = companies.find(c => c.companyEmail === email);
 
-    if (!user) {
-      setErrors({ form: 'Invalid email' });
-    } else if (user.password !== password) {
-      setErrors({ form: 'Wrong password' });
-    } else if (!user.isAccepted) {
-      setErrors({ form: 'Your account is pending approval' });
-    } else {
-      localStorage.setItem('currentCompany', JSON.stringify({
-        ...user,
-        hasNotification: user.hasNotification
-      }));
-      sessionStorage.setItem('currentCompany', JSON.stringify({
-        ...user,
-        hasNotification: user.hasNotification
-      }));
-
-      if (user.hasNotification) {
-        const updated = companies.map(c =>
-          c.companyEmail === email ? { ...c, hasNotification: false } : c
-        );
-        localStorage.setItem('companies', JSON.stringify(updated));
-        sessionStorage.setItem('companies', JSON.stringify(updated));
+    if (!user) { 
+      let errorMessage = 'Account not found or registration not approved.';
+      // --- 3. CHECK NOTIFICATIONS ON FAILED LOGIN (NO USER) ---
+      const userNotifications = getNotification(email); 
+      const rejectionNotification = userNotifications.find(n => n.message.toLowerCase().includes('rejected'));
+      if (rejectionNotification) {
+        errorMessage = rejectionNotification.message; 
       }
+      setErrors({ form: errorMessage });
+    } else if (user.password !== password) {
+      setErrors({ form: 'Incorrect password.' });
+    } else if (!user.isAccepted) {
+      let pendingMessage = 'Your account registration is still pending approval.';
+      // --- 4. CHECK NOTIFICATIONS ON FAILED LOGIN (NOT ACCEPTED) ---
+      const userNotifications = getNotification(email);
+      const specificStatusMessage = userNotifications.length > 0 ? userNotifications[userNotifications.length - 1].message : null;
+      if (specificStatusMessage) { 
+        pendingMessage = specificStatusMessage;
+      }
+      setErrors({ form: pendingMessage });
+    } else { 
+      localStorage.setItem('currentCompany', JSON.stringify(user));
+      
+      // --- 5. CLEAR NOTIFICATIONS ON SUCCESSFUL LOGIN ---
+      clearNotifications(email); 
+      setHasNotification(false); 
 
       navigate('/company-dashboard', { state: { company: user } });
     }
-
     setIsLoading(false);
   };
 
   const togglePopup = () => {
-    setShowPopup(prev => !prev);
-    if (hasNotification) {
-      setHasNotification(false);
-    }
+    setShowPopup(prevShowPopup => {
+        const willOpen = !prevShowPopup;
+        if (willOpen && hasNotification && email) { 
+            // --- 6. CLEAR NOTIFICATIONS WHEN POPUP IS OPENED ---
+            clearNotifications(email); 
+            setHasNotification(false);     
+        }
+        return willOpen;
+    });
   };
 
   return (
@@ -213,7 +245,7 @@ function CompanyLogin() {
           position: 'absolute',
           top: '70px',
           right: '20px',
-          width: '280px',
+          width: '300px',
           padding: '16px',
           backgroundColor: '#fff',
           border: `1px solid ${colors.neutral[200]}`,
@@ -267,11 +299,20 @@ function CompanyLogin() {
           </div>
           <div style={{
             padding: '12px',
-            backgroundColor: hasNotification ? colors.primary.lighter : colors.neutral[100],
+            backgroundColor: notificationMessage.toLowerCase().includes('rejected') ? '#fee2e2' : 
+                            notificationMessage.toLowerCase().includes('accepted') ? colors.primary.lighter : 
+                            colors.neutral[100],
             borderRadius: '6px',
-            color: hasNotification ? colors.primary.dark : colors.neutral[600],
+            color: notificationMessage.toLowerCase().includes('rejected') ? colors.error :
+                   notificationMessage.toLowerCase().includes('accepted') ? colors.primary.dark : 
+                   colors.neutral[600],
             fontSize: '14px',
-            marginBottom: '12px'
+            marginBottom: '12px',
+            borderLeft: `4px solid ${
+                notificationMessage.toLowerCase().includes('rejected') ? colors.error :
+                notificationMessage.toLowerCase().includes('accepted') ? colors.primary.main :
+                colors.neutral[300]
+            }`
           }}>
             {notificationMessage}
           </div>
@@ -279,7 +320,7 @@ function CompanyLogin() {
             onClick={togglePopup} 
             style={{
               padding: '8px 12px',
-              backgroundColor: colors.primary.main,
+              backgroundColor: colors.neutral[500],
               color: colors.primary.contrast,
               border: 'none',
               borderRadius: '6px',
@@ -288,9 +329,6 @@ function CompanyLogin() {
               fontWeight: '500',
               width: '100%',
               transition: 'background-color 0.2s ease',
-              ':hover': {
-                backgroundColor: colors.primary.dark
-              }
             }}
           >
             Close
@@ -343,15 +381,24 @@ function CompanyLogin() {
 
         {errors.form && (
           <div style={{
-            backgroundColor: '#fef2f2',
-            color: colors.error,
+            backgroundColor: errors.form.toLowerCase().includes('rejected') ? '#fee2e2' : 
+                           errors.form.toLowerCase().includes('pending') ? '#ffedd5' : 
+                           '#fef2f2', 
+            color: errors.form.toLowerCase().includes('rejected') ? colors.error :
+                   errors.form.toLowerCase().includes('pending') ? '#f97316' : 
+                   colors.error,
             padding: '12px 16px',
             borderRadius: '6px',
             marginBottom: '20px',
             fontSize: '14px',
             display: 'flex',
             alignItems: 'center',
-            gap: '8px'
+            gap: '8px',
+            borderLeft: `4px solid ${
+                errors.form.toLowerCase().includes('rejected') ? colors.error :
+                errors.form.toLowerCase().includes('pending') ? '#f97316' :
+                colors.error
+            }`
           }}>
             <svg 
               xmlns="http://www.w3.org/2000/svg" 
@@ -391,7 +438,7 @@ function CompanyLogin() {
               type="email"
               placeholder="your@company.com"
               value={email}
-              onChange={e => setEmail(e.target.value)}
+              onChange={e => setEmail(e.target.value.trim())}
               style={{
                 width: '100%',
                 padding: '10px 12px',
@@ -401,10 +448,6 @@ function CompanyLogin() {
                 outline: 'none',
                 transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
                 boxSizing: 'border-box',
-                ':focus': {
-                  borderColor: colors.primary.main,
-                  boxShadow: `0 0 0 3px ${colors.primary.lighter}`
-                }
               }}
             />
             {errors.email && (
@@ -416,21 +459,7 @@ function CompanyLogin() {
                 alignItems: 'center',
                 gap: '4px'
               }}>
-                <svg 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  width="12" 
-                  height="12" 
-                  viewBox="0 0 24 24" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  strokeWidth="2" 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round"
-                >
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <line x1="12" y1="8" x2="12" y2="12"></line>
-                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                </svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
                 {errors.email}
               </div>
             )}
@@ -453,7 +482,6 @@ function CompanyLogin() {
               >
                 Password
               </label>
-
             </div>
             <input
               id="password"
@@ -470,10 +498,6 @@ function CompanyLogin() {
                 outline: 'none',
                 transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
                 boxSizing: 'border-box',
-                ':focus': {
-                  borderColor: colors.primary.main,
-                  boxShadow: `0 0 0 3px ${colors.primary.lighter}`
-                }
               }}
             />
             {errors.password && (
@@ -485,21 +509,7 @@ function CompanyLogin() {
                 alignItems: 'center',
                 gap: '4px'
               }}>
-                <svg 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  width="12" 
-                  height="12" 
-                  viewBox="0 0 24 24" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  strokeWidth="2" 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round"
-                >
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <line x1="12" y1="8" x2="12" y2="12"></line>
-                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                </svg>
+                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
                 {errors.password}
               </div>
             )}
@@ -507,25 +517,22 @@ function CompanyLogin() {
 
           <button
             type="submit"
-            disabled={!canLogin || isLoading}
+            disabled={isLoading} 
             style={{
               padding: '12px',
               width: '100%',
-              backgroundColor: canLogin ? colors.primary.main : colors.neutral[400],
+              backgroundColor: isLoading ? colors.neutral[400] : (canLogin ? colors.primary.main : colors.neutral[500]), 
               color: 'white',
               border: 'none',
               borderRadius: '6px',
               fontSize: '14px',
               fontWeight: '500',
-              cursor: canLogin && !isLoading ? 'pointer' : 'not-allowed',
+              cursor: isLoading ? 'not-allowed' : (canLogin ? 'pointer' : 'not-allowed'),
               transition: 'background-color 0.2s ease',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               gap: '8px',
-              ':hover': {
-                backgroundColor: canLogin ? colors.primary.dark : colors.neutral[400]
-              }
             }}
           >
             {isLoading ? (
@@ -542,21 +549,12 @@ function CompanyLogin() {
                   strokeLinejoin="round"
                   style={{ animation: 'spin 1s linear infinite' }}
                 >
-                  <line x1="12" y1="2" x2="12" y2="6"></line>
-                  <line x1="12" y1="18" x2="12" y2="22"></line>
-                  <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
-                  <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
-                  <line x1="2" y1="12" x2="6" y2="12"></line>
-                  <line x1="18" y1="12" x2="22" y2="12"></line>
-                  <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
-                  <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
+                  <line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
                 </svg>
                 Signing in...
               </>
             ) : (
-              <>
-                {canLogin ? 'Sign In' : 'Account Pending Approval'}
-              </>
+              canLogin ? 'Sign In' : 'Account Not Approved / Check Notifications' 
             )}
           </button>
         </form>
@@ -581,7 +579,6 @@ function CompanyLogin() {
         </div>
       </div>
 
-      {/* CSS Animations */}
       <style dangerouslySetInnerHTML={{
         __html: `
           @keyframes fadeIn {

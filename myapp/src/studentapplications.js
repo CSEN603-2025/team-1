@@ -26,7 +26,7 @@ const MyApplications = () => {
     // Ensure storedApplied is an array, defaulting to [] if not found or invalid
     const storedAppliedString = localStorage.getItem("appliedInternships")
     const storedApplied = storedAppliedString ? JSON.parse(storedAppliedString) : [] // Default to []
-
+    console.log(storedApplied)
     if (student?.email) {
       // Now storedApplied is guaranteed to be an array, so .filter will work
       const studentApps = storedApplied.filter((app) => app.student?.email === student.email)
@@ -50,7 +50,7 @@ const MyApplications = () => {
 
     const handleStatusUpdate = (e) => {
       // Ensure student is available before accessing email
-      if (student && e.detail?.applicantEmail === student.email) {
+      if (student && e.detail?.applicantEmail === student.email ) {
         loadApplications()
       }
     }

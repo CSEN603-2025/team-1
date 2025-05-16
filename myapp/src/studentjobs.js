@@ -466,10 +466,10 @@ const StudentJobs = () => {
        return;
      }
 
-
-       const alreadyApplied = appliedInternships.some(
+     console.log(appliedInternships)
+       const alreadyApplied = appliedInternships.some (
          // Use a more robust check if possible, maybe a unique job ID + student email
-         (applied) => applied.id === selectedJob.id // Assuming jobs have unique IDs
+         (applied) => applied.id === selectedJob.id && applied.student?.email===student.email // Assuming jobs have unique IDs
          // Fallback if no IDs: applied.title === selectedJob.title && applied.companyName === selectedJob.companyName
        );
 
@@ -607,11 +607,12 @@ const StudentJobs = () => {
   }
 
   const isAlreadyApplied = (job) => {
+    console.log(student.email)
      // Use ID for reliable checking if available, otherwise fallback
      if (job?.id) {
-         return appliedInternships.some((applied) => applied.id === job.id);
+         return appliedInternships.some((applied) => applied.id === job.id && applied.student?.email===student.email );
      }
-    return appliedInternships.some((applied) => applied.title === job.title && applied.companyName === job.companyName)
+    return appliedInternships.some((applied) => applied.title === job.title && applied.companyName === job.companyName  && applied.student?.email===student.email)
   }
 
   const getInternshipVideoInfo = () => {

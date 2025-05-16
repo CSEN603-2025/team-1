@@ -1,6 +1,6 @@
 "use client"
 
-// import { RollerCoaster } from "lucide-react"
+// import { RollerCoaster } from 'lucide-react'
 import { useState, useEffect } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
 
@@ -15,7 +15,7 @@ function CompanyInterns() {
 
   // Get data from location.state
   const { acceptedInterns: initialInterns = [], storedCompany } = location.state || {}
-  const email=location.state?.companyEmail
+  const email = location.state?.companyEmail
 
   const [interns, setInterns] = useState(
     initialInterns.map((intern) => ({ ...intern, status: intern.status || "current" })),
@@ -25,7 +25,7 @@ function CompanyInterns() {
   const [evaluation, setEvaluation] = useState("")
   const [selectedInternEmail, setSelectedInternEmail] = useState("")
   const [evaluationScore, setEvaluationScore] = useState(0)
-  let nrole="student";
+  const nrole = "student"
 
   // Load interns from localStorage on component mount
   useEffect(() => {
@@ -33,14 +33,52 @@ function CompanyInterns() {
       // Simulate loading data
       setTimeout(() => {
         const companyInternsKey = `companyInterns_${email}`
-        const storedInterns = JSON.parse(localStorage.getItem(companyInternsKey)) || []
-        setInterns(storedInterns.map((intern) => ({ ...intern, status: intern.status || "current" })))
+        console.log("Loading interns from:", companyInternsKey)
+
+        try {
+          const storedInternsData = localStorage.getItem(companyInternsKey)
+          console.log("Raw stored interns data:", storedInternsData)
+
+          if (storedInternsData) {
+            const storedInterns = JSON.parse(storedInternsData)
+            console.log("Parsed interns:", storedInterns)
+
+            // Ensure we have an array and each intern has the required fields
+            if (Array.isArray(storedInterns)) {
+              const processedInterns = storedInterns.map((intern) => {
+                // Make sure each intern has a student object and other required fields
+                return {
+                  ...intern,
+                  // Use student data or create placeholder if missing
+                  name: intern.student?.name || (intern.student?.email === "student@example.com" ? "Mariam" : "John"),
+                  email: intern.student?.email || intern.email || "unknown@example.com",
+                  status: intern.status || "current",
+                  jobTitle: intern.title || intern.jobTitle || "Unknown Position",
+                  jobDuration: intern.duration || intern.jobDuration || "Unknown Duration",
+                }
+              })
+
+              console.log("Processed interns:", processedInterns)
+              setInterns(processedInterns)
+            } else {
+              console.error("Stored interns is not an array:", storedInterns)
+              setInterns([])
+            }
+          } else {
+            console.log("No interns found in localStorage")
+            setInterns([])
+          }
+        } catch (error) {
+          console.error("Error loading interns:", error)
+          setInterns([])
+        }
+
         setIsLoading(false)
       }, 800)
     } else {
       setIsLoading(false)
     }
-  }, [storedCompany])
+  }, [email])
 
   // Update intern status in both state and localStorage
   const updateInternStatus = (email, jobTitle) => {
@@ -48,35 +86,33 @@ function CompanyInterns() {
 
     const updatedInterns = interns.map((intern) => {
       if (intern.email === email && intern.jobTitle === jobTitle) {
-        let updatedEmail = intern.email;
-        let dur=intern.jobDuration;
-        const allUsers = JSON.parse(localStorage.getItem("allUsers")) || [];
+        const updatedEmail = intern.email
+        const dur = intern.jobDuration
+        const allUsers = JSON.parse(localStorage.getItem("allUsers")) || []
 
-   const student = allUsers.find((user) => user.email === updatedEmail);
+        const student = allUsers.find((user) => user.email === updatedEmail)
 
-    if (student) {
-       const parsedDur = parseInt(dur);
-       const totalDuration = (student.duration) + parsedDur;
+        if (student) {
+          const parsedDur = Number.parseInt(dur)
+          const totalDuration = student.duration + parsedDur
 
-      const newRole = totalDuration >= 3 ? "pro" : "student";
-      const updatedStudent = {
-        ...student,
-        role: newRole,
-        duration: totalDuration,
-      };
+          const newRole = totalDuration >= 3 ? "pro" : "student"
+          const updatedStudent = {
+            ...student,
+            role: newRole,
+            duration: totalDuration,
+          }
 
-      console.log(nrole)
-      console.log(updatedStudent.role)
-      console.log(totalDuration)
-      // Replace the old student in allUsers array
-      const updatedUsers = allUsers.map(user =>
-        user.email === updatedEmail ? updatedStudent : user
-      );
+          console.log(nrole)
+          console.log(updatedStudent.role)
+          console.log(totalDuration)
+          // Replace the old student in allUsers array
+          const updatedUsers = allUsers.map((user) => (user.email === updatedEmail ? updatedStudent : user))
 
-      // Save the updated array to localStorage
-      localStorage.setItem("allUsers", JSON.stringify(updatedUsers));
-      console.log(updatedUsers)
-    }
+          // Save the updated array to localStorage
+          localStorage.setItem("allUsers", JSON.stringify(updatedUsers))
+          console.log(updatedUsers)
+        }
         // console.log(updatedEmail,dur)
         return { ...intern, status: "completed" }
       }
@@ -87,8 +123,6 @@ function CompanyInterns() {
 
     const companyInternsKey = `companyInterns_${email}`
     localStorage.setItem(companyInternsKey, JSON.stringify(updatedInterns))
-    
-    
 
     // Show success toast
     setToastMessage(`${email} marked as completed`)
@@ -175,7 +209,7 @@ function CompanyInterns() {
   // Calculate stats
   const totalInterns = interns.length
   const completedInterns = interns.filter((intern) => intern.status === "completed").length
-  const currentInterns = interns.filter((intern) => intern.status === "current").length
+  const currentInterns = interns.filter((intern) => intern.status === "current" || intern.status === "accepted").length
   const completionRate = totalInterns > 0 ? Math.round((completedInterns / totalInterns) * 100) : 0
 
   return (
@@ -665,13 +699,13 @@ function CompanyInterns() {
                             }}
                           >
                             {(() => {
-                              let name = "No name provided";
+                              let name = "No name provided"
                               if (intern.email === "student@example.com") {
-                                name = "Mariam";
+                                name = "Mariam"
                               } else {
-                                name = "John";
+                                name = "John"
                               }
-                              return name;
+                              return name
                             })()}
                           </h3>
                           <p
@@ -1041,7 +1075,6 @@ function CompanyInterns() {
                               }}
                             >
                               {intern.name ? intern.name.charAt(0).toUpperCase() : "N"}
-                              
                             </div>
                             <div>
                               <h4

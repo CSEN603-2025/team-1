@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
 import SidebarFac from "./sidebarfaculty"
 import Sidebar from "./sidebarscad"
-import { setNotification } from "./notification"
+import { setNotification, getNotification } from "./notification"
 
 // Helper function to simulate notification service
 // const setNotification = (message, email) => {
@@ -20,6 +20,9 @@ const FacultyReport = () => {
   const [notification, setNotificationState] = useState({ show: false, message: "", type: "" })
   const [confirmLogout, setConfirmLogout] = useState(false)
   const [downloading, setDownloading] = useState(false)
+
+  const [isPopupOpen, setIsPopupOpen] = useState(false)
+  const [unreadNotifications, setUnreadNotifications] = useState(0)
 
   // Reports state
   const [reports, setReports] = useState([])
@@ -40,7 +43,9 @@ const FacultyReport = () => {
   // Load reports on component mount
   useEffect(() => {
     setLoading(true)
-
+    const email= isSCAD? "scad@example.com":"faculty@example.com"
+   
+    setUnreadNotifications( getNotification(email))
     // Get all internship reports from localStorage
     setTimeout(() => {
       // Get all reports from localStorage
@@ -160,52 +165,48 @@ const FacultyReport = () => {
     // Find the current comment for this report
     const report = reports.find((r) => r.id === id)
     setComment(report?.comment || "")
-    setPendingStatus(report?.status || "pending"|| "draft_saved") // Preserve current status
+    setPendingStatus(report?.status || "pending" || "draft_saved") // Preserve current status
 
     setCommentError("")
     setShowCommentModal(true)
     setEditingComment(true) // This is for editing/adding comment only
   }
-const handleStatusWithoutcomment = (id, status) => {
-  setPendingStatus(status)
+  const handleStatusWithoutcomment = (id, status) => {
+    setPendingStatus(status)
 
-  const updatedReports = reports.map((report) =>
-    report.id === id ? { ...report, status } : report
-  )
-  setReports(updatedReports)
+    const updatedReports = reports.map((report) => (report.id === id ? { ...report, status } : report))
+    setReports(updatedReports)
 
-  const reportKey = `report_${id}`
-  const reportData = localStorage.getItem(reportKey)
+    const reportKey = `report_${id}`
+    const reportData = localStorage.getItem(reportKey)
 
-  if (reportData) {
-    const parsedReport = JSON.parse(reportData)
-    const updatedReport = {
-      ...parsedReport,
-      status: status,
+    if (reportData) {
+      const parsedReport = JSON.parse(reportData)
+      const updatedReport = {
+        ...parsedReport,
+        status: status,
+      }
+      localStorage.setItem(reportKey, JSON.stringify(updatedReport))
     }
-    localStorage.setItem(reportKey, JSON.stringify(updatedReport))
-  }
 
-  const savedReports = localStorage.getItem("reports")
-  if (savedReports) {
-    const parsedReports = JSON.parse(savedReports)
-    const updatedSavedReports = parsedReports.map((report) =>
-      report.id === id ? { ...report, status: status } : report
-    )
-    localStorage.setItem("reports", JSON.stringify(updatedSavedReports))
-  }
+    const savedReports = localStorage.getItem("reports")
+    if (savedReports) {
+      const parsedReports = JSON.parse(savedReports)
+      const updatedSavedReports = parsedReports.map((report) =>
+        report.id === id ? { ...report, status: status } : report,
+      )
+      localStorage.setItem("reports", JSON.stringify(updatedSavedReports))
+    }
 
-  const report = reports.find((r) => r.id === id)
-  if (report) {
-    const email = report.studentemail
-    const title = report.title
-    const message = `Your internship report "${title}" has been ${status}.`
-    setNotification(message, email)
-    showNotification(`Report ${status} successfully`, "success")
-    
+    const report = reports.find((r) => r.id === id)
+    if (report) {
+      const email = report.studentemail
+      const title = report.title
+      const message = `Your internship report "${title}" has been ${status}.`
+      setNotification(message, email)
+      showNotification(`Report ${status} successfully`, "success")
+    }
   }
-}
-
 
   const saveCommentAndStatus = () => {
     if (!comment.trim()) {
@@ -445,6 +446,165 @@ const handleStatusWithoutcomment = (id, status) => {
 
           {/* User Profile */}
           <div style={{ marginLeft: "auto", display: "flex", alignItems: "center" }}>
+            <div style={{ position: "relative", marginRight: "20px" }}>
+              <div
+                onClick={() => {
+                  // Toggle notification popup
+                  setIsPopupOpen(!isPopupOpen)
+                }}
+                style={{
+                  cursor: "pointer",
+                  position: "relative",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "42px",
+                  height: "42px",
+                  borderRadius: "50%",
+                  backgroundColor: isPopupOpen ? "rgba(230, 230, 250, 0.5)" : "transparent",
+                  transition: "background-color 0.2s",
+                }}
+                aria-label="Notifications"
+                onMouseOver={(e) => {
+                  if (!isPopupOpen) e.currentTarget.style.backgroundColor = "rgba(230, 230, 250, 0.3)"
+                }}
+                onMouseOut={(e) => {
+                  if (!isPopupOpen) e.currentTarget.style.backgroundColor = "transparent"
+                }}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  style={{ color: "#4a4a6a" }}
+                >
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                </svg>
+                {!isPopupOpen && unreadNotifications > 0 && (
+                  <span
+                    style={{
+                      position: "absolute",
+                      top: "0",
+                      right: "0",
+                      backgroundColor: "#f44336",
+                      color: "white",
+                      borderRadius: "50%",
+                      width: "20px",
+                      height: "20px",
+                      fontSize: "11px",
+                      fontWeight: "bold",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      border: "2px solid white",
+                      boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                    }}
+                  >
+                    {unreadNotifications > 9 ? "9+" : unreadNotifications}
+                  </span>
+                )}
+              </div>
+              {isPopupOpen && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "45px",
+                    right: "-10px",
+                    backgroundColor: "white",
+                    boxShadow: "0 4px 15px rgba(0, 0, 0, 0.1)",
+                    borderRadius: "12px",
+                    width: "320px",
+                    zIndex: 1001,
+                    border: "1px solid rgba(230, 230, 250, 0.5)",
+                    overflow: "hidden",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      padding: "15px 20px",
+                      borderBottom: "1px solid rgba(230, 230, 250, 0.7)",
+                      backgroundColor: "rgba(230, 230, 250, 0.2)",
+                    }}
+                  >
+                    <h4 style={{ margin: "0", color: "#4a4a6a", fontSize: "16px", fontWeight: "600" }}>
+                      Notifications
+                    </h4>
+                    <button
+                      onClick={() => setIsPopupOpen(false)}
+                      style={{
+                        background: "transparent",
+                        border: "none",
+                        cursor: "pointer",
+                        color: "#6a6a8a",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        padding: "5px",
+                        borderRadius: "50%",
+                        transition: "background-color 0.2s",
+                      }}
+                      onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "rgba(230, 230, 250, 0.5)")}
+                      onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                      </svg>
+                    </button>
+                  </div>
+                  <div style={{ maxHeight: "350px", overflowY: "auto", padding: "10px 0" }}>
+                    <div
+                      style={{
+                        padding: "30px 20px",
+                        textAlign: "center",
+                        color: "#6a6a8a",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        gap: "10px",
+                      }}
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="40"
+                        height="40"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        style={{ color: "#d5c5f7", opacity: 0.7 }}
+                      >
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                      </svg>
+                      <p style={{ margin: "0" }}>No new notifications</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
             <div
               style={{
                 width: "36px",
@@ -930,8 +1090,8 @@ const handleStatusWithoutcomment = (id, status) => {
                                     width: "14px",
                                     height: "14px",
                                     border: "2px solid rgba(74, 106, 138, 0.3)",
-                                    borderTop: "2px solid #4a6a8a",
                                     borderRadius: "50%",
+                                    borderTop: "2px solid #4a6a8a",
                                     marginRight: "8px",
                                     animation: "spin 1s linear infinite",
                                   }}
@@ -944,7 +1104,7 @@ const handleStatusWithoutcomment = (id, status) => {
                           </button>
 
                           {/* Status buttons - only visible to faculty and only for pending reports */}
-                          {!isSCAD && (report.status === "pending"|| "draft_saved") && (
+                          {!isSCAD && (report.status === "pending" || "draft_saved") && (
                             <>
                               <button
                                 onClick={() => handleStatusWithComment(report.id, "rejected")}
@@ -1087,11 +1247,11 @@ const handleStatusWithoutcomment = (id, status) => {
           <div
             style={{
               backgroundColor: "white",
-              borderRadius: "8px",
-              padding: "20px",
-              width: "400px",
+              borderRadius: "12px",
+              padding: "25px",
+              width: "450px",
               maxWidth: "90%",
-              boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+              boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
             }}
           >
             <h3
@@ -1126,13 +1286,16 @@ const handleStatusWithoutcomment = (id, status) => {
               style={{
                 width: "100%",
                 height: "120px",
-                padding: "10px",
-                borderRadius: "6px",
+                padding: "15px",
+                borderRadius: "8px",
                 border: commentError ? "1px solid #d9534f" : "1px solid #ddd",
                 fontSize: "14px",
                 color: "#4a4a6a",
                 resize: "vertical",
-                marginBottom: commentError ? "5px" : "15px",
+                marginBottom: commentError ? "5px" : "20px",
+                textAlign: "center",
+                boxSizing: "border-box",
+             
               }}
             />
             {commentError && (
@@ -1149,8 +1312,9 @@ const handleStatusWithoutcomment = (id, status) => {
             <div
               style={{
                 display: "flex",
-                justifyContent: "flex-end",
-                gap: "10px",
+                justifyContent: "center",
+                gap: "15px",
+                marginTop: "20px",
               }}
             >
               <button
@@ -1161,28 +1325,32 @@ const handleStatusWithoutcomment = (id, status) => {
                   setEditingComment(false)
                 }}
                 style={{
-                  padding: "8px 16px",
+                  padding: "10px 20px",
                   backgroundColor: "#f1f1f1",
                   color: "#6a6a8a",
                   border: "none",
-                  borderRadius: "6px",
+                  borderRadius: "8px",
                   cursor: "pointer",
                   fontSize: "14px",
+                  fontWeight: "500",
+                  transition: "background-color 0.2s",
                 }}
+                onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#e5e5e5")}
+                onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#f1f1f1")}
               >
                 Cancel
               </button>
               <button
                 onClick={saveCommentAndStatus}
                 style={{
-                  padding: "8px 16px",
+                  padding: "10px 20px",
                   backgroundColor: editingComment
                     ? "#c5e8f7" // Blue-ish for generic comment update
                     : pendingStatus === "accepted"
-                      ? "rgba(200, 255, 200, 0.5)" // Green for accept
+                      ? "rgba(200, 255, 200, 0.8)" // Green for accept
                       : pendingStatus === "rejected"
-                        ? "rgba(255, 200, 200, 0.5)" // Red for reject
-                        : "rgba(255, 230, 180, 0.5)", // Orange for flag
+                        ? "rgba(255, 200, 200, 0.8)" // Red for reject
+                        : "rgba(255, 230, 180, 0.8)", // Orange for flag
                   color: editingComment
                     ? "#4a6a8a"
                     : pendingStatus === "accepted"
@@ -1191,10 +1359,20 @@ const handleStatusWithoutcomment = (id, status) => {
                         ? "#9a4a4a"
                         : "#9a7a4a",
                   border: "none",
-                  borderRadius: "6px",
+                  borderRadius: "8px",
                   cursor: "pointer",
                   fontSize: "14px",
-                  fontWeight: "bold",
+                  fontWeight: "600",
+                  transition: "all 0.2s",
+                  boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.transform = "translateY(-1px)"
+                  e.currentTarget.style.boxShadow = "0 4px 8px rgba(0,0,0,0.1)"
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)"
+                  e.currentTarget.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)"
                 }}
               >
                 {editingComment ? "Update Comment" : "Submit"}

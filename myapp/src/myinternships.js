@@ -173,6 +173,7 @@ function MyInternshipsPage() {
 
   useEffect(() => {
     setLoading(true)
+    setNotification("alo", "faculty@example.com")
     if (student?.email) {
       const foundInternships = []
       const foundCompanies = []
@@ -306,26 +307,13 @@ function MyInternshipsPage() {
     setCurrentInternshipIdForPopup(internshipId)
     let reportDataForPopup
 
-    if (
-      actionType === "create_new_version" ||
-      (internshipToEdit.report.finalSubmitted && actionType === "edit_or_add")
-    ) {
-      // Student wants to edit an already finalized report or explicitly create a new version
-      const currentFinalReport = internshipToEdit.report
+    if (actionType === "create_new_version") {
+      // When creating a new version, start fresh without previous content
       reportDataForPopup = {
-        title: currentFinalReport.title,
-        introduction: currentFinalReport.introduction,
-        body: currentFinalReport.body,
-        major: currentFinalReport.major,
-        courses: [...currentFinalReport.courses],
+        ...defaultReportState,
         pdfFile: null,
-        pdfFileName: currentFinalReport.pdfFileName, // Keep the existing PDF filename
-        submitted: true, // It's a draft being created
-        finalSubmitted: false, // New version is not finalized yet
-        status: "draft_saved", // This new draft's status
-        evaluatorComments: "", // Reset for this new version
-        appealMessage: "",
-        appealSubmitted: false,
+        // Only keep the job title as a reference
+        title: internshipToEdit.jobTitle || "",
       }
     } else if (
       internshipToEdit.report.submitted &&
@@ -552,12 +540,6 @@ function MyInternshipsPage() {
   }
 
   const handleSaveAppeal = () => {
-    // Remove validation for empty message since it's optional
-    // if (!appealMessageInput.trim()) {
-    //   setAppealError("Appeal message cannot be empty.")
-    //   return
-    // }
-
     const internshipToUpdate = allInternships.find(
       (intern) => intern.uniqueInternshipId === currentInternshipIdForPopup,
     )
@@ -570,8 +552,12 @@ function MyInternshipsPage() {
         pdfFile: null,
       }
       localStorage.setItem(`report_${currentInternshipIdForPopup}`, JSON.stringify(appealedReport))
-      setNotification( ' ${appealMessage} for {currentInternshipIdForPopup} ', "scad@example.com")
-      setNotification(' ${appealMessage} for {currentInternshipIdForPopup} ', "faculty@example.com")
+
+      // Send notifications to faculty and SCAD with proper message formatting
+      const appealNotification = `Appeal submitted for ${internshipToUpdate.jobTitle} report by ${student.name || student.email}`
+      setNotification(appealNotification, "faculty@example.com")
+      setNotification(appealNotification, "scad@example.com")
+
       const updatedReportForState = {
         ...appealedReport,
         pdfFile: internshipToUpdate.report.pdfFile,
@@ -2923,15 +2909,43 @@ function MyInternshipsPage() {
                     }}
                     style={{
                       padding: "10px 16px",
-                      backgroundColor: "#fbbf24",
-                      color: "#78350f",
-                      border: "1px solid #f59e0b",
+                      backgroundColor: "#6b46c1",
+                      color: "white",
+                      border: "none",
                       borderRadius: "6px",
                       cursor: "pointer",
                       fontSize: "14px",
                       fontWeight: "500",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      transition: "all 0.2s",
+                      boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                    }}
+                    onMouseOver={(e) => {
+                      e.currentTarget.style.backgroundColor = "#5a3aa6"
+                      e.currentTarget.style.transform = "translateY(-1px)"
+                      e.currentTarget.style.boxShadow = "0 4px 8px rgba(0,0,0,0.15)"
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.backgroundColor = "#6b46c1"
+                      e.currentTarget.style.transform = "translateY(0)"
+                      e.currentTarget.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)"
                     }}
                   >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M12 5v14M5 12h14"></path>
+                    </svg>
                     Create New Version
                   </button>
                   <button
@@ -3045,7 +3059,7 @@ function MyInternshipsPage() {
           <div
             style={{
               backgroundColor: "#fff",
-              padding: "25px",
+              padding: "30px",
               borderRadius: "12px",
               width: "90%",
               maxWidth: "600px",
@@ -3055,18 +3069,19 @@ function MyInternshipsPage() {
               textAlign: "center",
             }}
           >
-            <h3 style={{ margin: "0 0 15px 0", color: "#334155", fontSize: "18px", fontWeight: "600" }}>
+            <h3 style={{ margin: "0 0 20px 0", color: "#334155", fontSize: "20px", fontWeight: "600" }}>
               Appeal Rejected/Flagged Report
             </h3>
             <div
               style={{
                 backgroundColor: "#ede9fe",
-                padding: "12px",
-                borderRadius: "6px",
-                marginBottom: "15px",
+                padding: "15px",
+                borderRadius: "8px",
+                marginBottom: "20px",
                 color: "#6d28d9",
                 fontSize: "14px",
                 textAlign: "left",
+                boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
               }}
             >
               <p style={{ margin: "0 0 10px 0" }}>
@@ -3084,44 +3099,60 @@ function MyInternshipsPage() {
               rows={6}
               style={{
                 width: "100%",
-                padding: "12px",
-                borderRadius: "6px",
+                padding: "15px",
+                borderRadius: "8px",
                 border: appealError ? "1px solid #ef4444" : "1px solid #e2e8f0",
                 fontSize: "14px",
                 color: "#334155",
                 resize: "vertical",
-                marginBottom: "15px",
+                marginBottom: "20px",
                 textAlign: "left",
+                boxShadow: "inset 0 1px 3px rgba(0,0,0,0.05)",
               }}
             />
             {appealError && <p style={{ color: "#ef4444", margin: "0 0 15px 0", fontSize: "14px" }}>{appealError}</p>}
-            <div style={{ display: "flex", justifyContent: "center", gap: "10px" }}>
+            <div style={{ display: "flex", justifyContent: "center", gap: "15px" }}>
               <button
                 onClick={() => setShowAppealPopup(false)}
                 style={{
-                  padding: "10px 16px",
+                  padding: "12px 20px",
                   backgroundColor: "#f1f5f9",
                   color: "#64748b",
-                  border: "1px solid #e2e8f0",
-                  borderRadius: "6px",
+                  border: "none",
+                  borderRadius: "8px",
                   cursor: "pointer",
                   fontSize: "14px",
                   fontWeight: "500",
+                  transition: "background-color 0.2s",
                 }}
+                onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#e2e8f0")}
+                onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#f1f5f9")}
               >
                 Cancel
               </button>
               <button
                 onClick={handleSaveAppeal}
                 style={{
-                  padding: "10px 16px",
+                  padding: "12px 20px",
                   backgroundColor: "#6d28d9",
                   color: "white",
                   border: "none",
-                  borderRadius: "6px",
+                  borderRadius: "8px",
                   cursor: "pointer",
                   fontSize: "14px",
                   fontWeight: "500",
+                  transition: "all 0.2s",
+                  boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.backgroundColor = "#5b21b6"
+                  e.currentTarget.style.transform = "translateY(-1px)"
+                  e.currentTarget.style.boxShadow = "0 4px 8px rgba(0,0,0,0.15)"
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.backgroundColor = "#6d28d9"
+                  e.currentTarget.style.transform = "translateY(0)"
+                  e.currentTarget.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)"
                 }}
               >
                 Submit Appeal

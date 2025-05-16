@@ -43,6 +43,9 @@ const AppointmentPage = () => {
   const isFaculty = userType === "faculty"
   const isStudent = userType === "student" || (!isSCAD && !isFaculty)
   const student = location.state?.user || location.state?.studentj || location.state?.student || {}
+    const allUsers = JSON.parse(localStorage.getItem("allUsers")) || []
+  const s = allUsers.find((user) => user.email === student.email)
+  const studentrole = s?.role // Added optional chaining for safety
   const scadmail = "scad@example.com"
   const studentmail = student.email
   const userEmail = isSCAD ? scadmail : studentmail
@@ -699,7 +702,26 @@ const AppointmentPage = () => {
               )}
             </div>
             <div style={{ width: "36px", height: "36px", borderRadius: "50%", backgroundColor: isSCAD ? "#c5e8f7" : isFaculty ? "#d5c5f7" : "#f7d5c5", display: "flex", alignItems: "center", justifyContent: "center", color: "#4a4a6a", fontWeight: "bold", fontSize: "16px", marginRight: "10px" }}>{isSCAD ? "SA" : isFaculty ? "FP" : studentmail ? studentmail.substring(0, 2).toUpperCase() : "ST"}</div>
-            <div style={{ marginRight: "20px" }}><div style={{ fontSize: "14px", fontWeight: "bold", color: "#4a4a6a" }}>{isSCAD ? "SCAD Admin" : isFaculty ? "Faculty User" : student.name || "Student User"}</div><div style={{ fontSize: "12px", color: "#6a6a8a" }}>{userEmail || (isSCAD ? "Administrator" : isFaculty ? "Faculty" : "Student")}</div></div>
+            <div style={{ marginRight: "20px" }}><div style={{ fontSize: "14px", fontWeight: "bold", color: "#4a4a6a" }}>{isSCAD ? "SCAD Admin" : isFaculty ? "Faculty User" : student.name || "Student User"}{studentrole === "pro" && (
+                    <span
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        marginLeft: "8px",
+                        backgroundColor: "#ffd700",
+                        color: "#4a4a6a",
+                        fontSize: "10px",
+                        fontWeight: "bold",
+                        padding: "2px 6px",
+                        borderRadius: "10px",
+                        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                      }}
+                    >
+                      PRO
+                    </span>
+                  )}
+                </div><div style={{ fontSize: "12px", color: "#6a6a8a" }}>{userEmail || (isSCAD ? "Administrator" : isFaculty ? "Faculty" : "Student")}</div></div>
             <button onClick={handleLogout} style={{ padding: "8px 12px", backgroundColor: "rgba(255,200,200,0.5)", color: "#9a4a4a", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "14px", fontWeight: "bold", display: "flex", alignItems: "center", transition: "background-color 0.2s" }} onMouseOver={(e) => (e.target.style.backgroundColor = "rgba(255,200,200,0.7)")} onMouseOut={(e) => (e.target.style.backgroundColor = "rgba(255,200,200,0.5)")} disabled={loading} aria-label="Logout">{loading ? "Please wait..." : "Logout"}</button>
           </div>
         </div>

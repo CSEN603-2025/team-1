@@ -40,6 +40,10 @@ const StudentJobs = () => {
     location.state?.studentj ||
     location.state?.student || { email: "default@example.com", name: "Guest", major: "Unknown" } // Provide default name and major
 
+      const allUsers = JSON.parse(localStorage.getItem("allUsers")) || []
+  const s = allUsers.find((user) => user.email === student.email)
+  const studentrole = s?.role // Added optional chaining for safety
+
   const [appliedInternships, setAppliedInternships] = useState(() => {
     const storedApplied = localStorage.getItem("appliedInternships")
     console.log(storedApplied)
@@ -685,18 +689,50 @@ const StudentJobs = () => {
     return defaultVideo // Return default if student or major is not available
   }
 
+  const handleAppointmentsClick = () => {
+  
+    setActiveSection("appointments")
+    navigate("/appointments", { state: { student } })
+  }
+
+  const handleAssessmentsClick = () => {
+   
+    setActiveSection("assessments")
+    navigate("/online-assessments", { state: { student } })
+  }
+
+  const handleWorkshopsClick = () => {
+   
+    setActiveSection("workshops")
+    navigate("/studentworkshops", { state: { student } })
+  }
+
+    const handleviewedprofile = () => {
+    setActiveSection("jobs")
+    navigate("/viewprofile", { state: { ...location.state } })
+  }
   const commonItems = [
     { id: "dashboard", label: "Homepage", icon: "🏠", action: handleHomeClick },
     { id: "profile", label: "Profile", icon: "👤", action: handleProfileClick },
     { id: "courses", label: "All Courses", icon: "📚", action: handleCoursesClick },
-    { id: "companies", label: "Companies", icon: "🏢", action: handleCompaniesClick },
+    { id: "companies", label: "Companies", icon: "🏢", action: handleCompaniesClick }, // Action updated
     { id: "jobs", label: "Browse Jobs", icon: "💼", action: handleBrowseJobsClick },
     { id: "applications", label: "All Applications", icon: "📝", action: handleMyApplicationsClick },
     { id: "internships", label: "My Internships", icon: "🏆", action: handleMyInternshipsClick },
   ]
+  const proSpecificItems = [
+    { id: "appointments", label: "Appointments", icon: "📅", action: handleAppointmentsClick },
+    { id: "assessments", label: "Online Assessments", icon: "📋", action: handleAssessmentsClick },
+    { id: "workshops", label: "Workshops", icon: "🔧", action: handleWorkshopsClick },
+    { id: "Who viewed my profile", label: "Who viewed my profile", icon: "👁", action: handleviewedprofile},
+  ]
 
-  const Sidebar = ({ menuOpen, toggleMenu }) => {
+ 
+ const Sidebar = ({ menuOpen, toggleMenu }) => {
     const sidebarItems = [...commonItems]
+    if (student && studentrole === "pro") {
+      sidebarItems.push(...proSpecificItems)
+    }
     // Add settings at the end
     sidebarItems.push({ id: "settings", label: "Settings", icon: "⚙️", action: handleSettingsClick })
 
@@ -758,7 +794,26 @@ const StudentJobs = () => {
                 {student.name ? student.name.charAt(0).toUpperCase() : "S"}
               </div>
               <div>
-                <div style={{ fontSize: "14px", fontWeight: "bold", color: "#4a4a6a" }}>Student User</div>
+                <div style={{ fontSize: "14px", fontWeight: "bold", color: "#4a4a6a" }}>Student User{studentrole === "pro" && (
+                    <span
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        marginLeft: "8px",
+                        backgroundColor: "#ffd700",
+                        color: "#4a4a6a",
+                        fontSize: "10px",
+                        fontWeight: "bold",
+                        padding: "2px 6px",
+                        borderRadius: "10px",
+                        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                      }}
+                    >
+                      PRO
+                    </span>
+                  )}
+                </div>
                 <div style={{ fontSize: "12px", color: "#6a6a8a" }}>{student.name || student.email}</div>
               </div>
             </div>
@@ -1251,7 +1306,26 @@ const StudentJobs = () => {
                 }}
               >
                 Student User
-              </div>
+              {studentrole === "pro" && (
+                    <span
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        marginLeft: "8px",
+                        backgroundColor: "#ffd700",
+                        color: "#4a4a6a",
+                        fontSize: "10px",
+                        fontWeight: "bold",
+                        padding: "2px 6px",
+                        borderRadius: "10px",
+                        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                      }}
+                    >
+                      PRO
+                    </span>
+                  )}
+                </div>
               <div style={{ fontSize: "12px", color: "#6a6a8a" }}>{student?.name || student?.email || "Unknown"}</div>
             </div>
             <button

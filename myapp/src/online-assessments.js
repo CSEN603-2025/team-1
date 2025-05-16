@@ -1,9 +1,9 @@
 "use client"
 
-import { useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useState, useEffect } from "react"
+import { useNavigate, useLocation } from "react-router-dom"
 import Modal from "react-modal"
-import { useEffect } from "react"
+import SidebarStudent from "./sidebarpro" // Import the sidebar component
 
 // Make sure to bind modal to your appElement
 Modal.setAppElement("#root")
@@ -12,11 +12,17 @@ const AssessmentPage = () => {
   const [activeTab, setActiveTab] = useState("list")
   const [selectedAssessment, setSelectedAssessment] = useState(null)
   const [answers, setAnswers] = useState({})
-  //const [completedAssessments, setCompletedAssessments] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
   const [selectedResultDetails, setSelectedResultDetails] = useState(null)
+  const [menuOpen, setMenuOpen] = useState(false) // State for sidebar toggle
+  const location = useLocation() // Get location for passing to sidebar
+
+  // Toggle sidebar function
+  const toggleMenu = () => {
+    setMenuOpen(!menuOpen)
+  }
 
   // Color palette
   const colors = {
@@ -66,13 +72,18 @@ const AssessmentPage = () => {
   // Styles
   const styles = {
     container: {
-      maxWidth: "1200px",
-      margin: "0 auto",
-      padding: "40px 20px",
+      display: "flex", // Changed to flex to accommodate sidebar
       fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
       color: colors.gray.text,
       backgroundColor: colors.gray.lightest,
       minHeight: "100vh",
+    },
+    mainContent: {
+      flex: 1,
+      marginLeft: menuOpen ? "250px" : "0", // Adjust margin based on sidebar state
+      transition: "margin-left 0.3s ease",
+      padding: "40px 20px",
+      maxWidth: menuOpen ? "calc(100% - 250px)" : "100%", // Adjust width based on sidebar state
     },
     header: {
       marginBottom: "30px",
@@ -337,6 +348,30 @@ const AssessmentPage = () => {
       fontSize: "48px",
       color: colors.gray.medium,
       marginBottom: "15px",
+    },
+    // Add styles for the top navigation bar
+    topNav: {
+      display: "flex",
+      alignItems: "center",
+      padding: "15px 20px",
+      backgroundColor: "white",
+      boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+      zIndex: 5,
+    },
+    hamburgerIcon: {
+      display: "flex",
+      flexDirection: "column",
+      cursor: "pointer",
+      padding: "10px",
+      borderRadius: "8px",
+      transition: "background-color 0.2s",
+    },
+    hamburgerLine: {
+      width: "25px",
+      height: "3px",
+      backgroundColor: "#4a4a6a",
+      margin: "2px 0",
+      transition: "transform 0.2s, opacity 0.2s",
     },
   }
 
@@ -890,368 +925,422 @@ const AssessmentPage = () => {
 
   return (
     <div style={styles.container}>
-      <div style={styles.header}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            marginBottom: "10px",
-            justifyContent: "center",
-            position: "relative",
-          }}
-        >
+      {/* Sidebar Component */}
+      <SidebarStudent menuOpen={menuOpen} toggleMenu={toggleMenu} />
+
+      {/* Main Content */}
+      <div style={styles.mainContent}>
+        {/* Top Navigation Bar */}
+        <div style={styles.topNav}>
+          {/* Hamburger Icon */}
+          <div
+            style={{
+              ...styles.hamburgerIcon,
+              backgroundColor: menuOpen ? "rgba(181, 199, 248, 0.2)" : "transparent",
+            }}
+            onClick={toggleMenu}
+            aria-label="Toggle menu"
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === "Enter" && toggleMenu()}
+          >
+            <div
+              style={{
+                ...styles.hamburgerLine,
+                transform: menuOpen ? "rotate(45deg) translate(5px, 5px)" : "none",
+              }}
+            ></div>
+            <div
+              style={{
+                ...styles.hamburgerLine,
+                opacity: menuOpen ? 0 : 1,
+              }}
+            ></div>
+            <div
+              style={{
+                ...styles.hamburgerLine,
+                transform: menuOpen ? "rotate(-45deg) translate(5px, -5px)" : "none",
+              }}
+            ></div>
+          </div>
+
+          <h1
+            style={{
+              margin: "0 0 0 20px",
+              fontSize: "20px",
+              color: "#4a4a6a",
+              fontWeight: "bold",
+            }}
+          >
+            Student Portal
+          </h1>
+        </div>
+
+        <div style={styles.header}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              marginBottom: "10px",
+              justifyContent: "center",
+              position: "relative",
+            }}
+          >
+            <button
+              style={{
+                backgroundColor: colors.purple.light,
+                color: colors.purple.dark,
+                border: "none",
+                borderRadius: "6px",
+                padding: "8px 16px",
+                fontSize: "14px",
+                fontWeight: "500",
+                cursor: "pointer",
+                transition: "background-color 0.3s ease",
+                position: "absolute",
+                left: "0",
+              }}
+              onClick={handleGoBack}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = colors.purple.medium)}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = colors.purple.light)}
+            >
+              ← Back
+            </button>
+            <h1 style={styles.title}>Online Assessments</h1>
+          </div>
+          <p style={styles.subtitle}>Test your knowledge and skills with our interactive assessments</p>
+        </div>
+
+        <div style={styles.tabContainer}>
           <button
             style={{
-              backgroundColor: colors.purple.light,
-              color: colors.purple.dark,
-              border: "none",
-              borderRadius: "6px",
-              padding: "8px 16px",
-              fontSize: "14px",
-              fontWeight: "500",
-              cursor: "pointer",
-              transition: "background-color 0.3s ease",
-              position: "absolute",
-              left: "0",
+              ...styles.tab,
+              ...(activeTab === "list" ? styles.activeTab : {}),
             }}
-            onClick={handleGoBack}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = colors.purple.medium)}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = colors.purple.light)}
+            onClick={() => setActiveTab("list")}
           >
-            ← Back
+            Available Assessments
           </button>
-          <h1 style={styles.title}>Online Assessments</h1>
+          <button
+            style={{
+              ...styles.tab,
+              ...(activeTab === "scores" ? styles.activeTab : {}),
+            }}
+            onClick={() => setActiveTab("scores")}
+          >
+            My Scores
+          </button>
         </div>
-        <p style={styles.subtitle}>Test your knowledge and skills with our interactive assessments</p>
-      </div>
 
-      <div style={styles.tabContainer}>
-        <button
-          style={{
-            ...styles.tab,
-            ...(activeTab === "list" ? styles.activeTab : {}),
-          }}
-          onClick={() => setActiveTab("list")}
+        <div style={styles.contentContainer}>
+          {activeTab === "list" && renderAssessmentList()}
+          {activeTab === "scores" && renderScores()}
+        </div>
+
+        {/* Assessment Modal */}
+        <Modal
+          isOpen={isModalOpen}
+          onRequestClose={() => setIsModalOpen(false)}
+          contentLabel="Assessment Modal"
+          style={customModalStyles}
         >
-          Available Assessments
-        </button>
-        <button
-          style={{
-            ...styles.tab,
-            ...(activeTab === "scores" ? styles.activeTab : {}),
-          }}
-          onClick={() => setActiveTab("scores")}
-        >
-          My Scores
-        </button>
-      </div>
-
-      <div style={styles.contentContainer}>
-        {activeTab === "list" && renderAssessmentList()}
-        {activeTab === "scores" && renderScores()}
-      </div>
-
-      {/* Assessment Modal */}
-      <Modal
-        isOpen={isModalOpen}
-        onRequestClose={() => setIsModalOpen(false)}
-        contentLabel="Assessment Modal"
-        style={customModalStyles}
-      >
-        {selectedAssessment && (
-          <div>
-            <div style={styles.modalHeader}>
-              <h2 style={styles.modalTitle}>{selectedAssessment.title}</h2>
-              <button
-                style={styles.closeButton}
-                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = colors.gray.light)}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
-                onClick={() => setIsModalOpen(false)}
-              >
-                ×
-              </button>
-            </div>
-
-            <div style={styles.questionContainer}>
-              <div style={styles.questionHeader}>
-                <div style={styles.questionNumber}>{currentQuestionIndex + 1}</div>
-                <div style={styles.questionText}>{selectedAssessment.questions[currentQuestionIndex].text}</div>
+          {selectedAssessment && (
+            <div>
+              <div style={styles.modalHeader}>
+                <h2 style={styles.modalTitle}>{selectedAssessment.title}</h2>
+                <button
+                  style={styles.closeButton}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = colors.gray.light)}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+                  onClick={() => setIsModalOpen(false)}
+                >
+                  ×
+                </button>
               </div>
 
-              <div style={styles.optionsContainer}>
-                {selectedAssessment.questions[currentQuestionIndex].options.map((option) => (
-                  <label
-                    key={option.id}
-                    style={{
-                      ...styles.optionLabel,
-                      ...(answers[selectedAssessment.questions[currentQuestionIndex].id] === option.id
-                        ? styles.optionLabelSelected
-                        : {}),
-                    }}
-                    onMouseEnter={(e) => {
-                      if (answers[selectedAssessment.questions[currentQuestionIndex].id] !== option.id) {
-                        e.currentTarget.style.backgroundColor = colors.gray.lightest
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (answers[selectedAssessment.questions[currentQuestionIndex].id] !== option.id) {
-                        e.currentTarget.style.backgroundColor = "white"
-                      }
-                    }}
-                  >
-                    <input
-                      style={styles.radio}
-                      type="radio"
-                      name={`question-${selectedAssessment.questions[currentQuestionIndex].id}`}
-                      checked={answers[selectedAssessment.questions[currentQuestionIndex].id] === option.id}
-                      onChange={() =>
-                        handleAnswerSelect(selectedAssessment.questions[currentQuestionIndex].id, option.id)
-                      }
-                    />
-                    {option.text}
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div style={styles.progressBar}>
-              <div
-                style={styles.progressFill(((currentQuestionIndex + 1) / selectedAssessment.questions.length) * 100)}
-              ></div>
-            </div>
-
-            <div style={styles.modalFooter}>
-              <div>
-                {currentQuestionIndex > 0 && (
-                  <button
-                    style={styles.secondaryButton}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = colors.gray.medium)}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = colors.gray.light)}
-                    onClick={handlePrevQuestion}
-                  >
-                    Previous
-                  </button>
-                )}
-              </div>
-              <div>
-                {currentQuestionIndex < selectedAssessment.questions.length - 1 ? (
-                  <button
-                    style={{
-                      ...styles.button,
-                      opacity: answers[selectedAssessment.questions[currentQuestionIndex].id] ? 1 : 0.7,
-                      cursor: answers[selectedAssessment.questions[currentQuestionIndex].id]
-                        ? "pointer"
-                        : "not-allowed",
-                    }}
-                    onMouseEnter={(e) => {
-                      if (answers[selectedAssessment.questions[currentQuestionIndex].id]) {
-                        e.currentTarget.style.backgroundColor = colors.purple.dark
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (answers[selectedAssessment.questions[currentQuestionIndex].id]) {
-                        e.currentTarget.style.backgroundColor = colors.purple.primary
-                      }
-                    }}
-                    onClick={handleNextQuestion}
-                    disabled={!answers[selectedAssessment.questions[currentQuestionIndex].id]}
-                  >
-                    Next Question
-                  </button>
-                ) : (
-                  <button
-                    style={{
-                      ...styles.button,
-                      backgroundColor: "#38a169",
-                      opacity: Object.keys(answers).length === selectedAssessment.questions.length ? 1 : 0.7,
-                      cursor:
-                        Object.keys(answers).length === selectedAssessment.questions.length ? "pointer" : "not-allowed",
-                    }}
-                    onMouseEnter={(e) => {
-                      if (Object.keys(answers).length === selectedAssessment.questions.length) {
-                        e.currentTarget.style.backgroundColor = "#2f855a"
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (Object.keys(answers).length === selectedAssessment.questions.length) {
-                        e.currentTarget.style.backgroundColor = "#38a169"
-                      }
-                    }}
-                    onClick={handleSubmitAssessment}
-                    disabled={Object.keys(answers).length !== selectedAssessment.questions.length}
-                  >
-                    Submit Assessment
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-      </Modal>
-      {/* Assessment Details Modal */}
-      <Modal
-        isOpen={isDetailsModalOpen}
-        onRequestClose={() => setIsDetailsModalOpen(false)}
-        contentLabel="Assessment Details Modal"
-        style={customModalStyles}
-      >
-        {selectedResultDetails && (
-          <div>
-            <div style={styles.modalHeader}>
-              <h2 style={styles.modalTitle}>Assessment Details</h2>
-              <button
-                style={styles.closeButton}
-                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = colors.gray.light)}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
-                onClick={() => setIsDetailsModalOpen(false)}
-              >
-                ×
-              </button>
-            </div>
-
-            <div style={{ marginBottom: "20px" }}>
-              <h3 style={{ fontSize: "20px", color: colors.purple.dark, marginBottom: "10px" }}>
-                {selectedResultDetails.title}
-              </h3>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "15px", marginBottom: "20px" }}>
-                <div style={{ backgroundColor: colors.gray.lightest, padding: "15px", borderRadius: "8px" }}>
-                  <p style={{ fontSize: "14px", color: colors.gray.text, marginBottom: "5px" }}>Score</p>
-                  <p
-                    style={{
-                      fontSize: "24px",
-                      fontWeight: "bold",
-                      color:
-                        selectedResultDetails.score >= 70
-                          ? "#38a169"
-                          : selectedResultDetails.score >= 50
-                            ? "#dd6b20"
-                            : "#e53e3e",
-                    }}
-                  >
-                    {selectedResultDetails.score.toFixed(0)}%
-                  </p>
+              <div style={styles.questionContainer}>
+                <div style={styles.questionHeader}>
+                  <div style={styles.questionNumber}>{currentQuestionIndex + 1}</div>
+                  <div style={styles.questionText}>{selectedAssessment.questions[currentQuestionIndex].text}</div>
                 </div>
-                <div style={{ backgroundColor: colors.gray.lightest, padding: "15px", borderRadius: "8px" }}>
-                  <p style={{ fontSize: "14px", color: colors.gray.text, marginBottom: "5px" }}>Result</p>
-                  <p
-                    style={{
-                      fontSize: "18px",
-                      fontWeight: "bold",
-                      color:
-                        selectedResultDetails.score >= 70
-                          ? "#38a169"
-                          : selectedResultDetails.score >= 50
-                            ? "#dd6b20"
-                            : "#e53e3e",
-                    }}
-                  >
-                    {selectedResultDetails.score >= 70
-                      ? "Passed"
-                      : selectedResultDetails.score >= 50
-                        ? "Needs Improvement"
-                        : "Failed"}
-                  </p>
-                </div>
-              </div>
-              <div
-                style={{
-                  backgroundColor: colors.gray.lightest,
-                  padding: "15px",
-                  borderRadius: "8px",
-                  marginBottom: "20px",
-                }}
-              >
-                <p style={{ fontSize: "14px", color: colors.gray.text, marginBottom: "5px" }}>Summary</p>
-                <p style={{ fontSize: "16px" }}>
-                  Correct Answers: <strong>{selectedResultDetails.correctAnswers}</strong> out of{" "}
-                  <strong>{selectedResultDetails.totalQuestions}</strong>
-                </p>
-                <p style={{ fontSize: "14px", color: colors.gray.text }}>Completed on {selectedResultDetails.date}</p>
-              </div>
-            </div>
 
-            <h3
-              style={{
-                fontSize: "18px",
-                color: colors.purple.dark,
-                marginBottom: "15px",
-                borderBottom: `1px solid ${colors.gray.light}`,
-                paddingBottom: "10px",
-              }}
-            >
-              Question Details
-            </h3>
-
-            {selectedResultDetails.answers.map((answer, index) => (
-              <div
-                key={index}
-                style={{
-                  marginBottom: "15px",
-                  padding: "15px",
-                  backgroundColor: answer.selectedAnswer === answer.correctAnswer ? "#f0fff4" : "#fff5f5",
-                  borderRadius: "8px",
-                  border: `1px solid ${answer.selectedAnswer === answer.correctAnswer ? "#c6f6d5" : "#fed7d7"}`,
-                }}
-              >
-                <p style={{ fontSize: "16px", fontWeight: "500", marginBottom: "10px" }}>
-                  {index + 1}. {answer.questionText}
-                </p>
-                <div style={{ marginLeft: "20px" }}>
-                  {answer.options.map((option) => (
-                    <div
+                <div style={styles.optionsContainer}>
+                  {selectedAssessment.questions[currentQuestionIndex].options.map((option) => (
+                    <label
                       key={option.id}
                       style={{
-                        padding: "8px 12px",
-                        marginBottom: "5px",
-                        backgroundColor:
-                          option.id === answer.selectedAnswer
-                            ? option.id === answer.correctAnswer
-                              ? "#c6f6d5"
-                              : "#fed7d7"
-                            : option.id === answer.correctAnswer
-                              ? "#c6f6d5"
-                              : "white",
-                        borderRadius: "4px",
-                        fontSize: "14px",
+                        ...styles.optionLabel,
+                        ...(answers[selectedAssessment.questions[currentQuestionIndex].id] === option.id
+                          ? styles.optionLabelSelected
+                          : {}),
+                      }}
+                      onMouseEnter={(e) => {
+                        if (answers[selectedAssessment.questions[currentQuestionIndex].id] !== option.id) {
+                          e.currentTarget.style.backgroundColor = colors.gray.lightest
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (answers[selectedAssessment.questions[currentQuestionIndex].id] !== option.id) {
+                          e.currentTarget.style.backgroundColor = "white"
+                        }
                       }}
                     >
+                      <input
+                        style={styles.radio}
+                        type="radio"
+                        name={`question-${selectedAssessment.questions[currentQuestionIndex].id}`}
+                        checked={answers[selectedAssessment.questions[currentQuestionIndex].id] === option.id}
+                        onChange={() =>
+                          handleAnswerSelect(selectedAssessment.questions[currentQuestionIndex].id, option.id)
+                        }
+                      />
                       {option.text}
-                      {option.id === answer.selectedAnswer && option.id === answer.correctAnswer && " ✓"}
-                      {option.id === answer.selectedAnswer && option.id !== answer.correctAnswer && " ✗"}
-                      {option.id !== answer.selectedAnswer && option.id === answer.correctAnswer && " (Correct)"}
-                    </div>
+                    </label>
                   ))}
                 </div>
               </div>
-            ))}
 
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "flex-end",
-                marginTop: "20px",
-                paddingTop: "15px",
-                borderTop: `1px solid ${colors.gray.light}`,
-              }}
-            >
-              <button
-                style={styles.secondaryButton}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = colors.purple.light
-                  e.currentTarget.style.color = colors.purple.dark
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "white"
-                  e.currentTarget.style.color = colors.purple.primary
-                }}
-                onClick={() => setIsDetailsModalOpen(false)}
-              >
-                Close
-              </button>
+              <div style={styles.progressBar}>
+                <div
+                  style={styles.progressFill(((currentQuestionIndex + 1) / selectedAssessment.questions.length) * 100)}
+                ></div>
+              </div>
+
+              <div style={styles.modalFooter}>
+                <div>
+                  {currentQuestionIndex > 0 && (
+                    <button
+                      style={styles.secondaryButton}
+                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = colors.gray.medium)}
+                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = colors.gray.light)}
+                      onClick={handlePrevQuestion}
+                    >
+                      Previous
+                    </button>
+                  )}
+                </div>
+                <div>
+                  {currentQuestionIndex < selectedAssessment.questions.length - 1 ? (
+                    <button
+                      style={{
+                        ...styles.button,
+                        opacity: answers[selectedAssessment.questions[currentQuestionIndex].id] ? 1 : 0.7,
+                        cursor: answers[selectedAssessment.questions[currentQuestionIndex].id]
+                          ? "pointer"
+                          : "not-allowed",
+                      }}
+                      onMouseEnter={(e) => {
+                        if (answers[selectedAssessment.questions[currentQuestionIndex].id]) {
+                          e.currentTarget.style.backgroundColor = colors.purple.dark
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (answers[selectedAssessment.questions[currentQuestionIndex].id]) {
+                          e.currentTarget.style.backgroundColor = colors.purple.primary
+                        }
+                      }}
+                      onClick={handleNextQuestion}
+                      disabled={!answers[selectedAssessment.questions[currentQuestionIndex].id]}
+                    >
+                      Next Question
+                    </button>
+                  ) : (
+                    <button
+                      style={{
+                        ...styles.button,
+                        backgroundColor: "#38a169",
+                        opacity: Object.keys(answers).length === selectedAssessment.questions.length ? 1 : 0.7,
+                        cursor:
+                          Object.keys(answers).length === selectedAssessment.questions.length
+                            ? "pointer"
+                            : "not-allowed",
+                      }}
+                      onMouseEnter={(e) => {
+                        if (Object.keys(answers).length === selectedAssessment.questions.length) {
+                          e.currentTarget.style.backgroundColor = "#2f855a"
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (Object.keys(answers).length === selectedAssessment.questions.length) {
+                          e.currentTarget.style.backgroundColor = "#38a169"
+                        }
+                      }}
+                      onClick={handleSubmitAssessment}
+                      disabled={Object.keys(answers).length !== selectedAssessment.questions.length}
+                    >
+                      Submit Assessment
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
-        )}
-      </Modal>
+          )}
+        </Modal>
+        {/* Assessment Details Modal */}
+        <Modal
+          isOpen={isDetailsModalOpen}
+          onRequestClose={() => setIsDetailsModalOpen(false)}
+          contentLabel="Assessment Details Modal"
+          style={customModalStyles}
+        >
+          {selectedResultDetails && (
+            <div>
+              <div style={styles.modalHeader}>
+                <h2 style={styles.modalTitle}>Assessment Details</h2>
+                <button
+                  style={styles.closeButton}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = colors.gray.light)}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+                  onClick={() => setIsDetailsModalOpen(false)}
+                >
+                  ×
+                </button>
+              </div>
+
+              <div style={{ marginBottom: "20px" }}>
+                <h3 style={{ fontSize: "20px", color: colors.purple.dark, marginBottom: "10px" }}>
+                  {selectedResultDetails.title}
+                </h3>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "15px", marginBottom: "20px" }}>
+                  <div style={{ backgroundColor: colors.gray.lightest, padding: "15px", borderRadius: "8px" }}>
+                    <p style={{ fontSize: "14px", color: colors.gray.text, marginBottom: "5px" }}>Score</p>
+                    <p
+                      style={{
+                        fontSize: "24px",
+                        fontWeight: "bold",
+                        color:
+                          selectedResultDetails.score >= 70
+                            ? "#38a169"
+                            : selectedResultDetails.score >= 50
+                              ? "#dd6b20"
+                              : "#e53e3e",
+                      }}
+                    >
+                      {selectedResultDetails.score.toFixed(0)}%
+                    </p>
+                  </div>
+                  <div style={{ backgroundColor: colors.gray.lightest, padding: "15px", borderRadius: "8px" }}>
+                    <p style={{ fontSize: "14px", color: colors.gray.text, marginBottom: "5px" }}>Result</p>
+                    <p
+                      style={{
+                        fontSize: "18px",
+                        fontWeight: "bold",
+                        color:
+                          selectedResultDetails.score >= 70
+                            ? "#38a169"
+                            : selectedResultDetails.score >= 50
+                              ? "#dd6b20"
+                              : "#e53e3e",
+                      }}
+                    >
+                      {selectedResultDetails.score >= 70
+                        ? "Passed"
+                        : selectedResultDetails.score >= 50
+                          ? "Needs Improvement"
+                          : "Failed"}
+                    </p>
+                  </div>
+                </div>
+                <div
+                  style={{
+                    backgroundColor: colors.gray.lightest,
+                    padding: "15px",
+                    borderRadius: "8px",
+                    marginBottom: "20px",
+                  }}
+                >
+                  <p style={{ fontSize: "14px", color: colors.gray.text, marginBottom: "5px" }}>Summary</p>
+                  <p style={{ fontSize: "16px" }}>
+                    Correct Answers: <strong>{selectedResultDetails.correctAnswers}</strong> out of{" "}
+                    <strong>{selectedResultDetails.totalQuestions}</strong>
+                  </p>
+                  <p style={{ fontSize: "14px", color: colors.gray.text }}>Completed on {selectedResultDetails.date}</p>
+                </div>
+              </div>
+
+              <h3
+                style={{
+                  fontSize: "18px",
+                  color: colors.purple.dark,
+                  marginBottom: "15px",
+                  borderBottom: `1px solid ${colors.gray.light}`,
+                  paddingBottom: "10px",
+                }}
+              >
+                Question Details
+              </h3>
+
+              {selectedResultDetails.answers.map((answer, index) => (
+                <div
+                  key={index}
+                  style={{
+                    marginBottom: "15px",
+                    padding: "15px",
+                    backgroundColor: answer.selectedAnswer === answer.correctAnswer ? "#f0fff4" : "#fff5f5",
+                    borderRadius: "8px",
+                    border: `1px solid ${answer.selectedAnswer === answer.correctAnswer ? "#c6f6d5" : "#fed7d7"}`,
+                  }}
+                >
+                  <p style={{ fontSize: "16px", fontWeight: "500", marginBottom: "10px" }}>
+                    {index + 1}. {answer.questionText}
+                  </p>
+                  <div style={{ marginLeft: "20px" }}>
+                    {answer.options.map((option) => (
+                      <div
+                        key={option.id}
+                        style={{
+                          padding: "8px 12px",
+                          marginBottom: "5px",
+                          backgroundColor:
+                            option.id === answer.selectedAnswer
+                              ? option.id === answer.correctAnswer
+                                ? "#c6f6d5"
+                                : "#fed7d7"
+                              : option.id === answer.correctAnswer
+                                ? "#c6f6d5"
+                                : "white",
+                          borderRadius: "4px",
+                          fontSize: "14px",
+                        }}
+                      >
+                        {option.text}
+                        {option.id === answer.selectedAnswer && option.id === answer.correctAnswer && " ✓"}
+                        {option.id === answer.selectedAnswer && option.id !== answer.correctAnswer && " ✗"}
+                        {option.id !== answer.selectedAnswer && option.id === answer.correctAnswer && " (Correct)"}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  marginTop: "20px",
+                  paddingTop: "15px",
+                  borderTop: `1px solid ${colors.gray.light}`,
+                }}
+              >
+                <button
+                  style={styles.secondaryButton}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = colors.purple.light
+                    e.currentTarget.style.color = colors.purple.dark
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "white"
+                    e.currentTarget.style.color = colors.purple.primary
+                  }}
+                  onClick={() => setIsDetailsModalOpen(false)}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          )}
+        </Modal>
+      </div>
     </div>
   )
 }

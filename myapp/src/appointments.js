@@ -106,7 +106,7 @@ const AppointmentPage = () => {
       if (isSCAD) {
         try {
           const allUsers = JSON.parse(localStorage.getItem("allUsers") || "[]")
-          const studentUsers = allUsers.filter((user) => user.role === "student")
+          const studentUsers = allUsers.filter((user) => user.role === "student"|| user.role==="pro")
           const emails = studentUsers.map((user) => user.email)
           setStudentEmails(emails)
           if (emails.length > 0) {

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
+import { setNotification } from "./notification"
 
 // ... (majorsWithCourses, defaultEvaluationState, defaultReportState remain the same) ...
 const majorsWithCourses = [
@@ -551,23 +552,26 @@ function MyInternshipsPage() {
   }
 
   const handleSaveAppeal = () => {
-    if (!appealMessageInput.trim()) {
-      setAppealError("Appeal message cannot be empty.")
-      return
-    }
+    // Remove validation for empty message since it's optional
+    // if (!appealMessageInput.trim()) {
+    //   setAppealError("Appeal message cannot be empty.")
+    //   return
+    // }
+
     const internshipToUpdate = allInternships.find(
       (intern) => intern.uniqueInternshipId === currentInternshipIdForPopup,
     )
     if (internshipToUpdate) {
       const appealedReport = {
         ...internshipToUpdate.report,
-        appealMessage: appealMessageInput,
+        appealMessage: appealMessageInput.trim(),
         appealSubmitted: true,
         status: "pending_appeal",
         pdfFile: null,
       }
       localStorage.setItem(`report_${currentInternshipIdForPopup}`, JSON.stringify(appealedReport))
-
+      setNotification( ' ${appealMessage} for {currentInternshipIdForPopup} ', "scad@example.com")
+      setNotification(' ${appealMessage} for {currentInternshipIdForPopup} ', "faculty@example.com")
       const updatedReportForState = {
         ...appealedReport,
         pdfFile: internshipToUpdate.report.pdfFile,
@@ -622,7 +626,7 @@ function MyInternshipsPage() {
 
   const handleBrowseJobsClick = () => {
     resetViews()
-    navigate("/studentjobs", { state: { student } })
+    navigate("/jobspage", { state: { student } })
   }
 
   const handleMyApplicationsClick = () => {
@@ -1759,6 +1763,7 @@ function MyInternshipsPage() {
                                       </button>
                                     )}
                                     {/* Replace the existing appeal button code with this improved version: */}
+                                    {/* Appeal button - only visible for flagged or rejected reports */}
                                     {["rejected", "flagged"].includes(report.status) && !report.appealSubmitted && (
                                       <button
                                         onClick={() => handleOpenAppealPopup(internship.uniqueInternshipId)}
@@ -3070,10 +3075,10 @@ function MyInternshipsPage() {
               </p>
             </div>
             <p style={{ margin: "0 0 15px 0", color: "#475569", fontSize: "14px" }}>
-              Please provide your reasons for appealing the decision on your report.
+              Please provide your reasons for appealing the decision on your report. This message is optional.
             </p>
             <textarea
-              placeholder="Enter your appeal message..."
+              placeholder="Enter your appeal message to faculty (optional)..."
               value={appealMessageInput}
               onChange={(e) => setAppealMessageInput(e.target.value)}
               rows={6}

@@ -44,6 +44,7 @@ export const setNotification = (message, email, clearAfterRead = false) => {
     };
 
     const existingData = localStorage.getItem("notifications");
+    console.log(existingData)
     const notifications = existingData ? JSON.parse(existingData) : [];
     notifications.push(newNotification);
     localStorage.setItem("notifications", JSON.stringify(notifications));

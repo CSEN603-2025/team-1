@@ -140,10 +140,13 @@ const isInitialLoad = useState(true);
         navigate('/company-dashboard', { state: {company:companyUser } });
       }
     }
-  }, [navigate,isInitialLoad]);
   }, [navigate, isInitialLoad]);
 
+  // Purple theme colors
+  const theme = {
+    primary: {
       main: '#6a4c93', // Main purple
+      light: '#9d8bb0', // Light purple
       dark: '#4a2c73', // Dark purple
       veryLight: '#f5f0fa', // Very light purple for backgrounds
       transparent: 'rgba(85, 17, 116, 0.27)', // Transparent purple as requested
@@ -151,6 +154,10 @@ const isInitialLoad = useState(true);
     text: {
       primary: '#333333',
       secondary: '#666666',
+      light: '#ffffff',
+    },
+    error: '#d32f2f',
+  };
 
   return (
     <div>
@@ -166,41 +173,58 @@ const isInitialLoad = useState(true);
                 width: '100%',
               }}
             >
+              {/* Left Half - Welcome and Logo with transparent purple background */}
               <div
                 style={{
-                  padding: '30px',
-                  borderRadius: '10px',
-                  boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
-                  width: '400px',
+                  flex: 1,
+                  backgroundColor: theme.primary.transparent, // Transparent purple background
                   display: 'flex',
-                }}
-                    maxWidth: '300px', 
-                  textAlign: 'center',
-                <p style={{ 
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  padding: '40px',
                 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '15px' }}>
-                  <img src="/scad.png" alt="SCAD Logo" style={{ width: '250px', height: 'auto' }} />
-                </div>
-                <h2 style={{ textAlign: 'center', color: '#385e72' }}>Login</h2>
-                <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                    <label htmlFor="email" style={{ fontWeight: 'bold', color: '#385e72', textAlign: 'left', display: 'block' }}>Email:</label>
-                    <input
-                      type="email"
-                      id="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                      placeholder="Enter your email"
-                        width: '100%',
-                        padding: '10px',
-                        border: `1px solid ${emailError ? '#ff4d4d' : '#ccc'}`,
-                        borderRadius: '4px',
-                    />
-                    {emailError && <div style={{ color: '#ff4d4d', fontSize: '12px' }}>{emailError}</div>}
-                  </div>
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
+                <img 
+                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/20240821000231%21German_University_in_Cairo_logo-JrPReAORyb41fBSa6NRLevScQhijEI.png" 
+                  alt="GUC Logo" 
+                  style={{ 
+                    width: '50%', // Smaller logo
+                    maxWidth: '300px', 
+                    marginBottom: '40px' 
+                  }} 
+                />
+                <h1 style={{ 
+                  fontSize: '32px', 
+                  color: 'black', 
+                  textAlign: 'center',
+                  fontWeight: 'bold',
+                  marginBottom: '20px'
+                }}>
+                  Welcome to the GUC SCAD System
+                </h1>
+                <p style={{ 
+                  fontSize: '18px', 
+                  color: 'black', 
+                  textAlign: 'center',
+                  maxWidth: '600px',
+                  lineHeight: '1.6'
+                }}>
+                  Student Career and Alumni Development portal for the German University in Cairo
+                </p>
+              </div>
+
+              {/* Right Half - Login Form with light purple accents */}
+              <div
+                style={{
+                  flex: 1,
+                  backgroundColor: 'white',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  boxShadow: '-5px 0 15px rgba(0, 0, 0, 0.1)',
+                }}
+              >
                 <div
                   style={{
                     width: '80%',
